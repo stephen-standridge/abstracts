@@ -110,7 +110,7 @@ class Tree extends Array {
 		this._level --;
 		this._node = Math.floor( this._node / this._branchCount );
 	}
-	goTo( node, level=this ){
+	goTo( node, level ){
 		this._level = level || this._level;
 		this._node = node || this._node;
 		return this.node
