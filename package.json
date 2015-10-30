@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "A one-dimensional tree structure that can generate an n-branching tree and traverse it recursively",
   "main": "index.js",
+  "repository": {
+  	"type": "git",
+  	"url": "https://github.com/stephen-standridge/basic-tree"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
