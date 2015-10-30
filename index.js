@@ -1,3 +1,4 @@
+'use strict';
 class Tree extends Array {
 	constructor(branchCount, depth){
 		super()
@@ -77,13 +78,16 @@ class Tree extends Array {
 			this.length = index;
 		}		
 	}
-	nodesAt( level= this._level ){
+	nodesAt( level ){
+		level = level || this._level
 		return Math.pow( this._branchCount, level )
 	}
-	nodesAtIndexed( level= this._level ){
+	nodesAtIndexed( level ){
+		level = level || this._level;
 		return this.nodesAt( level ) - 1 
 	}	
-	rootNodeAt( level=this._level ){
+	rootNodeAt( level ){
+		level = level || this._level
 		return this.nodesAtIndexed( level ) / this.adjCount
 	}
 	locate( level, node ){
@@ -106,9 +110,9 @@ class Tree extends Array {
 		this._level --;
 		this._node = Math.floor( this._node / this._branchCount );
 	}
-	goTo( node=this._node, level=this._level ){
-		this._level = level;
-		this._node = node;
+	goTo( node, level=this ){
+		this._level = level || this._level;
+		this._node = node || this._node;
 		return this.node
 	}
 	depthTraversalCall( callback ){
@@ -135,7 +139,8 @@ class Tree extends Array {
 			this.parent
 		}
 	}
-	breadthTraversalCall( callback, level= this._level ){
+	breadthTraversalCall( callback, level ){
+		level = level || this._level;
 		for( let i = 0, j = this.nodesAt(); i< j; i++ ){
 			this.toNode( i )
 			callback( this.node );
