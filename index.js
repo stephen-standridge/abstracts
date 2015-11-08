@@ -6,6 +6,7 @@ class Tree extends Array {
 		this._depth = depth;
 		this._level = 0;
 		this._node = 0;
+		this._cache = [];
 	}
 	set width( arg ){
 		this._branchCount = arg;
@@ -34,6 +35,7 @@ class Tree extends Array {
 				index = this.locate( level, node );
 				this.deepen(index + 1)
 		this[this.locate( level, node ) ] = value
+		// this.trim()
 	}	
 	get node(){
 		let level=this._level, 
@@ -71,13 +73,34 @@ class Tree extends Array {
 		vals.map(function( item, index ){
 			this[this.firstChildIndex+index] = item
 		}, this)
+		// this.trim()
 		return this.children
 	}	
+	reRoot(){
+		while(this._level > 1){
+			this.toParent()
+		}
+		let newTree = this.breadthTraversalGet();
+		this.length = 0;
+		for(var i = 0; i< newTree.length; i++){
+			this.push(newTree[i])
+		}
+		this.parent
+		return
+	}
 	deepen( index ){
 		if(this.length < index ){
 			this.length = index;
 		}		
 	}
+	trim(){
+		if( this._depth == undefined ){
+			return;
+		}
+		if( this._level > this._depth - 1 ){
+			this.reRoot()
+		}
+	}	
 	nodesAt( level ){
 		level = level || this._level
 		return Math.pow( this._branchCount, level )
@@ -134,15 +157,27 @@ class Tree extends Array {
 				} else {
 					this.node = value
 				}
-				this.depthTraversal(value)
+				this.depthTraversalSet(value)
 			}
 			this.parent
 		}
 	}
+	depthTraversalGet(){
+		let returned = [];
+		returned.push(this.node)						
+		for( let i = 0; i< this._branchCount; i++ ){
+			this.toNth(i)
+			if( this.node !== undefined ){
+				returned = returned.concat( this.depthTraversalGet() )
+			}
+			this.parent
+		}
+		return returned;
+	}	
 	breadthTraversalCall( callback, level ){
 		level = level || this._level;
 		for( let i = 0, j = this.nodesAt(); i< j; i++ ){
-			this.toNode( i )
+			this.toNth( i )
 			callback( this.node );
 		}
 		if( this.length > this.lastChildIndex + 1 ){
@@ -161,6 +196,23 @@ class Tree extends Array {
 				}
 		}
 	}	
+	breadthTraversalGet(){
+		let returned = [], queue = [];
+		queue.push({ n: this._node, l: this._level})
+		while( queue.length > 0 ){
+			let address = queue.shift()
+			this.goTo(address.n, address.l)
+			for( let j = 0; j< this._branchCount; j++ ){
+				this.toNth(j)
+				if(this.node !== undefined ){
+					queue.push({n: this._node, l: this._level})
+				}
+				this.parent
+			}
+			returned.push(this.node)
+		}
+		return returned
+	}
 	breadthTraversalInitialize( func, val, level ){
 		this._level = level || this._level
 		for( let i = 0, j = this.nodesAt(); i< j; i++ ){
@@ -171,4 +223,4 @@ class Tree extends Array {
 
 
 }
-module.exports = Tree
+// module.exports = Tree
