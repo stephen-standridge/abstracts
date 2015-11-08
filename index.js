@@ -223,4 +223,4 @@ class Tree extends Array {
 
 
 }
-// module.exports = Tree
+module.exports = Tree
