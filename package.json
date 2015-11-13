@@ -1,6 +1,6 @@
 {
   "name": "basic-tree",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "A one-dimensional tree structure that can generate an n-branching tree and traverse it recursively",
   "main": "index.js",
   "repository": {

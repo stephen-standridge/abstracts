@@ -35,7 +35,8 @@ class Tree extends Array {
 				index = this.locate( level, node );
 				this.deepen(index + 1)
 		this[this.locate( level, node ) ] = value
-		// this.trim()
+		this[this.locate( level, node ) ].__n = node	
+		this[this.locate( level, node ) ].__l = level			
 	}	
 	get node(){
 		let level=this._level, 
@@ -72,8 +73,12 @@ class Tree extends Array {
 		this.deepen( this.lastChildIndex + 1 )	
 		vals.map(function( item, index ){
 			this[this.firstChildIndex+index] = item
+			this.toNth( index )
+			this.node = item
+			this.node.__n = this._node
+			this.node.__l = this._level
+			this.parent
 		}, this)
-		// this.trim()
 		return this.children
 	}	
 	reRoot(){
@@ -81,12 +86,44 @@ class Tree extends Array {
 			this.toParent()
 		}
 		let newTree = this.breadthTraversalGet();
+		let returned = this.diffTree(newTree);
 		this.length = 0;
 		for(var i = 0; i< newTree.length; i++){
 			this.push(newTree[i])
+			this.root
+			this.reIndex()
 		}
-		this.parent
-		return
+		return returned
+	}
+	diffTree( tree ){
+    var a = [], diff = [];
+
+    for (let i = 0; i < tree.length; i++) {
+        a[tree[i].__n + '.'+ tree[i].__l] = tree[i];
+    }
+    for (let i = 0; i < this.length; i++) {
+    		if(this[i] == undefined ){
+    			continue;
+    		}
+        if (a[this[i].__n + '.'+ this[i].__l]) {
+        	continue;
+        } else {
+          diff.push( this[i] );
+        }
+    }
+
+    return diff;
+	}
+	reIndex(){
+		this.node.__n = this._node									
+		this.node.__l = this._level									
+		for( let i = 0; i< this._branchCount; i++ ){
+			this.toNth(i)
+			if( this.node !== undefined ){
+				this.reIndex()
+			}
+			this.parent
+		}
 	}
 	deepen( index ){
 		if(this.length < index ){
@@ -99,6 +136,7 @@ class Tree extends Array {
 		}
 		if( this._level > this._depth - 1 ){
 			this.reRoot()
+			this.root			
 		}
 	}	
 	nodesAt( level ){
