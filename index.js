@@ -1,4 +1,3 @@
-'use strict';
 class Tree extends Array {
 	constructor(branchCount, depth){
 		super()
