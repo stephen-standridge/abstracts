@@ -67,10 +67,14 @@ describe('tree', ()=>{
 		expect(tree.children[1]).to.equal('testvalue2')
 		expect(tree.children[0]).to.equal('testvalue1')
 	})
+	it('should be able to handle undefined values', ()=>{
+		const tree = new Tree(3);
+		expect(String(tree.children) ).to.equal(String([false, false, false]))
+	})	
 	describe('a structured tree', ()=>{
 	let tree;	
 		beforeEach(()=>{
-			tree = new Tree(3);
+			tree = new Tree(3,2);
 			tree.root = 1
 			tree.children = [2, 3, 4]
 			tree.toNth(0)
@@ -146,12 +150,35 @@ describe('tree', ()=>{
 			tree.children = [false, false, false]
 			expect(String(tree.toJS('value'))).to.equal(String([1,2,3,4,false,false,false,8,9,10,11,12,13]))	
 		})	
-		it('should allow for rerooting', ()=>{
-			expect(true).to.equal(false)
+		it('should allow for automatic rerooting when assigning a deep node', ()=>{
+			tree.toLast()
+			tree.toLast()
+			expect(tree.node).to.equal(13)
+			expect(tree._node).to.equal(8)
+			expect(tree._level).to.equal(2)
+			tree.toLast()
+			tree.node = 'test'
+			expect(tree.node).to.equal('test')			
+			expect(tree._node).to.equal(8)			
+			expect(tree._level).to.equal(2)
+			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,false,false,false,false,false,false,false,false,'test']))	
 		})
+		it('should allow for automatic rerooting when assigning deep children', ()=>{
+			tree.toLast()
+			tree.toLast()
+			expect(tree.node).to.equal(13)
+			expect(tree._node).to.equal(8)
+			expect(tree._level).to.equal(2)
+			tree.children = ['test1', 'test2', 'test3']
+
+			expect(tree.node).to.equal(13)			
+			expect(tree._node).to.equal(2)			
+			expect(tree._level).to.equal(1)
+			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,false,false,false,false,false,false,'test1','test2','test3'])) })
+		
 		it('should reindex properly', ()=>{
 			tree._store = tree._store.reverse()
-			expect(String(tree.toJS('value'))).to.equal(String([13,12,11,10,9,8,7,6,5,4,3,2,1]))
+			expect( String(tree.toJS('value')) ).to.equal( String([13,12,11,10,9,8,7,6,5,4,3,2,1]) )
 			tree.reIndex();
 			expect(tree._store).to.equal(fromJS([
 				{ value:13, __n:0, __l:0 },

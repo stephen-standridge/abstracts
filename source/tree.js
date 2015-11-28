@@ -10,9 +10,10 @@ class Tree{
 		this._node = 0;
 		this._maxLevel = 0;
 		this._store = List();
+		this._length = 0;
 	}
 	get length(){
-		return this._store.size
+		return this.maxNodeIndex + 1;
 	}
 	set width( arg ){
 		this._branchCount = arg;
@@ -44,6 +45,7 @@ class Tree{
 				if(this._level > this._maxLevel){
 					this._maxLevel = this._level;
 				}
+				this.trim()
 				return
 	}	
 	get node(){
@@ -86,12 +88,13 @@ class Tree{
 		this.node = arg;
 	}	
 	get children(){
-		let children = this._store.slice( this.firstChildIndex, this.lastChildIndex + 1 ),
-		returned = List();
-		children.map((item, index)=>{
-			returned = returned.push(item.get('value'))
-		});
-		return returned.toJS();
+		let children = List();
+		for(let i = 0; i< this._branchCount; i++){
+			this.toNth( i )
+			children = children.push(this.node)
+			this.toParent()
+		}
+		return children.toJS();
 	}
 	get childrenItems(){
 		let children = this._store.slice( this.firstChildIndex, this.lastChildIndex + 1 );
@@ -125,8 +128,15 @@ class Tree{
 		level = level || this._level
 		return this.nodesAtIndexed( level ) / this.adjCount
 	}
-	locate( level, node ){
+	getIndex(level, node){
 		let index = node + this.nodesAtIndexed( level ) / this.adjCount 
+		return index
+	}
+	locate( level, node ){
+		let index = this.getIndex(level, node)
+				if( this._store.get(index) == undefined ){
+					this._store = this._store.set(index, this.makeNode())
+				}
 				return index
 	}
 	toFirst(){
@@ -151,6 +161,10 @@ class Tree{
 		this._node = node !== undefined ? node : this._node;
 		return this.nodeItem
 	}
+	goToSilent( node, level ){
+		this._level = level !== undefined ? level : this._level;
+		this._node = node !== undefined ? node : this._node;
+	}	
 	preOrderDepth( callback, ctx=this ){
 		let node = this.nodeItem;
 		callback.call(ctx, node.get('value'), this._node, this._level)			
@@ -162,6 +176,17 @@ class Tree{
 			this.parent
 		}		
 	}
+	inOrderDepth( callback, ctx=this ){
+		let node = this.nodeItem;
+		callback.call(ctx, this.node, this._node, this._level)		
+		if(this.getIndex(this._level+1, this._branchCount) < this.length){					
+			for( let i = 0; i< this._branchCount; i++ ){
+				this.toNth(i)
+				this.inOrderDepth( callback, ctx )
+				this.parent
+			}	
+		}	
+	}	
 	postOrderDepth( callback, ctx=this ){
 		let node = this.nodeItem;
 			for( let i = 0; i< this._branchCount; i++ ){
@@ -198,23 +223,72 @@ class Tree{
 				this.goTo(n, l)									
 				callback.call(ctx, value, this._node, this._level)				
 	}
+
 	reIndex(){
-		if( this.node ){
+		if(this.node !== undefined){
 			this.node = this.node;
+		}
+		if(this.getIndex(this._level+1, this._branchCount) < this.length){			
 			for( let i = 0; i< this._branchCount; i++ ){
 				this.toNth(i)
-				if( this.node !== false ){
-					this.reIndex()
-				}
+				this.reIndex()
 				this.parent
 			}
 		}
 	}
-	toJS(retrieved){
+	scaleDownIndex( node, levels=1 ){
+		let scaled = node;
+		while(levels){
+			scaled = Math.floor( scaled / this._branchCount )
+			levels --
+		}
+		return scaled
+	}
+	scaleUpIndex( node, levels=1 ){
+		let scaled = node;
+		while(levels){
+			scaled = Math.ceil( scaled * this._branchCount )
+			levels --
+		}
+		return scaled
+	}
+	trim(){
+		if(this._level > this._depth){
+			let node = this._node,
+					level = this._level, 
+					test = this.reRoot();
+			this.goToSilent(node, level)
+			while(test){
+				this.toParent()
+				test--
+			}
+		}		
+	}	
+	reRoot(){
+		var count = 0, l = this._level, n;
+		while(this._level > 1){
+			this.toParent()
+		}(count++)
+ 		n=this._node		
+
+		let returned = List();
+		returned = returned.push( this.nodeItem )
+		this.inOrderDepth((item, n, l)=>{
+			returned = returned.concat(this.childrenItems)
+		})
+		this._store = this._store.clear();
+		this._store = returned
+		this.reIndex()
+
+		return count
+	}	
+	toJS(retrieved = false ){
 		let returned = List();
 		this._store.forEach((item)=> {
-			if(retrieved){ 
-				returned = returned.push(item.get('value')) 
+			if(item === undefined){
+				returned = returned.push(false)
+			}else if(retrieved ){ 
+				returned = returned.push(item.get(retrieved)) 
 			}
 			else{ 
 				returned = returned.push(item)
