@@ -158,6 +158,7 @@ describe('tree', ()=>{
 			expect(tree._level).to.equal(2)
 			tree.toLast()
 			tree.node = 'test'
+
 			expect(tree.node).to.equal('test')			
 			expect(tree._node).to.equal(8)			
 			expect(tree._level).to.equal(2)
@@ -165,17 +166,17 @@ describe('tree', ()=>{
 		})
 		it('should allow for automatic rerooting when assigning deep children', ()=>{
 			tree.toLast()
-			tree.toLast()
-			expect(tree.node).to.equal(13)
-			expect(tree._node).to.equal(8)
+			tree.toFirst()
+			expect(tree.node).to.equal(11)
+			expect(tree._node).to.equal(6)
 			expect(tree._level).to.equal(2)
 			tree.children = ['test1', 'test2', 'test3']
 
-			expect(tree.node).to.equal(13)			
-			expect(tree._node).to.equal(2)			
+			expect(tree.node).to.equal(11)			
+			expect(tree._node).to.equal(0)			
 			expect(tree._level).to.equal(1)
-			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,false,false,false,false,false,false,'test1','test2','test3'])) })
-		
+			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,'test1','test2','test3',false,false,false,false,false,false])) })
+
 		it('should reindex properly', ()=>{
 			tree._store = tree._store.reverse()
 			expect( String(tree.toJS('value')) ).to.equal( String([13,12,11,10,9,8,7,6,5,4,3,2,1]) )

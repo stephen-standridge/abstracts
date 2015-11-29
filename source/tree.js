@@ -97,8 +97,13 @@ class Tree{
 		return children.toJS();
 	}
 	get childrenItems(){
-		let children = this._store.slice( this.firstChildIndex, this.lastChildIndex + 1 );
-				return children
+		let children = List();
+		for(let i = 0; i< this._branchCount; i++){
+			this.toNth( i )
+			children = children.push(this.nodeItem)
+			this.toParent()
+		}
+		return children;		
 	}
 	set children( vals ){
 		vals.length = this._branchCount;
@@ -223,8 +228,7 @@ class Tree{
 				this.goTo(n, l)									
 				callback.call(ctx, value, this._node, this._level)				
 	}
-
-	reIndex(){
+	reIndex( n, l ){
 		if(this.node !== undefined){
 			this.node = this.node;
 		}
@@ -239,7 +243,7 @@ class Tree{
 	scaleDownIndex( node, levels=1 ){
 		let scaled = node;
 		while(levels){
-			scaled = Math.floor( scaled / this._branchCount )
+			scaled = Math.floor( scaled-this.nodesAt / this._branchCount )
 			levels --
 		}
 		return scaled
@@ -257,19 +261,13 @@ class Tree{
 			let node = this._node,
 					level = this._level, 
 					test = this.reRoot();
-			this.goToSilent(node, level)
-			while(test){
-				this.toParent()
-				test--
-			}
 		}		
-	}	
+	}		
 	reRoot(){
-		var count = 0, l = this._level, n;
+		var count = 0, l = this._level, n = this._node, returnTo = {l:0, n:0}, shouldReturn = false;
 		while(this._level > 1){
 			this.toParent()
 		}(count++)
- 		n=this._node		
 
 		let returned = List();
 		returned = returned.push( this.nodeItem )
@@ -278,8 +276,22 @@ class Tree{
 		})
 		this._store = this._store.clear();
 		this._store = returned
-		this.reIndex()
+		this.root
 
+		this.inOrderDepth(()=>{
+			if(this.node !== undefined){
+				if(this.nodeItem.get('__l') == l && this.nodeItem.get('__n') == n){
+					shouldReturn = true;
+				}
+				this.node = this.node;
+				if(shouldReturn){
+					returnTo.n = this.nodeItem.get('__n')
+					returnTo.l = this.nodeItem.get('__l')
+					shouldReturn = false;
+				}
+			}			
+		})
+		this.goTo(returnTo.n, returnTo.l)
 		return count
 	}	
 	toJS(retrieved = false ){
