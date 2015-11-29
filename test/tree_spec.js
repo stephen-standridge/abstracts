@@ -1,6 +1,6 @@
 import {expect, assert} from 'chai';
 import {List, Map, fromJS} from 'immutable';
-import Tree from '../source/tree.js'
+import Tree from '../index.js'
 
 describe('tree', ()=>{
 	it('should not allow a tree to be created without branches', () =>{

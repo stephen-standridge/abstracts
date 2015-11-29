@@ -209,12 +209,12 @@ class Tree{
 				l = node.get('__l'),
 				n = node.get('__n');
 
-				this.goTo(n, l)	
-				callback.call(ctx, value, this._node, this._level)	
+		this.goTo(n, l)	
+		callback.call(ctx, value, this._node, this._level)	
 
-				if( index < this.maxNodeIndex ){				
-					this.preOrderBreadth( callback, ctx, index + 1 )
-				}
+		if( index < this.maxNodeIndex ){				
+			this.preOrderBreadth( callback, ctx, index + 1 )
+		}
 	}
 	postOrderBreadth( callback, ctx=this, index=0 ){
 		let node = this._store.get(index), 
@@ -222,11 +222,11 @@ class Tree{
 				l = node.get('__l'),
 				n = node.get('__n');
 
-				if( index < this.maxNodeIndex ){
-					this.postOrderBreadth( callback, ctx, index + 1 )
-				}
-				this.goTo(n, l)									
-				callback.call(ctx, value, this._node, this._level)				
+		if( index < this.maxNodeIndex ){
+			this.postOrderBreadth( callback, ctx, index + 1 )
+		}
+		this.goTo(n, l)									
+		callback.call(ctx, value, this._node, this._level)				
 	}
 	reIndex( n, l ){
 		if(this.node !== undefined){
@@ -240,31 +240,18 @@ class Tree{
 			}
 		}
 	}
-	scaleDownIndex( node, levels=1 ){
-		let scaled = node;
-		while(levels){
-			scaled = Math.floor( scaled-this.nodesAt / this._branchCount )
-			levels --
-		}
-		return scaled
-	}
-	scaleUpIndex( node, levels=1 ){
-		let scaled = node;
-		while(levels){
-			scaled = Math.ceil( scaled * this._branchCount )
-			levels --
-		}
-		return scaled
-	}
 	trim(){
 		if(this._level > this._depth){
-			let node = this._node,
-					level = this._level, 
-					test = this.reRoot();
+			this.reRoot();
 		}		
 	}		
 	reRoot(){
-		var count = 0, l = this._level, n = this._node, returnTo = {l:0, n:0}, shouldReturn = false;
+		var count = 0, 
+				l = this._level, 
+				n = this._node, 
+				returnTo = {l:0, n:0}, 
+				shouldReturn = false;
+
 		while(this._level > 1){
 			this.toParent()
 		}(count++)
@@ -293,7 +280,7 @@ class Tree{
 		})
 		this.goTo(returnTo.n, returnTo.l)
 		return count
-	}	
+	}
 	toJS(retrieved = false ){
 		let returned = List();
 		this._store.forEach((item)=> {
