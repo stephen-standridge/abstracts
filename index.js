@@ -1,3 +1,3 @@
-import Tree from './source/tree'
+var Tree = require('./dist/bundle')
 
-export default Tree
+module.exports = Tree;

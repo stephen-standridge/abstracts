@@ -1,4 +1,6 @@
-import {List, Map} from 'immutable';
+var Immutable = require('immutable'),
+		Map = Immutable.Map,
+		List = Immutable.List;
 class Tree{
 	constructor(branchCount, depth){
 		if(!branchCount){
@@ -296,4 +298,4 @@ class Tree{
 		return returned.toJS();
 	}
 }
-export default Tree
+module.exports = Tree
