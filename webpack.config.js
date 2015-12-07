@@ -13,6 +13,10 @@ module.exports = {
   },  
   output: {
     path: __dirname + '/dist',
-    filename: 'bundle.js'
+    filename: 'bundle.js',
+    // export itself to a global var
+    libraryTarget: "commonjs2",
+    // name of the global var: "Foo"
+    library: "Tree"    
   }
 };

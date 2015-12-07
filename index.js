@@ -1,3 +1,1 @@
-var Tree = require('./dist/bundle')
-
-module.exports = Tree;
+module.exports = require('./dist/bundle');

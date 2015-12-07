@@ -1,54 +1,134 @@
 import {expect, assert} from 'chai';
-import {List, Map, fromJS} from 'immutable';
-import Tree from '../index.js'
+import {List, Map, fromJS, is} from 'immutable';
+import Tree from '../dist/bundle';
+// var Tree = require('../dist/bundle')
+console.log(Tree)
 
 describe('tree', ()=>{
-	it('should not allow a tree to be created without branches', () =>{
-			assert.throw(function(){
-        new Tree()
-      }, Error)		
+	var test, control;
+	describe('#new Tree', ()=>{
+		it('should default to its initial state', ()=>{
+			test = new Tree()
+			control = fromJS({
+					level: 0,
+					node: 0,
+					maxLevel: 0					
+				});
+			expect(is(test._nav, control)).to.equal(true)
+			control = fromJS([])
+			expect(is(test._data, control)).to.equal(true)
+			control = fromJS({
+						branches: 2,
+						depth: false
+					})
+			expect(is(test._config, control)).to.equal(true)
+		})
+		it('should allow overriding its defaults', ()=>{
+			test = new Tree({
+				config:{
+					branches: 3,
+					depth: 2
+				},
+				nav: {
+					level: 1,
+					node: 1, 
+					maxLevel: 5
+				}})
+			control = fromJS({
+					level: 1,
+					node: 1,
+					maxLevel: 5
+				});
+			expect(is(test._nav, control) ).to.equal(true)
+			control = fromJS({
+						branches: 3,
+						depth: 2
+					});
+			expect(is(test._config, control) ).to.equal(true)
+		})
 	})
+	describe('#setNav', ()=>{
+		it('should set the nav state', ()=>{
+			test = new Tree()
+			test.setNav({ level: 2, node: 1, maxLevel: 3})
+			control = fromJS({
+					level: 2,
+					node: 1,
+					maxLevel: 3					
+				});
+			expect(is(test._nav, control) ).to.equal(true)
+		})				
+	})
+	describe('#setDataFromJS', ()=>{
+		it('should set the data state', ()=>{
+			test = new Tree()
+			test.setDataFromJS([{value: true}, {value: true}, {value: true}	])
+			control = fromJS([{value: true, __l: 0, __n: 0}, 
+								{value: true, __l: 1, __n: 0}, 
+								{value: true, __l: 1, __n: 1}]);
+			expect(is(test._data, control) ).to.equal(true)
+		})	
+	})
+	describe('#setData', ()=>{
+		it('should set the data state', ()=>{
+			test = new Tree()
+			test.setData(fromJS([{value: true}, {value: true}, {value: true}	]))
+			control = fromJS([{value: true, __l: 0, __n: 0}, 
+								{value: true, __l: 1, __n: 0}, 
+								{value: true, __l: 1, __n: 1}])
+			expect(is(test._data, control) ).to.equal(true)
+		})	
+	})	
 	it('should allow a node to be set', ()=>{
-		const tree = new Tree(2)
+		const tree = new Tree()
 		tree.node = 'test'
 		expect(tree.node).to.equal('test')
 		expect(tree.length).to.equal(1)
 	})
 	it('should mark the node with an internal node and level value', ()=>{
-		const tree = new Tree(2)
-		tree.node = 'test'
-		expect(tree.nodeItem).to.equal(fromJS({value: 'test', __n: 0, __l: 0}))
+		const tree = new Tree(2);
+		control = fromJS({value: 'test', __n: 0, __l: 0});
+		tree.node = 'test';
+		expect(is( tree.nodeItem, control) ).to.equal(true)
 		expect(tree.length).to.equal(1)		
 	})	
 	it('should allow a root to be set', ()=>{
 		const tree = new Tree(2);
 		tree.root = 'test'
+		control = fromJS({value: 'test', __n: 0, __l: 0});
 		expect(tree.root).to.equal('test')
 		expect(tree.length).to.equal(1)
 
-		expect(tree.rootItem).to.equal(fromJS({value: 'test', __n: 0, __l: 0}))		
+		expect(is(tree.rootItem, control)).to.equal(true)		
 	})
 	it('should allow traversal to the first child', ()=>{
-		const tree = new Tree(3);
+		const tree = new Tree();
 		tree.toFirst()
 		expect(tree._node).to.equal(0)
 		expect(tree._level).to.equal(1)
 	})
 	it('should allow traversal to the last child', ()=>{
-		const tree = new Tree(3);
+		const tree = new Tree({config:{branches: 3}});
 		tree.toLast()
 		expect(tree._node).to.equal(2)
 		expect(tree._level).to.equal(1)
 	})	
 	it('should allow traversal to an nth child', ()=>{
-		const tree = new Tree(3);
+		const tree = new Tree({config:{branches: 3}});
 		tree.toNth(1)
 		expect(tree._node).to.equal(1)
 		expect(tree._level).to.equal(1)
+
+		tree.parent
+		tree.toNth(2)
+		expect(tree._node).to.equal(2)
+		expect(tree._level).to.equal(1)		
 	})
+
 	it('should allow traversal to the parent', ()=>{
-		const tree = new Tree(3);
+		const tree = new Tree({config:{branches: 3}});
 		tree.root = 'test'
+		control = fromJS({value: 'test', __n: 0, __l: 0});
 		tree.toLast();
 		expect(tree._node).to.equal(2)
 		expect(tree._level).to.equal(1)
@@ -58,23 +138,23 @@ describe('tree', ()=>{
 		expect(tree._level).to.equal(0)
 
 		tree.toLast();
-		expect(tree.parentItem).to.equal(fromJS({value: 'test', __n: 0, __l: 0}))
+		expect(is(tree.parentItem, control)).to.equal(true)
 	})
 	it('should get and set multiple children', ()=>{
-		const tree = new Tree(3);
+		const tree = new Tree({config:{branches: 3}});
 		tree.children = ['testvalue1', 'testvalue2', 'testvalue3'];
 		expect(tree.children[2]).to.equal('testvalue3')
 		expect(tree.children[1]).to.equal('testvalue2')
 		expect(tree.children[0]).to.equal('testvalue1')
 	})
 	it('should be able to handle undefined values', ()=>{
-		const tree = new Tree(3);
-		expect(String(tree.children) ).to.equal(String([false, false, false]))
-	})	
+		const tree = new Tree({config:{branches: 3}});
+		expect(String(tree.children) ).to.equal(String([undefined, undefined, undefined]))
+	})
 	describe('a structured tree', ()=>{
 	let tree;	
 		beforeEach(()=>{
-			tree = new Tree(3,2);
+			tree = new Tree({config: {branches: 3,depth: 2}});
 			tree.root = 1
 			tree.children = [2, 3, 4]
 			tree.toNth(0)
@@ -138,8 +218,8 @@ describe('tree', ()=>{
 		it('should allow for post-order breadth-first traversal', ()=>{
 			let testArray = [],
 
-					callback = function(value, node, item){
-						testArray.push( this.node )
+					callback = function(value, node, level){
+						testArray.push( value )
 					}
 
 					tree.postOrderBreadth( callback )
@@ -162,7 +242,7 @@ describe('tree', ()=>{
 			expect(tree.node).to.equal('test')			
 			expect(tree._node).to.equal(8)			
 			expect(tree._level).to.equal(2)
-			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,false,false,false,false,false,false,false,false,'test']))	
+			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,'test']))	
 		})
 		it('should allow for automatic rerooting when assigning deep children', ()=>{
 			tree.toLast()
@@ -175,13 +255,13 @@ describe('tree', ()=>{
 			expect(tree.node).to.equal(11)			
 			expect(tree._node).to.equal(0)			
 			expect(tree._level).to.equal(1)
-			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,'test1','test2','test3',false,false,false,false,false,false])) })
+			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,'test1','test2','test3',undefined,undefined,undefined,undefined,undefined,undefined])) })
 
 		it('should reindex properly', ()=>{
-			tree._store = tree._store.reverse()
+			tree._data = tree._data.reverse()
 			expect( String(tree.toJS('value')) ).to.equal( String([13,12,11,10,9,8,7,6,5,4,3,2,1]) )
 			tree.reIndex();
-			expect(tree._store).to.equal(fromJS([
+			control = fromJS([
 				{ value:13, __n:0, __l:0 },
 				{ value:12, __n:0, __l:1 },
 				{ value:11, __n:1, __l:1 },
@@ -194,7 +274,8 @@ describe('tree', ()=>{
 				{ value:4, __n:5, __l:2 },
 				{	value:3, __n:6, __l:2 },
 				{ value:2, __n:7, __l:2 },
-				{ value:1, __n:8, __l:2 } ]))		
+				{ value:1, __n:8, __l:2 } ]);
+			expect(is(tree._data, control) ).to.equal(true)		
 		})	
 	})
 

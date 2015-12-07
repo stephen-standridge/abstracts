@@ -1,8 +1,8 @@
 {
   "name": "basic-tree",
-  "version": "1.1.2",
+  "version": "1.1.4",
   "description": "A one-dimensional immutable tree structure that can generate and traverse an n-branching tree",
-  "main": "index.js",
+  "main": "dist/bundle.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/stephen-standridge/basic-tree"

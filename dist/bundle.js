@@ -1,3 +1,4 @@
+module.exports =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -55,36 +56,108 @@
 
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _immutable = __webpack_require__(2);
+
+	var _defaults = __webpack_require__(3);
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var Immutable = __webpack_require__(2),
-	    Map = Immutable.Map,
-	    List = Immutable.List;
+	// var Immutable = require('immutable'),
+	// 		Map = Immutable.Map,
+	// 		List = Immutable.List,
+	// 		fromJS = Immutable.fromJS;
+
+	// var Defaults = require('./defaults'),
+	// 		initialData = Defaults.initialData,
+	// 		initialNav = Defaults.initialNav,
+	// 		initialConfig = Defaults.initialConfig;
 
 	var Tree = (function () {
-		function Tree(branchCount, depth) {
+		function Tree() {
+			var args = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
 			_classCallCheck(this, Tree);
 
-			if (!branchCount) {
-				throw new Error('must specify branch count');
-			}
-			this._branchCount = branchCount;
-			this._depth = depth;
-			this._level = 0;
-			this._node = 0;
-			this._maxLevel = 0;
-			this._store = List();
-			this._length = 0;
+			this._config = _defaults.initialConfig;
+			this._data = _defaults.initialData;
+			this._nav = _defaults.initialNav;
+			this.setConfig(args.config);
+			this.setDataFromJS(args.data);
+			this.setNav(args.nav);
 		}
 
 		_createClass(Tree, [{
+			key: 'setDataFromJS',
+			value: function setDataFromJS() {
+				var newData = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+				var data = arguments.length <= 1 || arguments[1] === undefined ? this._data : arguments[1];
+
+				newData = (0, _immutable.fromJS)(newData);
+				this.setData(newData, data);
+			}
+		}, {
+			key: 'setData',
+			value: function setData(newData) {
+				var data = arguments.length <= 1 || arguments[1] === undefined ? this._data : arguments[1];
+
+				data = data.merge(newData);
+				this._data = data;
+				if (newData.size) {
+					this.root;
+					this.index();
+				}
+				return data;
+			}
+		}, {
+			key: 'setConfig',
+			value: function setConfig() {
+				var newConfig = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+				var config = arguments.length <= 1 || arguments[1] === undefined ? this._config : arguments[1];
+
+				config = config.merge(newConfig);
+				this._config = config;
+				return config;
+			}
+		}, {
+			key: 'setNav',
+			value: function setNav() {
+				var newNav = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+				var nav = arguments.length <= 1 || arguments[1] === undefined ? this._nav : arguments[1];
+
+				nav = nav.merge(newNav);
+				this._nav = nav;
+				return nav;
+			}
+		}, {
+			key: 'flatten',
+			value: function flatten() {
+				var thing = this._data.map(function (item, index) {
+					return item.get('value');
+				});
+				return thing;
+			}
+		}, {
+			key: 'flattenItem',
+			value: function flattenItem() {
+				return this._data;
+			}
+		}, {
+			key: 'maxNodeIndex',
+			value: function maxNodeIndex(max) {
+				return this.nodesAtIndexed(max + 1) / this.adjCount - 1;
+			}
+		}, {
 			key: 'makeNode',
-			value: function makeNode() {
-				var value = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+			value: function makeNode(value) {
 				var n = arguments.length <= 1 || arguments[1] === undefined ? this._node : arguments[1];
 				var l = arguments.length <= 2 || arguments[2] === undefined ? this._level : arguments[2];
 
-				return Map({
+				var val = value == undefined ? false : value;
+				return (0, _immutable.Map)({
 					value: value,
 					__n: n,
 					__l: l
@@ -94,7 +167,7 @@
 			key: 'nodesAt',
 			value: function nodesAt(level) {
 				level = level || this._level;
-				return Math.pow(this._branchCount, level);
+				return Math.pow(this.branches, level);
 			}
 		}, {
 			key: 'nodesAtIndexed',
@@ -118,77 +191,74 @@
 			key: 'locate',
 			value: function locate(level, node) {
 				var index = this.getIndex(level, node);
-				if (this._store.get(index) == undefined) {
-					this._store = this._store.set(index, this.makeNode());
-				}
 				return index;
 			}
 		}, {
 			key: 'toFirst',
 			value: function toFirst() {
-				this._level++;
-				this._node = this.firstChildNode;
+				var l = this._nav.get('level') + 1;
+				var n = this.firstChildNode;
+				this.setNav({ level: l, node: n });
 			}
 		}, {
 			key: 'toLast',
 			value: function toLast() {
-				this._level++;
-				this._node = this.lastChildNode;
+				var l = this._nav.get('level') + 1;
+				var n = this.lastChildNode;
+				this.setNav({ level: l, node: n });
 			}
 		}, {
 			key: 'toNth',
 			value: function toNth(index) {
-				this._level++;
-				this._node = this.firstChildNode + index;
-				return this.node;
+				var l = this._nav.get('level') + 1;
+				var n = this.firstChildNode + index;
+				this.setNav({ level: l, node: n });
 			}
 		}, {
 			key: 'toParent',
 			value: function toParent() {
-				this._level--;
-				this._node = Math.floor(this._node / this._branchCount);
+				var l = this._nav.get('level') - 1;
+				var n = Math.floor(this._node / this.branches);
+				this.setNav({ level: l, node: n });
+			}
+		}, {
+			key: 'toParentAtLevel',
+			value: function toParentAtLevel() {
+				var level = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
+
+				while (this._level > level) {
+					this.toParent();
+				}
 			}
 		}, {
 			key: 'goTo',
 			value: function goTo(node, level) {
-				this._level = level !== undefined ? level : this._level;
-				this._node = node !== undefined ? node : this._node;
-				return this.nodeItem;
+				var l = level !== undefined ? level : this._nav.get('level');
+				var n = node !== undefined ? node : this._nav.get('node');
+				this.setNav({ level: l, node: n });
 			}
 		}, {
-			key: 'goToSilent',
-			value: function goToSilent(node, level) {
-				this._level = level !== undefined ? level : this._level;
-				this._node = node !== undefined ? node : this._node;
+			key: 'goToNode',
+			value: function goToNode(node) {
+				if (node == undefined) {
+					return;
+				}
+				var l = node.get('__l'),
+				    n = node.get('__n');
+				this.goTo(n, l);
 			}
 		}, {
 			key: 'preOrderDepth',
 			value: function preOrderDepth(callback) {
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
 
-				var node = this.nodeItem;
-				callback.call(ctx, node.get('value'), this._node, this._level);
-				for (var i = 0; i < this._branchCount; i++) {
+				callback.call(ctx, this.node, this._node, this._level);
+				for (var i = 0; i < this.branches; i++) {
 					this.toNth(i);
-					if (this.node) {
+					if (this.shouldTraverseDeeper) {
 						this.preOrderDepth(callback, ctx);
 					}
 					this.parent;
-				}
-			}
-		}, {
-			key: 'inOrderDepth',
-			value: function inOrderDepth(callback) {
-				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
-
-				var node = this.nodeItem;
-				callback.call(ctx, this.node, this._node, this._level);
-				if (this.getIndex(this._level + 1, this._branchCount) < this.length) {
-					for (var i = 0; i < this._branchCount; i++) {
-						this.toNth(i);
-						this.inOrderDepth(callback, ctx);
-						this.parent;
-					}
 				}
 			}
 		}, {
@@ -196,15 +266,14 @@
 			value: function postOrderDepth(callback) {
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
 
-				var node = this.nodeItem;
-				for (var i = 0; i < this._branchCount; i++) {
+				for (var i = 0; i < this.branches; i++) {
 					this.toNth(i);
-					if (this.node) {
+					if (this.shouldTraverseDeeper) {
 						this.postOrderDepth(callback, ctx);
 					}
 					this.parent;
 				}
-				callback.call(ctx, node.get('value'), this._node, this._level);
+				callback.call(ctx, this.node, this._node, this._level);
 			}
 		}, {
 			key: 'preOrderBreadth',
@@ -212,15 +281,8 @@
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
 				var index = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-				var node = this._store.get(index),
-				    value = node.get('value'),
-				    l = node.get('__l'),
-				    n = node.get('__n');
-
-				this.goTo(n, l);
-				callback.call(ctx, value, this._node, this._level);
-
-				if (index < this.maxNodeIndex) {
+				if (index < this.traversed) {
+					this.breadthTraverse(callback, ctx, index);
 					this.preOrderBreadth(callback, ctx, index + 1);
 				}
 			}
@@ -230,25 +292,28 @@
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
 				var index = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-				var node = this._store.get(index),
-				    value = node.get('value'),
-				    l = node.get('__l'),
-				    n = node.get('__n');
-
-				if (index < this.maxNodeIndex) {
+				if (index < this.traversed) {
 					this.postOrderBreadth(callback, ctx, index + 1);
+					this.breadthTraverse(callback, ctx, index);
 				}
-				this.goTo(n, l);
-				callback.call(ctx, value, this._node, this._level);
+			}
+		}, {
+			key: 'breadthTraverse',
+			value: function breadthTraverse(callback, ctx, index) {
+				var node = this._data.get(index);
+				this.goToNode(node);
+				if (this.node) {
+					callback.call(ctx, this.node, this._node, this._level);
+				}
 			}
 		}, {
 			key: 'reIndex',
-			value: function reIndex(n, l) {
+			value: function reIndex() {
 				if (this.node !== undefined) {
 					this.node = this.node;
 				}
-				if (this.getIndex(this._level + 1, this._branchCount) < this.length) {
-					for (var i = 0; i < this._branchCount; i++) {
+				if (this.shouldIndexDeeper) {
+					for (var i = 0; i < this.branches; i++) {
 						this.toNth(i);
 						this.reIndex();
 						this.parent;
@@ -256,9 +321,21 @@
 				}
 			}
 		}, {
+			key: 'index',
+			value: function index() {
+				if (this.node !== undefined) {
+					this.node = this.node;
+					for (var i = 0; i < this.branches; i++) {
+						this.toNth(i);
+						this.index();
+						this.parent;
+					}
+				}
+			}
+		}, {
 			key: 'trim',
 			value: function trim() {
-				if (this._level > this._depth) {
+				if (this.depth && this._level > this.depth) {
 					this.reRoot();
 				}
 			}
@@ -267,51 +344,36 @@
 			value: function reRoot() {
 				var _this = this;
 
-				var count = 0,
-				    l = this._level,
-				    n = this._node,
-				    returnTo = { l: 0, n: 0 },
-				    shouldReturn = false;
+				var level = this._level,
+				    node = this._node,
+				    returnToIndex = 0,
+				    returned = (0, _immutable.List)();
 
-				while (this._level > 1) {
-					this.toParent();
-				}count++;
-
-				var returned = List();
+				this.toParentAtLevel(1);
 				returned = returned.push(this.nodeItem);
-				this.inOrderDepth(function (item, n, l) {
-					returned = returned.concat(_this.childrenItems);
-				});
-				this._store = this._store.clear();
-				this._store = returned;
-				this.root;
 
-				this.inOrderDepth(function () {
-					if (_this.node !== undefined) {
-						if (_this.nodeItem.get('__l') == l && _this.nodeItem.get('__n') == n) {
-							shouldReturn = true;
+				this.preOrderDepth(function (val) {
+					_this.childrenItems.forEach(function (item) {
+						returned = returned.push(item);
+						if (item && item.get('__l') == level && item.get('__n') == node) {
+							returnToIndex = returned.size - 1;
 						}
-						_this.node = _this.node;
-						if (shouldReturn) {
-							returnTo.n = _this.nodeItem.get('__n');
-							returnTo.l = _this.nodeItem.get('__l');
-							shouldReturn = false;
-						}
-					}
+					});
 				});
-				this.goTo(returnTo.n, returnTo.l);
-				return count;
+
+				this._data = this._data.clear();
+				this.setData(returned);
+				this.goToNode(this._data.get(returnToIndex));
+				return;
 			}
 		}, {
 			key: 'toJS',
 			value: function toJS() {
 				var retrieved = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
-				var returned = List();
-				this._store.forEach(function (item) {
-					if (item === undefined) {
-						returned = returned.push(false);
-					} else if (retrieved) {
+				var returned = (0, _immutable.List)();
+				this._data.forEach(function (item) {
+					if (retrieved && item) {
 						returned = returned.push(item.get(retrieved));
 					} else {
 						returned = returned.push(item);
@@ -320,30 +382,59 @@
 				return returned.toJS();
 			}
 		}, {
+			key: 'branches',
+			get: function get() {
+				return this._config.get('branches');
+			}
+		}, {
+			key: 'depth',
+			get: function get() {
+				return this._config.get('depth');
+			}
+		}, {
+			key: 'shouldIndexDeeper',
+			get: function get() {
+				return this.getIndex(this._level, this.branches) < this.traversed;
+			}
+		}, {
+			key: 'shouldTraverseDeeper',
+			get: function get() {
+				return this.getIndex(this._level, this.branches) < this.length;
+			}
+		}, {
+			key: '_node',
+			get: function get() {
+				return this._nav.get('node');
+			}
+		}, {
+			key: '_level',
+			get: function get() {
+				return this._nav.get('level');
+			}
+		}, {
+			key: 'maxLevel',
+			get: function get() {
+				return this._nav.get('maxLevel');
+			}
+		}, {
 			key: 'length',
 			get: function get() {
-				return this.maxNodeIndex + 1;
+				return this.maxNodeIndex(this.depth) + 1;
 			}
 		}, {
-			key: 'width',
-			set: function set(arg) {
-				this._branchCount = arg;
-			}
-		}, {
-			key: 'maxNodeIndex',
+			key: 'traversed',
 			get: function get() {
-				var depth = this._depth || this._maxLevel;
-				return this.nodesAtIndexed(depth + 1) / this.adjCount - 1;
+				return this.maxNodeIndex(this.maxLevel) + 1;
 			}
 		}, {
 			key: 'adjCount',
 			get: function get() {
-				return this._branchCount - 1;
+				return this.branches - 1;
 			}
 		}, {
 			key: 'firstChildNode',
 			get: function get() {
-				return this._node * this._branchCount;
+				return this._node * this.branches;
 			}
 		}, {
 			key: 'firstChildIndex',
@@ -353,7 +444,7 @@
 		}, {
 			key: 'lastChildNode',
 			get: function get() {
-				return this._node * this._branchCount + this.adjCount;
+				return this._node * this.branches + this.adjCount;
 			}
 		}, {
 			key: 'lastChildIndex',
@@ -366,9 +457,9 @@
 				var level = this._level,
 				    node = this._node,
 				    index = this.locate(level, node);
-				this._store = this._store.set(index, this.makeNode(value));
-				if (this._level > this._maxLevel) {
-					this._maxLevel = this._level;
+				this._data = this._data.set(index, this.makeNode(value));
+				if (this._level > this.maxLevel) {
+					this.setNav({ maxLevel: this._level });
 				}
 				this.trim();
 				return;
@@ -376,8 +467,9 @@
 			get: function get() {
 				var level = this._level,
 				    node = this._node,
-				    index = this.locate(level, node);
-				return this._store.getIn([index, 'value']) || false;
+				    index = this.locate(level, node),
+				    value = this._data.getIn([index, 'value']);
+				return value;
 			}
 		}, {
 			key: 'nodeItem',
@@ -385,18 +477,16 @@
 				var level = this._level,
 				    node = this._node,
 				    index = this.locate(level, node);
-				return this._store.get(index) || false;
+				return this._data.get(index) || undefined;
 			}
 		}, {
 			key: 'root',
 			get: function get() {
-				this._level = 0;
-				this._node = 0;
+				this.setNav({ level: 0, node: 0 });
 				return this.node;
 			},
 			set: function set(value) {
-				this._level = 0;
-				this._node = 0;
+				this.root;
 				this.node = value;
 				return this.node;
 			}
@@ -425,18 +515,12 @@
 		}, {
 			key: 'children',
 			get: function get() {
-				var children = List();
-				for (var i = 0; i < this._branchCount; i++) {
-					this.toNth(i);
-					children = children.push(this.node);
-					this.toParent();
-				}
-				return children.toJS();
+				return this.childrenList.toJS();
 			},
 			set: function set(vals) {
 				var _this2 = this;
 
-				vals.length = this._branchCount;
+				vals.length = this.branches;
 
 				vals.map(function (value, index) {
 					_this2.toNth(index);
@@ -445,10 +529,21 @@
 				}, this);
 			}
 		}, {
+			key: 'childrenList',
+			get: function get() {
+				var children = (0, _immutable.List)();
+				for (var i = 0; i < this.branches; i++) {
+					this.toNth(i);
+					children = children.push(this.node);
+					this.toParent();
+				}
+				return children;
+			}
+		}, {
 			key: 'childrenItems',
 			get: function get() {
-				var children = List();
-				for (var i = 0; i < this._branchCount; i++) {
+				var children = (0, _immutable.List)();
+				for (var i = 0; i < this.branches; i++) {
 					this.toNth(i);
 					children = children.push(this.nodeItem);
 					this.toParent();
@@ -460,7 +555,7 @@
 		return Tree;
 	})();
 
-	module.exports = Tree;
+	exports.default = Tree;
 
 /***/ },
 /* 2 */
@@ -5426,6 +5521,29 @@
 	  return Immutable;
 
 	}));
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Immutable = __webpack_require__(2),
+	    Map = Immutable.Map,
+	    List = Immutable.List;
+
+	module.exports = {
+		initialData: List(),
+		initialConfig: Map({
+			branches: 2,
+			depth: false
+		}),
+		initialNav: Map({
+			level: 0,
+			node: 0,
+			maxLevel: 0
+		})
+	};
 
 /***/ }
 /******/ ]);
