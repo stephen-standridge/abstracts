@@ -66,16 +66,6 @@ module.exports =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	// var Immutable = require('immutable'),
-	// 		Map = Immutable.Map,
-	// 		List = Immutable.List,
-	// 		fromJS = Immutable.fromJS;
-
-	// var Defaults = require('./defaults'),
-	// 		initialData = Defaults.initialData,
-	// 		initialNav = Defaults.initialNav,
-	// 		initialConfig = Defaults.initialConfig;
-
 	var Tree = (function () {
 		function Tree() {
 			var args = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -85,12 +75,17 @@ module.exports =
 			this._config = _defaults.initialConfig;
 			this._data = _defaults.initialData;
 			this._nav = _defaults.initialNav;
-			this.setConfig(args.config);
-			this.setDataFromJS(args.data);
-			this.setNav(args.nav);
+			this.setState(args);
 		}
 
 		_createClass(Tree, [{
+			key: 'setState',
+			value: function setState(state) {
+				this.setConfig(state.config);
+				this.setDataFromJS(state.data);
+				this.setNav(state.nav);
+			}
+		}, {
 			key: 'setDataFromJS',
 			value: function setDataFromJS() {
 				var newData = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];

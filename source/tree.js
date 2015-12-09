@@ -6,9 +6,12 @@ class Tree{
 		this._config = initialConfig;
 		this._data = initialData;
 		this._nav = initialNav;
-		this.setConfig( args.config )		
-		this.setDataFromJS( args.data )
-		this.setNav( args.nav )
+		this.setState( args )
+	}
+	setState( state ){
+		this.setConfig( state.config )		
+		this.setDataFromJS( state.data )
+		this.setNav( state.nav )
 	}
 	setDataFromJS( newData={}, data=this._data ){
 		newData = fromJS( newData )
