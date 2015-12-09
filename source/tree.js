@@ -1,14 +1,5 @@
 import {Map, List, fromJS} from 'immutable';
 import {initialData, initialNav, initialConfig} from './defaults'
-// var Immutable = require('immutable'),
-// 		Map = Immutable.Map,
-// 		List = Immutable.List,
-// 		fromJS = Immutable.fromJS;
-
-// var Defaults = require('./defaults'),
-// 		initialData = Defaults.initialData,
-// 		initialNav = Defaults.initialNav,
-// 		initialConfig = Defaults.initialConfig;
 
 class Tree{
 	constructor( args={} ){
