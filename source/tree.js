@@ -165,7 +165,12 @@ class Tree{
 		return children;		
 	}
 	set children( vals ){
-		vals.length = this.branches;
+		
+		if(vals.size){
+			vals.size = this.branches;
+		}else{
+			vals.length = this.branches;
+		}
 
 		vals.map( ( value, index ) =>{
 			this.toNth( index )

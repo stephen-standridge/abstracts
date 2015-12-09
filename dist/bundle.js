@@ -520,7 +520,11 @@ module.exports =
 			set: function set(vals) {
 				var _this2 = this;
 
-				vals.length = this.branches;
+				if (vals.size) {
+					vals.size = this.branches;
+				} else {
+					vals.length = this.branches;
+				}
 
 				vals.map(function (value, index) {
 					_this2.toNth(index);
