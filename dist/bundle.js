@@ -81,9 +81,23 @@ module.exports =
 		_createClass(Tree, [{
 			key: 'setState',
 			value: function setState(state) {
-				this.setConfig(state.config);
-				this.setDataFromJS(state.data);
-				this.setNav(state.nav);
+				if (state.config) {
+					this.setConfig(state.config);
+				} else if (state.get && state.get('config')) {
+					this.setConfig(state.get('config'));
+				}
+
+				if (state.data) {
+					this.setDataFromJS(state.data);
+				} else if (state.get && state.get('data')) {
+					this.setData(state.get('data'));
+				}
+
+				if (state.nav) {
+					this.setNav(state.nav);
+				} else if (state.get && state.get('nav')) {
+					this.setNav(state.get('nav'));
+				}
 			}
 		}, {
 			key: 'setDataFromJS',

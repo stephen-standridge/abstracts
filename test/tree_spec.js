@@ -46,6 +46,29 @@ describe('tree', ()=>{
 					});
 			expect(is(test._config, control) ).to.equal(true)
 		})
+		it('should take immutable structures for overrides', ()=>{
+			test = new Tree(Map({
+				config:Map({
+					branches: 3,
+					depth: 2
+				}),
+				nav: Map({
+					level: 1,
+					node: 1, 
+					maxLevel: 5
+				})}) )
+			control = fromJS({
+					level: 1,
+					node: 1,
+					maxLevel: 5
+				});
+			expect(is(test._nav, control) ).to.equal(true)
+			control = fromJS({
+						branches: 3,
+						depth: 2
+					});
+			expect(is(test._config, control) ).to.equal(true)			
+		})
 	})
 	describe('#setNav', ()=>{
 		it('should set the nav state', ()=>{
