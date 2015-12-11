@@ -64,6 +64,10 @@ module.exports =
 
 	var _defaults = __webpack_require__(3);
 
+	var _defaults2 = _interopRequireDefault(_defaults);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Tree = (function () {
@@ -72,9 +76,7 @@ module.exports =
 
 			_classCallCheck(this, Tree);
 
-			this._config = _defaults.initialConfig;
-			this._data = _defaults.initialData;
-			this._nav = _defaults.initialNav;
+			this.state = _defaults2.default;
 			this.setState(args);
 		}
 
@@ -103,7 +105,7 @@ module.exports =
 			key: 'setDataFromJS',
 			value: function setDataFromJS() {
 				var newData = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-				var data = arguments.length <= 1 || arguments[1] === undefined ? this._data : arguments[1];
+				var data = arguments.length <= 1 || arguments[1] === undefined ? this.state.get('data') : arguments[1];
 
 				newData = (0, _immutable.fromJS)(newData);
 				this.setData(newData, data);
@@ -111,40 +113,40 @@ module.exports =
 		}, {
 			key: 'setData',
 			value: function setData(newData) {
-				var data = arguments.length <= 1 || arguments[1] === undefined ? this._data : arguments[1];
+				var data = arguments.length <= 1 || arguments[1] === undefined ? this.state.get('data') : arguments[1];
 
 				data = data.merge(newData);
-				this._data = data;
+				this.state = this.state.set('data', data);
 				if (newData.size) {
 					this.root;
 					this.index();
 				}
-				return data;
+				return this.state.get('data');
 			}
 		}, {
 			key: 'setConfig',
 			value: function setConfig() {
 				var newConfig = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-				var config = arguments.length <= 1 || arguments[1] === undefined ? this._config : arguments[1];
+				var config = arguments.length <= 1 || arguments[1] === undefined ? this.state.get('config') : arguments[1];
 
 				config = config.merge(newConfig);
-				this._config = config;
-				return config;
+				this.state = this.state.set('config', config);
+				return this.state.get('config');
 			}
 		}, {
 			key: 'setNav',
 			value: function setNav() {
 				var newNav = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-				var nav = arguments.length <= 1 || arguments[1] === undefined ? this._nav : arguments[1];
+				var nav = arguments.length <= 1 || arguments[1] === undefined ? this.state.get('nav') : arguments[1];
 
 				nav = nav.merge(newNav);
-				this._nav = nav;
-				return nav;
+				this.state = this.state.set('nav', nav);
+				return this.state.get('nav');
 			}
 		}, {
 			key: 'flatten',
 			value: function flatten() {
-				var thing = this._data.map(function (item, index) {
+				var thing = this.state.get('data').map(function (item, index) {
 					return item.get('value');
 				});
 				return thing;
@@ -152,7 +154,7 @@ module.exports =
 		}, {
 			key: 'flattenItem',
 			value: function flattenItem() {
-				return this._data;
+				return this.state.get('data');
 			}
 		}, {
 			key: 'maxNodeIndex',
@@ -205,28 +207,28 @@ module.exports =
 		}, {
 			key: 'toFirst',
 			value: function toFirst() {
-				var l = this._nav.get('level') + 1;
+				var l = this.state.getIn(['nav', 'level']) + 1;
 				var n = this.firstChildNode;
 				this.setNav({ level: l, node: n });
 			}
 		}, {
 			key: 'toLast',
 			value: function toLast() {
-				var l = this._nav.get('level') + 1;
+				var l = this.state.getIn(['nav', 'level']) + 1;
 				var n = this.lastChildNode;
 				this.setNav({ level: l, node: n });
 			}
 		}, {
 			key: 'toNth',
 			value: function toNth(index) {
-				var l = this._nav.get('level') + 1;
+				var l = this.state.getIn(['nav', 'level']) + 1;
 				var n = this.firstChildNode + index;
 				this.setNav({ level: l, node: n });
 			}
 		}, {
 			key: 'toParent',
 			value: function toParent() {
-				var l = this._nav.get('level') - 1;
+				var l = this.state.getIn(['nav', 'level']) - 1;
 				var n = Math.floor(this._node / this.branches);
 				this.setNav({ level: l, node: n });
 			}
@@ -242,8 +244,8 @@ module.exports =
 		}, {
 			key: 'goTo',
 			value: function goTo(node, level) {
-				var l = level !== undefined ? level : this._nav.get('level');
-				var n = node !== undefined ? node : this._nav.get('node');
+				var l = level !== undefined ? level : this.state.getIn(['nav', 'level']);
+				var n = node !== undefined ? node : this.state.getIn(['nav', 'node']);
 				this.setNav({ level: l, node: n });
 			}
 		}, {
@@ -309,7 +311,7 @@ module.exports =
 		}, {
 			key: 'breadthTraverse',
 			value: function breadthTraverse(callback, ctx, index) {
-				var node = this._data.get(index);
+				var node = this.state.getIn(['data', index]);
 				this.goToNode(node);
 				if (this.node) {
 					callback.call(ctx, this.node, this._node, this._level);
@@ -370,9 +372,9 @@ module.exports =
 					});
 				});
 
-				this._data = this._data.clear();
+				this.state = this.state.set('data', this.state.get('data').clear());
 				this.setData(returned);
-				this.goToNode(this._data.get(returnToIndex));
+				this.goToNode(this.state.getIn(['data', returnToIndex]));
 				return;
 			}
 		}, {
@@ -381,7 +383,7 @@ module.exports =
 				var retrieved = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
 				var returned = (0, _immutable.List)();
-				this._data.forEach(function (item) {
+				this.state.get('data').forEach(function (item) {
 					if (retrieved && item) {
 						returned = returned.push(item.get(retrieved));
 					} else {
@@ -393,12 +395,12 @@ module.exports =
 		}, {
 			key: 'branches',
 			get: function get() {
-				return this._config.get('branches');
+				return this.state.getIn(['config', 'branches']);
 			}
 		}, {
 			key: 'depth',
 			get: function get() {
-				return this._config.get('depth');
+				return this.state.getIn(['config', 'depth']);
 			}
 		}, {
 			key: 'shouldIndexDeeper',
@@ -413,17 +415,17 @@ module.exports =
 		}, {
 			key: '_node',
 			get: function get() {
-				return this._nav.get('node');
+				return this.state.getIn(['nav', 'node']);
 			}
 		}, {
 			key: '_level',
 			get: function get() {
-				return this._nav.get('level');
+				return this.state.getIn(['nav', 'level']);
 			}
 		}, {
 			key: 'maxLevel',
 			get: function get() {
-				return this._nav.get('maxLevel');
+				return this.state.getIn(['nav', 'maxLevel']);
 			}
 		}, {
 			key: 'length',
@@ -466,7 +468,7 @@ module.exports =
 				var level = this._level,
 				    node = this._node,
 				    index = this.locate(level, node);
-				this._data = this._data.set(index, this.makeNode(value));
+				this.state = this.state.setIn(['data', index], this.makeNode(value));
 				if (this._level > this.maxLevel) {
 					this.setNav({ maxLevel: this._level });
 				}
@@ -477,7 +479,7 @@ module.exports =
 				var level = this._level,
 				    node = this._node,
 				    index = this.locate(level, node),
-				    value = this._data.getIn([index, 'value']);
+				    value = this.state.getIn(['data', index, 'value']);
 				return value;
 			}
 		}, {
@@ -486,7 +488,7 @@ module.exports =
 				var level = this._level,
 				    node = this._node,
 				    index = this.locate(level, node);
-				return this._data.get(index) || undefined;
+				return this.state.getIn(['data', index]) || undefined;
 			}
 		}, {
 			key: 'root',
@@ -5541,22 +5543,26 @@ module.exports =
 
 	'use strict';
 
-	var Immutable = __webpack_require__(2),
-	    Map = Immutable.Map,
-	    List = Immutable.List;
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
 
-	module.exports = {
-		initialData: List(),
-		initialConfig: Map({
+	var _immutable = __webpack_require__(2);
+
+	var initial = (0, _immutable.Map)({
+		data: (0, _immutable.List)(),
+		config: (0, _immutable.Map)({
 			branches: 2,
 			depth: false
 		}),
-		initialNav: Map({
+		nav: (0, _immutable.Map)({
 			level: 0,
 			node: 0,
 			maxLevel: 0
 		})
-	};
+	});
+
+	exports.default = initial;
 
 /***/ }
 /******/ ]);

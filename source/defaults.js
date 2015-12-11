@@ -1,18 +1,18 @@
-var Immutable = require('immutable'),
-		Map = Immutable.Map,
-		List = Immutable.List;
+import {Map, List} from 'immutable';
 
-module.exports = {
-	initialData: List(),
-	initialConfig: Map({
+const initial = Map({
+	data: List(),
+	config: Map({
 		branches: 2,
 		depth: false
 	}),
-	initialNav: Map({
+	nav: Map({
 		level: 0,
 		node: 0,
 		maxLevel: 0			
 	})	
-}
+});
+
+export default initial
 
 
