@@ -271,6 +271,21 @@ class Tree{
 			}
 		callback.call(ctx, this.node, this._node, this._level)	
 	}
+	actualBreadth(callback, ctx=this){
+		var q = List(), current, count=0;
+				if( !this.node ){ return }
+				q = q.push(this.nodeItem)
+
+				while( q.size > 0){
+					current = q.first();
+					q = q.shift();
+					this.goToNode(current)					
+					callback.call(ctx, current)					
+					if( current && this.shouldTraverseDeeper ){ 
+						q = q.concat(this.childrenItems)
+					}
+				}
+	}
 	preOrderBreadth( callback, ctx=this, index=0 ){
 		if( index < this.traversed ){
 			this.breadthTraverse( callback, ctx, index )
@@ -324,15 +339,11 @@ class Tree{
 				returned = List();
 
 		this.toParentAtLevel(1);
-		returned = returned.push(this.nodeItem)
-
-		this.preOrderDepth(( val )=>{
-			this.childrenItems.forEach((item)=>{
-				returned = returned.push(item)
-				if(item && item.get('__l') == level && item.get('__n') == node){
-					returnToIndex = returned.size -1;
-				}		
-			})	
+		this.actualBreadth((item)=>{
+			returned = returned.push(item)
+			if(item && item.get('__l') == level && item.get('__n') == node){
+				returnToIndex = returned.size -1;
+			}		
 		})
 
 		this.state = this.state.set('data', this.state.get('data').clear())

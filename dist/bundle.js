@@ -287,6 +287,29 @@ module.exports =
 				callback.call(ctx, this.node, this._node, this._level);
 			}
 		}, {
+			key: 'actualBreadth',
+			value: function actualBreadth(callback) {
+				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
+
+				var q = (0, _immutable.List)(),
+				    current,
+				    count = 0;
+				if (!this.node) {
+					return;
+				}
+				q = q.push(this.nodeItem);
+
+				while (q.size > 0) {
+					current = q.first();
+					q = q.shift();
+					this.goToNode(current);
+					callback.call(ctx, current);
+					if (current && this.shouldTraverseDeeper) {
+						q = q.concat(this.childrenItems);
+					}
+				}
+			}
+		}, {
 			key: 'preOrderBreadth',
 			value: function preOrderBreadth(callback) {
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
@@ -353,23 +376,17 @@ module.exports =
 		}, {
 			key: 'reRoot',
 			value: function reRoot() {
-				var _this = this;
-
 				var level = this._level,
 				    node = this._node,
 				    returnToIndex = 0,
 				    returned = (0, _immutable.List)();
 
 				this.toParentAtLevel(1);
-				returned = returned.push(this.nodeItem);
-
-				this.preOrderDepth(function (val) {
-					_this.childrenItems.forEach(function (item) {
-						returned = returned.push(item);
-						if (item && item.get('__l') == level && item.get('__n') == node) {
-							returnToIndex = returned.size - 1;
-						}
-					});
+				this.actualBreadth(function (item) {
+					returned = returned.push(item);
+					if (item && item.get('__l') == level && item.get('__n') == node) {
+						returnToIndex = returned.size - 1;
+					}
 				});
 
 				this.state = this.state.set('data', this.state.get('data').clear());
@@ -529,7 +546,7 @@ module.exports =
 				return this.childrenList.toJS();
 			},
 			set: function set(vals) {
-				var _this2 = this;
+				var _this = this;
 
 				if (vals.size) {
 					vals.size = this.branches;
@@ -538,9 +555,9 @@ module.exports =
 				}
 
 				vals.map(function (value, index) {
-					_this2.toNth(index);
-					_this2.node = value;
-					_this2.parent;
+					_this.toNth(index);
+					_this.node = value;
+					_this.parent;
 				}, this);
 			}
 		}, {
