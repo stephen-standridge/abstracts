@@ -174,6 +174,13 @@ describe('tree', ()=>{
 		const tree = new Tree({config:{branches: 3}});
 		expect(String(tree.children) ).to.equal(String([undefined, undefined, undefined]))
 	})
+	it('should allow getting the address', ()=>{
+		const tree = new Tree({config:{branches: 3}})
+		control = fromJS({__l:0, __n:0});
+		expect( is(tree.nodeAddress, control) ).to.equal(true)	
+		control = fromJS([{__l:1, __n:0}, {__l:1, __n:1}, {__l:1, __n:2}]);
+		expect( is(tree.childrenAddresses, control )).to.equal(true)		
+	})
 	describe('a structured tree', ()=>{
 	let tree;	
 		beforeEach(()=>{
@@ -337,7 +344,7 @@ describe('tree', ()=>{
 			// expect(tree.node).to.equal(11)			
 			// expect(tree._node).to.equal(0)			
 			// expect(tree._level).to.equal(1)
-			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,32,33,34,35,36,37,38,39,40,'test1','test2','test3',undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined])) })
+			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,32,33,34,35,36,37,38,39,40,'test1','test2','test3'])) })
 
 		it('should reindex properly', ()=>{
 			tree.state = tree.state.set('data', tree.state.get('data').reverse())

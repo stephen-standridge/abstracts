@@ -124,6 +124,9 @@ class Tree{
 				index = this.locate( level, node );
 		return this.state.getIn( ['data', index] ) || undefined
 	}	
+	get nodeAddress(){
+		return fromJS({__l: this._level, __n: this._node})
+	}	
 	get root(){
 		this.setNav({level: 0, node: 0})
 		return this.node
@@ -153,23 +156,14 @@ class Tree{
 		return this.childrenList.toJS()
 	}
 	get childrenList(){
-		let children = List();
-		for(let i = 0; i< this.branches; i++){
-			this.toNth( i )
-			children = children.push(this.node)
-			this.toParent()
-		}
-		return children;		
+		return this._children('node')
 	}
 	get childrenItems(){
-		let children = List();
-		for(let i = 0; i< this.branches; i++){
-			this.toNth( i )
-			children = children.push(this.nodeItem)
-			this.toParent()
-		}
-		return children;		
+		return this._children('nodeItem')	
 	}
+	get childrenAddresses(){
+		return this._children('nodeAddress')
+	}	
 	set children( vals ){
 		
 		if(vals.size){
@@ -183,6 +177,15 @@ class Tree{
 			this.node = value
 			this.parent
 		}, this)
+	}	
+	_children(prop){
+		let children = List();
+		for(let i = 0; i< this.branches; i++){
+			this.toNth( i )
+			children = children.push(this[prop])
+			this.toParent()
+		}
+		return children;		
 	}	
 	maxNodeIndex( max ){
 		return ( this.nodesAtIndexed( max + 1 ) / this.adjCount ) - 1;
@@ -274,15 +277,15 @@ class Tree{
 	actualBreadth(callback, ctx=this){
 		var q = List(), current, count=0;
 				if( !this.node ){ return }
-				q = q.push(this.nodeItem)
+				q = q.push(this.nodeAddress)
 
 				while( q.size > 0){
 					current = q.first();
 					q = q.shift();
-					this.goToNode(current)					
-					callback.call(ctx, current)					
-					if( current && this.shouldTraverseDeeper ){ 
-						q = q.concat(this.childrenItems)
+					if( this.getIndex(current.get('__l'), current.get('__n')) < this.state.get('data').size ){ 
+						this.goToNode(current)					
+						callback.call(ctx, this.node, this._node, this._level)					
+						q = q.concat(this.childrenAddresses)
 					}
 				}
 	}
@@ -339,13 +342,12 @@ class Tree{
 				returned = List();
 
 		this.toParentAtLevel(1);
-		this.actualBreadth((item)=>{
-			returned = returned.push(item)
-			if(item && item.get('__l') == level && item.get('__n') == node){
+		this.actualBreadth((item, n, l)=>{
+			returned = returned.push(this.nodeItem)
+			if(l == level && n == node){
 				returnToIndex = returned.size -1;
 			}		
 		})
-
 		this.state = this.state.set('data', this.state.get('data').clear())
 		this.setData( returned )
 		this.goToNode( this.state.getIn(['data', returnToIndex]) )

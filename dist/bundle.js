@@ -157,6 +157,17 @@ module.exports =
 				return this.state.get('data');
 			}
 		}, {
+			key: '_children',
+			value: function _children(prop) {
+				var children = (0, _immutable.List)();
+				for (var i = 0; i < this.branches; i++) {
+					this.toNth(i);
+					children = children.push(this[prop]);
+					this.toParent();
+				}
+				return children;
+			}
+		}, {
 			key: 'maxNodeIndex',
 			value: function maxNodeIndex(max) {
 				return this.nodesAtIndexed(max + 1) / this.adjCount - 1;
@@ -297,15 +308,15 @@ module.exports =
 				if (!this.node) {
 					return;
 				}
-				q = q.push(this.nodeItem);
+				q = q.push(this.nodeAddress);
 
 				while (q.size > 0) {
 					current = q.first();
 					q = q.shift();
-					this.goToNode(current);
-					callback.call(ctx, current);
-					if (current && this.shouldTraverseDeeper) {
-						q = q.concat(this.childrenItems);
+					if (this.getIndex(current.get('__l'), current.get('__n')) < this.state.get('data').size) {
+						this.goToNode(current);
+						callback.call(ctx, this.node, this._node, this._level);
+						q = q.concat(this.childrenAddresses);
 					}
 				}
 			}
@@ -376,19 +387,20 @@ module.exports =
 		}, {
 			key: 'reRoot',
 			value: function reRoot() {
+				var _this = this;
+
 				var level = this._level,
 				    node = this._node,
 				    returnToIndex = 0,
 				    returned = (0, _immutable.List)();
 
 				this.toParentAtLevel(1);
-				this.actualBreadth(function (item) {
-					returned = returned.push(item);
-					if (item && item.get('__l') == level && item.get('__n') == node) {
+				this.actualBreadth(function (item, n, l) {
+					returned = returned.push(_this.nodeItem);
+					if (l == level && n == node) {
 						returnToIndex = returned.size - 1;
 					}
 				});
-
 				this.state = this.state.set('data', this.state.get('data').clear());
 				this.setData(returned);
 				this.goToNode(this.state.getIn(['data', returnToIndex]));
@@ -508,6 +520,11 @@ module.exports =
 				return this.state.getIn(['data', index]) || undefined;
 			}
 		}, {
+			key: 'nodeAddress',
+			get: function get() {
+				return (0, _immutable.fromJS)({ __l: this._level, __n: this._node });
+			}
+		}, {
 			key: 'root',
 			get: function get() {
 				this.setNav({ level: 0, node: 0 });
@@ -546,7 +563,7 @@ module.exports =
 				return this.childrenList.toJS();
 			},
 			set: function set(vals) {
-				var _this = this;
+				var _this2 = this;
 
 				if (vals.size) {
 					vals.size = this.branches;
@@ -555,32 +572,25 @@ module.exports =
 				}
 
 				vals.map(function (value, index) {
-					_this.toNth(index);
-					_this.node = value;
-					_this.parent;
+					_this2.toNth(index);
+					_this2.node = value;
+					_this2.parent;
 				}, this);
 			}
 		}, {
 			key: 'childrenList',
 			get: function get() {
-				var children = (0, _immutable.List)();
-				for (var i = 0; i < this.branches; i++) {
-					this.toNth(i);
-					children = children.push(this.node);
-					this.toParent();
-				}
-				return children;
+				return this._children('node');
 			}
 		}, {
 			key: 'childrenItems',
 			get: function get() {
-				var children = (0, _immutable.List)();
-				for (var i = 0; i < this.branches; i++) {
-					this.toNth(i);
-					children = children.push(this.nodeItem);
-					this.toParent();
-				}
-				return children;
+				return this._children('nodeItem');
+			}
+		}, {
+			key: 'childrenAddresses',
+			get: function get() {
+				return this._children('nodeAddress');
 			}
 		}]);
 
