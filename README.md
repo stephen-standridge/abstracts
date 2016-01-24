@@ -31,7 +31,7 @@ tree.toJS()
 
 ```
 
-###Traversal
+###Navigation
 
 ####toNth() //0 indexed
 ####toFirst()
@@ -45,3 +45,9 @@ tree.toJS()
 ####node
 ####children
 ####parent
+
+###Traversal
+
+#####preOrderDepth( callback )
+#####postOrderDepth( callback )
+#####preOrderBreadth( callback )

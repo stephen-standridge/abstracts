@@ -70,7 +70,7 @@ module.exports =
 
 			_classCallCheck(this, Tree);
 
-			this.state = initialState;
+			this.state = this.initialState();
 			this.setState(args);
 		}
 
@@ -308,8 +308,8 @@ module.exports =
 				callback.call(ctx, this.node, this._node, this._level);
 			}
 		}, {
-			key: 'actualBreadth',
-			value: function actualBreadth(callback) {
+			key: 'preOrderBreadth',
+			value: function preOrderBreadth(callback) {
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
 
 				var q = (0, _immutable.List)(),
@@ -328,28 +328,6 @@ module.exports =
 						callback.call(ctx, this.node, this._node, this._level);
 						q = q.concat(this.childrenAddresses);
 					}
-				}
-			}
-		}, {
-			key: 'preOrderBreadth',
-			value: function preOrderBreadth(callback) {
-				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
-				var index = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
-
-				if (index < this.traversed) {
-					this.breadthTraverse(callback, ctx, index);
-					this.preOrderBreadth(callback, ctx, index + 1);
-				}
-			}
-		}, {
-			key: 'postOrderBreadth',
-			value: function postOrderBreadth(callback) {
-				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
-				var index = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
-
-				if (index < this.traversed) {
-					this.postOrderBreadth(callback, ctx, index + 1);
-					this.breadthTraverse(callback, ctx, index);
 				}
 			}
 		}, {
@@ -405,7 +383,7 @@ module.exports =
 				    returned = (0, _immutable.List)();
 
 				this.toParentAtLevel(1);
-				this.actualBreadth(function (item, n, l) {
+				this.preOrderBreadth(function (item, n, l) {
 					returned = returned.push(_this.nodeItem);
 					if (l == level && n == node) {
 						returnToIndex = returned.size - 1;

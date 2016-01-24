@@ -2,7 +2,7 @@ import {Map, List, fromJS} from 'immutable';
 
 class Tree{
 	constructor( args={} ){
-		this.state = initialState
+		this.state = this.initialState()
 		this.setState( args )
 	}
 	initialState(){
@@ -287,7 +287,7 @@ class Tree{
 			}
 		callback.call(ctx, this.node, this._node, this._level)	
 	}
-	actualBreadth(callback, ctx=this){
+	preOrderBreadth(callback, ctx=this){
 		var q = List(), current, count=0;
 				if( !this.node ){ return }
 				q = q.push(this.nodeAddress)
@@ -301,19 +301,7 @@ class Tree{
 						q = q.concat(this.childrenAddresses)
 					}
 				}
-	}
-	preOrderBreadth( callback, ctx=this, index=0 ){
-		if( index < this.traversed ){
-			this.breadthTraverse( callback, ctx, index )
-			this.preOrderBreadth( callback, ctx, index + 1 )		
-		}
 	}	
-	postOrderBreadth( callback, ctx=this, index=0 ){
-		if( index < this.traversed ){
-			this.postOrderBreadth( callback, ctx, index + 1 )
-			this.breadthTraverse( callback, ctx, index )
-		}
-	}
 	breadthTraverse( callback, ctx, index ){
 		let node = this.state.getIn(['data', index]);		
 		this.goToNode( node )
@@ -355,7 +343,7 @@ class Tree{
 				returned = List();
 
 		this.toParentAtLevel(1);
-		this.actualBreadth((item, n, l)=>{
+		this.preOrderBreadth((item, n, l)=>{
 			returned = returned.push(this.nodeItem)
 			if(l == level && n == node){
 				returnToIndex = returned.size -1;
