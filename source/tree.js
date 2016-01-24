@@ -1,10 +1,23 @@
 import {Map, List, fromJS} from 'immutable';
-import initial from './defaults'
 
 class Tree{
 	constructor( args={} ){
-		this.state = initial
+		this.state = initialState
 		this.setState( args )
+	}
+	initialState(){
+		return Map({
+			data: List(),
+			config: Map({
+				branches: 2,
+				depth: false
+			}),
+			nav: Map({
+				level: 0,
+				node: 0,
+				maxLevel: 0			
+			})	
+		});
 	}
 	setState( state ){
 		if(state.config){
