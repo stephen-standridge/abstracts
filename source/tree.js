@@ -1,80 +1,63 @@
-import {Map, List, fromJS} from 'immutable';
-
 class Tree{
 	constructor( args={} ){
 		this.state = this.initialState()
 		this.setState( args )
 	}
 	initialState(){
-		return Map({
-			data: List(),
-			config: Map({
+		return {
+			data: [],
+			config: {
 				branches: 2,
 				depth: false
-			}),
-			nav: Map({
+			},
+			nav: {
 				level: 0,
 				node: 0,
 				maxLevel: 0			
-			})	
-		});
+			}	
+		};
 	}
 	setState( state ){
 		if(state.config){
 			this.setConfig( state.config )	
-		}	else if( state.get && state.get('config') ){
-			this.setConfig( state.get('config') )	
 		}
 
 		if(state.data){
-			this.setDataFromJS( state.data )			
-		}	else if( state.get && state.get('data') ){
-			this.setData(state.get('data'))
+			this.setData( state.data )			
 		}
 
 		if(state.nav){
 			this.setNav( state.nav )	
-		}	else if( state.get && state.get('nav') ){
-			this.setNav( state.get('nav') )	
-		}		
-	}
-	setDataFromJS( newData={}, data=this.state.get('data') ){
-		newData = fromJS( newData )
-		this.setData( newData, data )
-	}
-	setData(newData, data=this.state.get('data')){
-		data = data.merge(newData)
-		this.state = this.state.set('data', data)
-		if(newData.size){
-			this.root
-			this.index()
 		}	
-		return this.state.get('data')
-	}	
-	setConfig( newConfig={}, config=this.state.get('config')){
-		config = config.merge(newConfig)
-		this.state = this.state.set('config', config)
-		return this.state.get('config')
 	}
-	setNav( newNav={}, nav=this.state.get('nav') ){
-		nav = nav.merge( newNav );
-		this.state = this.state.set('nav', nav)
-		return this.state.get('nav')
+	setData(newData=[]){
+		this.state.data = newData.slice();
+		this.root
+		this.index()
+		return this.state.data
+	}	
+	setConfig(newConfig={}){
+		this.state.config = Object.assign(this.state.config, newConfig);
+		return this.state.config
+	}
+	setNav(newNav={}){
+		this.state.nav = Object.assign(this.state.nav, newNav)
+		return this.state.nav
 	}
 	flatten(){
-		let thing = this.state.get('data').map((item, index)=>{
-			return item.get('value')
+		let thing = this.state.data.map((item, index)=>{
+			return item.value
 		})
 		return thing;
 	}	
 	flattenItem(){
-		return this.state.get('data')
+		return this.state.data
 	}
 	get branches(){
-		return this.state.getIn(['config','branches'])
+		return this.state.config.branches
 	}
 	get depth(){
-		return this.state.getIn(['config','depth'])
+		return this.state.config.depth
 	}
 	get shouldIndexDeeper(){
 		return this.getIndex( this._level, this.branches ) < this.traversed;
@@ -83,13 +66,13 @@ class Tree{
 		return this.getIndex( this._level, this.branches ) < this.length;		
 	}
 	get _node(){
-		return this.state.getIn(['nav', 'node'])
+		return this.state.nav.node
 	}
 	get _level(){
-		return this.state.getIn(['nav', 'level'])
+		return this.state.nav.level
 	}	
 	get maxLevel(){
-		return this.state.getIn(['nav', 'maxLevel'])
+		return this.state.nav.maxLevel
 	}
 	get length(){
 		return this.maxNodeIndex( this.depth ) + 1
@@ -128,17 +111,17 @@ class Tree{
 				node=this._node,
 
 				index = this.locate( level, node ),
-				value = this.state.getIn( ['data', index, 'value'] );
+				value = this.state.data[index].value;
 		return  value;
 	}
 	get nodeItem(){
 		let level=this._level, 
 				node=this._node,
 				index = this.locate( level, node );
-		return this.state.getIn( ['data', index] ) || undefined
+		return this.state.data[index] || undefined
 	}	
 	get nodeAddress(){
-		return fromJS({__l: this._level, __n: this._node})
+		return {__l: this._level, __n: this._node}
 	}	
 	get root(){
 		this.setNav({level: 0, node: 0})
@@ -166,7 +149,7 @@ class Tree{
 		this.node = arg;
 	}	
 	get children(){
-		return this.childrenList.toJS()
+		return this.childrenList
 	}
 	get childrenList(){
 		return this._children('node')
@@ -192,7 +175,7 @@ class Tree{
 		}, this)
 	}	
 	_children(prop){
-		let children = List();
+		let children = [];
 		for(let i = 0; i< this.branches; i++){
 			this.toNth( i )
 			children = children.push(this[prop])
@@ -205,11 +188,11 @@ class Tree{
 	}	
 	makeNode( value, n=this._node, l=this._level ){
 		let val = value == undefined? false : value;
-		return Map({
+		return {
 			value: value,
 			__n: n,
 			__l: l
-		})
+		}
 	}
 	nodesAt( level ){
 		level = level || this._level
@@ -232,22 +215,22 @@ class Tree{
 				return index
 	}
 	toFirst(){
-		let l = this.state.getIn(['nav', 'level']) + 1
+		let l = this.state.nav.level + 1
 		let n = this.firstChildNode
 		this.setNav({level: l, node: n })
 	}	
 	toLast(){
-		let l = this.state.getIn(['nav', 'level']) + 1
+		let l = this.state.nav.level + 1
 		let n = this.lastChildNode
 		this.setNav({level: l, node: n })		
 	}
 	toNth( index ){
-		let l = this.state.getIn(['nav', 'level']) + 1
+		let l = this.state.nav.level + 1
 		let n = this.firstChildNode + index
 		this.setNav({level: l, node: n })
 	}
 	toParent(){
-		let l = this.state.getIn(['nav', 'level']) - 1
+		let l = this.state.nav.level - 1
 		let n = Math.floor( this._node / this.branches )
 		this.setNav({level: l, node: n })
 	}
@@ -257,14 +240,14 @@ class Tree{
 		}
 	}
 	goTo( node, level ){
-		let l = level !== undefined ? level : this.state.getIn(['nav', 'level']);
-		let n = node !== undefined ? node : this.state.getIn(['nav', 'node']);
+		let l = level !== undefined ? level : this.state.nav.level;
+		let n = node !== undefined ? node : this.state.nav.node;
 		this.setNav({level: l, node: n })
 	}		
 	goToNode( node ){
 		if( node == undefined ){ return; }
-		let l = node.get('__l'),
-				n = node.get('__n');
+		let l = node.__l,
+				n = node.__n;
 		this.goTo( n, l )
 	}
 	preOrderDepth( callback, ctx=this ){
@@ -288,14 +271,14 @@ class Tree{
 		callback.call(ctx, this.node, this._node, this._level)	
 	}
 	preOrderBreadth(callback, ctx=this){
-		var q = List(), current, count=0;
+		var q = [], current, count=0;
 				if( !this.node ){ return }
 				q = q.push(this.nodeAddress)
 
 				while( q.size > 0){
 					current = q.first();
 					q = q.shift();
-					if( this.getIndex(current.get('__l'), current.get('__n')) < this.state.get('data').size ){ 
+					if( this.getIndex(current.__l, current.__n) < this.state.data.size ){ 
 						this.goToNode(current)					
 						callback.call(ctx, this.node, this._node, this._level)					
 						q = q.concat(this.childrenAddresses)
@@ -303,7 +286,7 @@ class Tree{
 				}
 	}	
 	breadthTraverse( callback, ctx, index ){
-		let node = this.state.getIn(['data', index]);		
+		let node = this.state.data[index];		
 		this.goToNode( node )
 		if( this.node ){
 			callback.call(ctx, this.node, this._node, this._level)			
@@ -340,7 +323,7 @@ class Tree{
 		var level = this._level, 
 				node = this._node, 
 				returnToIndex = 0,
-				returned = List();
+				returned = [];
 
 		this.toParentAtLevel(1);
 		this.preOrderBreadth((item, n, l)=>{
@@ -349,16 +332,16 @@ class Tree{
 				returnToIndex = returned.size -1;
 			}		
 		})
-		this.state = this.state.set('data', this.state.get('data').clear())
+		this.state = this.state.set('data', this.state.data.clear())
 		this.setData( returned )
-		this.goToNode( this.state.getIn(['data', returnToIndex]) )
+		this.goToNode( this.state.data[returnToIndex] )
 		return 
 	}
 	toJS(retrieved = false ){
-		let returned = List();
-		this.state.get('data').forEach((item)=> {
+		let returned = [];
+		this.state.data.forEach((item)=> {
 			if( retrieved && item ){ 
-				returned = returned.push(item.get(retrieved));
+				returned = returned.push(item.retrieved);
 			}else{
 				returned = returned.push(item);
 			}
