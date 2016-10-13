@@ -99,7 +99,7 @@ class Tree{
 		let level=this._level, 
 				node=this._node,
 				index = this.locate( level, node );
-				this.state = this.state.setIn( ['data', index], this.makeNode(value) )
+				this.state.data[index] = this.makeNode(value)
 				if(this._level > this.maxLevel){
 					this.setNav({maxLevel: this._level})
 				}
@@ -110,9 +110,9 @@ class Tree{
 		let level=this._level, 
 				node=this._node,
 
-				index = this.locate( level, node ),
-				value = this.state.data[index].value;
-		return  value;
+				index = this.locate( level, node );
+
+		return this.state.data[index] ? this.state.data[index].value : undefined
 	}
 	get nodeItem(){
 		let level=this._level, 
@@ -161,12 +161,7 @@ class Tree{
 		return this._children('nodeAddress')
 	}	
 	set children( vals ){
-		
-		if(vals.size){
-			vals.size = this.branches;
-		}else{
-			vals.length = this.branches;
-		}
+		vals.length = this.branches;
 
 		vals.map( ( value, index ) =>{
 			this.toNth( index )
@@ -178,7 +173,7 @@ class Tree{
 		let children = [];
 		for(let i = 0; i< this.branches; i++){
 			this.toNth( i )
-			children = children.push(this[prop])
+			children.push(this[prop])
 			this.toParent()
 		}
 		return children;		
@@ -273,12 +268,12 @@ class Tree{
 	preOrderBreadth(callback, ctx=this){
 		var q = [], current, count=0;
 				if( !this.node ){ return }
-				q = q.push(this.nodeAddress)
+				q.push(this.nodeAddress)
 
-				while( q.size > 0){
-					current = q.first();
-					q = q.shift();
-					if( this.getIndex(current.__l, current.__n) < this.state.data.size ){ 
+				while( q.length > 0){
+					current = q[0];
+					q.shift();
+					if( this.getIndex(current.__l, current.__n) < this.state.data.length ){ 
 						this.goToNode(current)					
 						callback.call(ctx, this.node, this._node, this._level)					
 						q = q.concat(this.childrenAddresses)
@@ -327,12 +322,11 @@ class Tree{
 
 		this.toParentAtLevel(1);
 		this.preOrderBreadth((item, n, l)=>{
-			returned = returned.push(this.nodeItem)
+			returned.push(this.nodeItem)
 			if(l == level && n == node){
-				returnToIndex = returned.size -1;
+				returnToIndex = returned.length -1;
 			}		
 		})
-		this.state = this.state.set('data', this.state.data.clear())
 		this.setData( returned )
 		this.goToNode( this.state.data[returnToIndex] )
 		return 
@@ -341,12 +335,12 @@ class Tree{
 		let returned = [];
 		this.state.data.forEach((item)=> {
 			if( retrieved && item ){ 
-				returned = returned.push(item.retrieved);
+				returned.push(item[retrieved]);
 			}else{
-				returned = returned.push(item);
+				returned.push(item);
 			}
 		})
-		return returned.toJS();
+		return returned;
 	}
 }
 export default Tree;

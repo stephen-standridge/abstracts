@@ -9,19 +9,13 @@ describe('tree', ()=>{
 	describe('#new Tree', ()=>{
 		it('should default to its initial state', ()=>{
 			test = new Tree()
-			control = fromJS({
-					level: 0,
-					node: 0,
-					maxLevel: 0					
-				});
-			expect(is(test.state.get('nav'), control)).to.equal(true)
-			control = fromJS([])
-			expect(is(test.state.get('data'), control)).to.equal(true)
-			control = fromJS({
-						branches: 2,
-						depth: false
-					})
-			expect(is(test.state.get('config'), control)).to.equal(true)
+			expect(test.state.nav.level).to.equal(0)
+			expect(test.state.nav.node).to.equal(0)
+			expect(test.state.nav.maxLevel).to.equal(0)
+
+			expect(test.state.data.length).to.equal(0)
+			expect(test.state.config.branches).to.equal(2)
+			expect(test.state.config.depth).to.equal(false)
 		})
 		it('should allow overriding its defaults', ()=>{
 			test = new Tree({
@@ -34,72 +28,35 @@ describe('tree', ()=>{
 					node: 1, 
 					maxLevel: 5
 				}})
-			control = fromJS({
-					level: 1,
-					node: 1,
-					maxLevel: 5
-				});
-			expect(is(test.state.get('nav'), control) ).to.equal(true)
-			control = fromJS({
-						branches: 3,
-						depth: 2
-					});
-			expect(is(test.state.get('config'), control) ).to.equal(true)
-		})
-		it('should take immutable structures for overrides', ()=>{
-			test = new Tree(Map({
-				config:Map({
-					branches: 3,
-					depth: 2
-				}),
-				nav: Map({
-					level: 1,
-					node: 1, 
-					maxLevel: 5
-				})}) )
-			control = fromJS({
-					level: 1,
-					node: 1,
-					maxLevel: 5
-				});
-			expect(is(test.state.get('nav'), control) ).to.equal(true)
-			control = fromJS({
-						branches: 3,
-						depth: 2
-					});
-			expect(is(test.state.get('config'), control) ).to.equal(true)			
+			expect(test.state.nav.level ).to.equal(1)
+			expect(test.state.nav.node ).to.equal(1)
+			expect(test.state.nav.maxLevel ).to.equal(5)
+			expect(test.state.config.branches).to.equal(3)
+			expect(test.state.config.depth).to.equal(2)
 		})
 	})
 	describe('#setNav', ()=>{
 		it('should set the nav state', ()=>{
 			test = new Tree()
 			test.setNav({ level: 2, node: 1, maxLevel: 3})
-			control = fromJS({
-					level: 2,
-					node: 1,
-					maxLevel: 3					
-				});
-			expect(is(test.state.get('nav'), control) ).to.equal(true)
+			expect(test.state.nav.level ).to.equal(2)
+			expect(test.state.nav.node ).to.equal(1)
+			expect(test.state.nav.maxLevel ).to.equal(3)
 		})				
-	})
-	describe('#setDataFromJS', ()=>{
-		it('should set the data state', ()=>{
-			test = new Tree()
-			test.setDataFromJS([{value: true}, {value: true}, {value: true}	])
-			control = fromJS([{value: true, __l: 0, __n: 0}, 
-								{value: true, __l: 1, __n: 0}, 
-								{value: true, __l: 1, __n: 1}]);
-			expect(is(test.state.get('data'), control) ).to.equal(true)
-		})	
 	})
 	describe('#setData', ()=>{
 		it('should set the data state', ()=>{
 			test = new Tree()
-			test.setData(fromJS([{value: true}, {value: true}, {value: true}	]))
-			control = fromJS([{value: true, __l: 0, __n: 0}, 
+			test.setData([ {value: true}, {value: true}, {value: true}])
+			control = [{value: true, __l: 0, __n: 0}, 
 								{value: true, __l: 1, __n: 0}, 
-								{value: true, __l: 1, __n: 1}])
-			expect(is(test.state.get('data'), control) ).to.equal(true)
+								{value: true, __l: 1, __n: 1}];
+			expect(test.state.data[0].__l).to.equal(control[0].__l)
+			expect(test.state.data[0].__n).to.equal(control[0].__n)
+			expect(test.state.data[1].__l).to.equal(control[1].__l)
+			expect(test.state.data[1].__n).to.equal(control[1].__n)
+			expect(test.state.data[2].__l).to.equal(control[2].__l)
+			expect(test.state.data[2].__n).to.equal(control[2].__n)
 		})	
 	})	
 	it('should allow a node to be set', ()=>{
@@ -110,19 +67,19 @@ describe('tree', ()=>{
 	})
 	it('should mark the node with an internal node and level value', ()=>{
 		const tree = new Tree(2);
-		control = fromJS({value: 'test', __n: 0, __l: 0});
 		tree.node = 'test';
-		expect(is( tree.nodeItem, control) ).to.equal(true)
+		expect(tree.nodeItem.__l).to.equal(0)
+		expect(tree.nodeItem.__n).to.equal(0)
+		expect(tree.nodeItem.value).to.equal('test')
 		expect(tree.length).to.equal(1)		
 	})	
 	it('should allow a root to be set', ()=>{
 		const tree = new Tree(2);
 		tree.root = 'test'
-		control = fromJS({value: 'test', __n: 0, __l: 0});
 		expect(tree.root).to.equal('test')
+		expect(tree.rootItem.__l).to.equal(0)
+		expect(tree.rootItem.__n).to.equal(0)
 		expect(tree.length).to.equal(1)
-
-		expect(is(tree.rootItem, control)).to.equal(true)		
 	})
 	it('should allow traversal to the first child', ()=>{
 		const tree = new Tree();
@@ -151,7 +108,7 @@ describe('tree', ()=>{
 	it('should allow traversal to the parent', ()=>{
 		const tree = new Tree({config:{branches: 3}});
 		tree.root = 'test'
-		control = fromJS({value: 'test', __n: 0, __l: 0});
+		control = {value: 'test', __n: 0, __l: 0};
 		tree.toLast();
 		expect(tree._node).to.equal(2)
 		expect(tree._level).to.equal(1)
@@ -161,7 +118,10 @@ describe('tree', ()=>{
 		expect(tree._level).to.equal(0)
 
 		tree.toLast();
-		expect(is(tree.parentItem, control)).to.equal(true)
+		let parent = tree.parentItem;
+		expect(parent.__l).to.equal(0)
+		expect(parent.__n).to.equal(0)
+		expect(parent.value).to.equal('test')
 	})
 	it('should get and set multiple children', ()=>{
 		const tree = new Tree({config:{branches: 3}});
@@ -176,10 +136,14 @@ describe('tree', ()=>{
 	})
 	it('should allow getting the address', ()=>{
 		const tree = new Tree({config:{branches: 3}})
-		control = fromJS({__l:0, __n:0});
-		expect( is(tree.nodeAddress, control) ).to.equal(true)	
-		control = fromJS([{__l:1, __n:0}, {__l:1, __n:1}, {__l:1, __n:2}]);
-		expect( is(tree.childrenAddresses, control )).to.equal(true)		
+		expect(tree.nodeAddress.__l).to.equal(0)	
+		expect(tree.nodeAddress.__n).to.equal(0)	
+		expect(tree.childrenAddresses[0].__l).to.equal(1)		
+		expect(tree.childrenAddresses[0].__n).to.equal(0)		
+		expect(tree.childrenAddresses[1].__l).to.equal(1)		
+		expect(tree.childrenAddresses[1].__n).to.equal(1)	
+		expect(tree.childrenAddresses[2].__l).to.equal(1)		
+		expect(tree.childrenAddresses[2].__n).to.equal(2)						
 	})
 	describe('a structured tree', ()=>{
 	let tree;	
@@ -337,10 +301,10 @@ describe('tree', ()=>{
 			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,32,33,34,35,36,37,38,39,40,'test1','test2','test3'])) })
 
 		it('should reindex properly', ()=>{
-			tree.state = tree.state.set('data', tree.state.get('data').reverse())
+			tree.state.data = tree.state.data.reverse()
 			expect( String(tree.toJS('value')) ).to.equal( String([40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]) )
 			tree.reIndex();
-			control = fromJS([
+			control = [
 				{ value:40, __n:0, __l:0 },
 				{ value:39, __n:0, __l:1 },
 				{ value:38, __n:1, __l:1 },
@@ -381,8 +345,12 @@ describe('tree', ()=>{
 				{ value:3, __n:24, __l:3 },
 				{ value:2, __n:25, __l:3 },
 				{	value:1, __n:26, __l:3 }
-			]);
-			expect(is(tree.state.get('data'), control) ).to.equal(true)		
+			];
+			tree.state.data.map(function(item, index){
+				expect(item.value).to.equal(control[index].value)
+				expect(item.__l).to.equal(control[index].__l)
+				expect(item.__n).to.equal(control[index].__n)
+			})
 		})	
 	})
 
