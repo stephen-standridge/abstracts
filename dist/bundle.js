@@ -94,11 +94,9 @@ module.exports =
 				if (state.config) {
 					this.setConfig(state.config);
 				}
-
 				if (state.data) {
 					this.setData(state.data);
 				}
-
 				if (state.nav) {
 					this.setNav(state.nav);
 				}
@@ -138,15 +136,15 @@ module.exports =
 				return thing;
 			}
 		}, {
-			key: 'flattenItem',
-			value: function flattenItem() {
-				return this.state.data;
+			key: 'attribute',
+			value: function attribute(name) {
+				return this.state.config[name] !== undefined ? this.state.config[name] : this.state.nav[name];
 			}
 		}, {
-			key: '_children',
-			value: function _children(prop) {
+			key: 'getChildren',
+			value: function getChildren(prop) {
 				var children = [];
-				for (var i = 0; i < this.branches; i++) {
+				for (var i = 0; i < this.attribute('branches'); i++) {
 					this.toNth(i);
 					children.push(this[prop]);
 					this.toParent();
@@ -156,50 +154,45 @@ module.exports =
 		}, {
 			key: 'maxNodeIndex',
 			value: function maxNodeIndex(max) {
-				return this.nodesAtIndexed(max + 1) / this.adjCount - 1;
+				return this.nodesAtIndexed(max + 1) / (this.attribute('branches') - 1) - 1;
 			}
 		}, {
 			key: 'makeNode',
 			value: function makeNode(value) {
-				var n = arguments.length <= 1 || arguments[1] === undefined ? this._node : arguments[1];
-				var l = arguments.length <= 2 || arguments[2] === undefined ? this._level : arguments[2];
+				var n = arguments.length <= 1 || arguments[1] === undefined ? this.attribute('node') : arguments[1];
+				var l = arguments.length <= 2 || arguments[2] === undefined ? this.attribute('level') : arguments[2];
 
 				var val = value == undefined ? false : value;
-				return {
-					value: value,
-					__n: n,
-					__l: l
-				};
+				return { value: value, __n: n, __l: l };
 			}
 		}, {
 			key: 'nodesAt',
 			value: function nodesAt(level) {
-				level = level || this._level;
-				return Math.pow(this.branches, level);
+				level = level || this.attribute('level');
+				return Math.pow(this.attribute('branches'), level);
 			}
 		}, {
 			key: 'nodesAtIndexed',
 			value: function nodesAtIndexed(level) {
-				level = level || this._level;
+				level = level || this.attribute('level');
 				return this.nodesAt(level) - 1;
 			}
 		}, {
 			key: 'rootNodeAt',
 			value: function rootNodeAt(level) {
-				level = level || this._level;
-				return this.nodesAtIndexed(level) / this.adjCount;
+				level = level || this.attribute('level');
+				return this.nodesAtIndexed(level) / (this.attribute('branches') - 1);
 			}
 		}, {
 			key: 'getIndex',
 			value: function getIndex(level, node) {
-				var index = node + this.nodesAtIndexed(level) / this.adjCount;
+				var index = node + this.nodesAtIndexed(level) / (this.attribute('branches') - 1);
 				return index;
 			}
 		}, {
 			key: 'locate',
 			value: function locate(level, node) {
-				var index = this.getIndex(level, node);
-				return index;
+				return this.getIndex(level, node);
 			}
 		}, {
 			key: 'toFirst',
@@ -226,7 +219,7 @@ module.exports =
 			key: 'toParent',
 			value: function toParent() {
 				var l = this.state.nav.level - 1;
-				var n = Math.floor(this._node / this.branches);
+				var n = Math.floor(this.attribute('node') / this.attribute('branches'));
 				this.setNav({ level: l, node: n });
 			}
 		}, {
@@ -234,7 +227,7 @@ module.exports =
 			value: function toParentAtLevel() {
 				var level = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
 
-				while (this._level > level) {
+				while (this.attribute('level') > level) {
 					this.toParent();
 				}
 			}
@@ -260,8 +253,8 @@ module.exports =
 			value: function preOrderDepth(callback) {
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
 
-				callback.call(ctx, this.node, this._node, this._level);
-				for (var i = 0; i < this.branches; i++) {
+				callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'));
+				for (var i = 0; i < this.attribute('branches'); i++) {
 					this.toNth(i);
 					if (this.shouldTraverseDeeper) {
 						this.preOrderDepth(callback, ctx);
@@ -274,26 +267,27 @@ module.exports =
 			value: function postOrderDepth(callback) {
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
 
-				for (var i = 0; i < this.branches; i++) {
+				for (var i = 0; i < this.attribute('branches'); i++) {
 					this.toNth(i);
 					if (this.shouldTraverseDeeper) {
 						this.postOrderDepth(callback, ctx);
 					}
 					this.parent;
 				}
-				callback.call(ctx, this.node, this._node, this._level);
+				callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'));
 			}
 		}, {
 			key: 'preOrderBreadth',
 			value: function preOrderBreadth(callback) {
 				var ctx = arguments.length <= 1 || arguments[1] === undefined ? this : arguments[1];
 
-				var q = [],
-				    current,
-				    count = 0;
 				if (!this.node) {
 					return;
 				}
+
+				var q = [],
+				    current = undefined,
+				    count = 0;
 				q.push(this.nodeAddress);
 
 				while (q.length > 0) {
@@ -301,8 +295,8 @@ module.exports =
 					q.shift();
 					if (this.getIndex(current.__l, current.__n) < this.state.data.length) {
 						this.goToNode(current);
-						callback.call(ctx, this.node, this._node, this._level);
-						q = q.concat(this.childrenAddresses);
+						callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'));
+						q = q.concat(this.getChildren('nodeAddress'));
 					}
 				}
 			}
@@ -312,7 +306,7 @@ module.exports =
 				var node = this.state.data[index];
 				this.goToNode(node);
 				if (this.node) {
-					callback.call(ctx, this.node, this._node, this._level);
+					callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'));
 				}
 			}
 		}, {
@@ -322,7 +316,7 @@ module.exports =
 					this.node = this.node;
 				}
 				if (this.shouldIndexDeeper) {
-					for (var i = 0; i < this.branches; i++) {
+					for (var i = 0; i < this.attribute('branches'); i++) {
 						this.toNth(i);
 						this.reIndex();
 						this.parent;
@@ -334,7 +328,7 @@ module.exports =
 			value: function index() {
 				if (this.node !== undefined) {
 					this.node = this.node;
-					for (var i = 0; i < this.branches; i++) {
+					for (var i = 0; i < this.attribute('branches'); i++) {
 						this.toNth(i);
 						this.index();
 						this.parent;
@@ -344,7 +338,7 @@ module.exports =
 		}, {
 			key: 'trim',
 			value: function trim() {
-				if (this.depth && this._level > this.depth) {
+				if (this.attribute('depth') && this.attribute('level') > this.attribute('depth')) {
 					this.reRoot();
 				}
 			}
@@ -353,8 +347,8 @@ module.exports =
 			value: function reRoot() {
 				var _this = this;
 
-				var level = this._level,
-				    node = this._node,
+				var level = this.attribute('level'),
+				    node = this.attribute('node'),
 				    returnToIndex = 0,
 				    returned = [];
 
@@ -385,91 +379,63 @@ module.exports =
 				return returned;
 			}
 		}, {
-			key: 'branches',
-			get: function get() {
-				return this.state.config.branches;
-			}
-		}, {
-			key: 'depth',
-			get: function get() {
-				return this.state.config.depth;
-			}
-		}, {
 			key: 'shouldIndexDeeper',
 			get: function get() {
-				return this.getIndex(this._level, this.branches) < this.traversed;
+				return this.getIndex(this.attribute('level'), this.attribute('branches')) < this.traversed;
 			}
 		}, {
 			key: 'shouldTraverseDeeper',
 			get: function get() {
-				return this.getIndex(this._level, this.branches) < this.length;
-			}
-		}, {
-			key: '_node',
-			get: function get() {
-				return this.state.nav.node;
-			}
-		}, {
-			key: '_level',
-			get: function get() {
-				return this.state.nav.level;
-			}
-		}, {
-			key: 'maxLevel',
-			get: function get() {
-				return this.state.nav.maxLevel;
+				return this.getIndex(this.attribute('level'), this.attribute('branches')) < this.length;
 			}
 		}, {
 			key: 'length',
 			get: function get() {
-				return this.maxNodeIndex(this.depth) + 1;
+				return this.maxNodeIndex(this.attribute('depth')) + 1;
 			}
 		}, {
 			key: 'traversed',
 			get: function get() {
-				return this.maxNodeIndex(this.maxLevel) + 1;
-			}
-		}, {
-			key: 'adjCount',
-			get: function get() {
-				return this.branches - 1;
+				return this.maxNodeIndex(this.attribute('maxLevel')) + 1;
 			}
 		}, {
 			key: 'firstChildNode',
 			get: function get() {
-				return this._node * this.branches;
+				return this.attribute('node') * this.attribute('branches');
 			}
 		}, {
 			key: 'firstChildIndex',
 			get: function get() {
-				return this.locate(this._level + 1, this.firstChildNode);
+				return this.locate(this.attribute('level') + 1, this.firstChildNode);
 			}
 		}, {
 			key: 'lastChildNode',
 			get: function get() {
-				return this._node * this.branches + this.adjCount;
+				return this.attribute('node') * this.attribute('branches') + (this.attribute('branches') - 1);
 			}
 		}, {
 			key: 'lastChildIndex',
 			get: function get() {
-				return this.locate(this._level + 1, this.lastChildNode);
+				return this.locate(this.attribute('level') + 1, this.lastChildNode);
 			}
 		}, {
 			key: 'node',
 			set: function set(value) {
-				var level = this._level,
-				    node = this._node,
+				var level = this.attribute('level'),
+				    node = this.attribute('node'),
 				    index = this.locate(level, node);
+
 				this.state.data[index] = this.makeNode(value);
-				if (this._level > this.maxLevel) {
-					this.setNav({ maxLevel: this._level });
+
+				if (this.attribute('level') > this.attribute('maxLevel')) {
+					this.setNav({ maxLevel: this.attribute('level') });
 				}
 				this.trim();
 				return;
 			},
 			get: function get() {
-				var level = this._level,
-				    node = this._node,
+				var level = this.attribute('level'),
+				    node = this.attribute('node'),
 				    index = this.locate(level, node);
 
 				return this.state.data[index] ? this.state.data[index].value : undefined;
@@ -477,15 +443,15 @@ module.exports =
 		}, {
 			key: 'nodeItem',
 			get: function get() {
-				var level = this._level,
-				    node = this._node,
+				var level = this.attribute('level'),
+				    node = this.attribute('node'),
 				    index = this.locate(level, node);
 				return this.state.data[index] || undefined;
 			}
 		}, {
 			key: 'nodeAddress',
 			get: function get() {
-				return { __l: this._level, __n: this._node };
+				return { __l: this.attribute('level'), __n: this.attribute('node') };
 			}
 		}, {
 			key: 'root',
@@ -523,33 +489,18 @@ module.exports =
 		}, {
 			key: 'children',
 			get: function get() {
-				return this.childrenList;
+				return this.getChildren('node');
 			},
 			set: function set(vals) {
 				var _this2 = this;
 
-				vals.length = this.branches;
+				vals.length = this.attribute('branches');
 
 				vals.map(function (value, index) {
 					_this2.toNth(index);
 					_this2.node = value;
 					_this2.parent;
 				}, this);
-			}
-		}, {
-			key: 'childrenList',
-			get: function get() {
-				return this._children('node');
-			}
-		}, {
-			key: 'childrenItems',
-			get: function get() {
-				return this._children('nodeItem');
-			}
-		}, {
-			key: 'childrenAddresses',
-			get: function get() {
-				return this._children('nodeAddress');
 			}
 		}]);
 

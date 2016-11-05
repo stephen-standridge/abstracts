@@ -18,17 +18,9 @@ class Tree{
 		};
 	}
 	setState( state ){
-		if(state.config){
-			this.setConfig( state.config )	
-		}
-
-		if(state.data){
-			this.setData( state.data )			
-		}
-
-		if(state.nav){
-			this.setNav( state.nav )	
-		}	
+		if (state.config){ this.setConfig( state.config ) }
+		if (state.data){ this.setData( state.data ) }
+		if (state.nav){ this.setNav( state.nav )	}	
 	}
 	setData(newData=[]){
 		this.state.data = newData.slice();
@@ -45,83 +37,64 @@ class Tree{
 		return this.state.nav
 	}
 	flatten(){
-		let thing = this.state.data.map((item, index)=>{
-			return item.value
-		})
+		let thing = this.state.data.map((item, index)=> item.value )
 		return thing;
 	}	
-	flattenItem(){
-		return this.state.data
-	}
-	get branches(){
-		return this.state.config.branches
-	}
-	get depth(){
-		return this.state.config.depth
+	attribute(name) {
+		return this.state.config[name] !== undefined ? this.state.config[name] : this.state.nav[name]
 	}
 	get shouldIndexDeeper(){
-		return this.getIndex( this._level, this.branches ) < this.traversed;
+		return this.getIndex( this.attribute('level'), this.attribute('branches') ) < this.traversed;
 	}
 	get shouldTraverseDeeper(){
-		return this.getIndex( this._level, this.branches ) < this.length;		
-	}
-	get _node(){
-		return this.state.nav.node
-	}
-	get _level(){
-		return this.state.nav.level
-	}	
-	get maxLevel(){
-		return this.state.nav.maxLevel
+		return this.getIndex( this.attribute('level'), this.attribute('branches') ) < this.length;		
 	}
 	get length(){
-		return this.maxNodeIndex( this.depth ) + 1
+		return this.maxNodeIndex( this.attribute('depth') ) + 1
 	}
 	get traversed(){
-		return this.maxNodeIndex( this.maxLevel ) + 1
-	}
-	get adjCount(){
-		return this.branches - 1
+		return this.maxNodeIndex( this.attribute('maxLevel') ) + 1
 	}
 	get firstChildNode(){
-		return this._node * this.branches
+		return this.attribute('node') * this.attribute('branches')
 	}
 	get firstChildIndex(){
-		return this.locate( this._level + 1, this.firstChildNode )
+		return this.locate( this.attribute('level') + 1, this.firstChildNode )
 	}
 	get lastChildNode(){
-		return this._node * this.branches + this.adjCount;
+		return this.attribute('node') * this.attribute('branches') + (this.attribute('branches') - 1);
 	}	
 	get lastChildIndex(){
-		return this.locate( this._level + 1, this.lastChildNode )
+		return this.locate( this.attribute('level') + 1, this.lastChildNode )
 	}	
 	set node( value ){
-		let level=this._level, 
-				node=this._node,
+		let level=this.attribute('level'), 
+				node=this.attribute('node'),
 				index = this.locate( level, node );
-				this.state.data[index] = this.makeNode(value)
-				if(this._level > this.maxLevel){
-					this.setNav({maxLevel: this._level})
-				}
-				this.trim()	
-				return
+
+		this.state.data[index] = this.makeNode(value)
+
+		if(this.attribute('level') > this.attribute('maxLevel')){
+			this.setNav({maxLevel: this.attribute('level')})
+		}
+		this.trim()	
+		return
 	}	
 	get node(){
-		let level=this._level, 
-				node=this._node,
-
+		let level=this.attribute('level'), 
+				node=this.attribute('node'),
 				index = this.locate( level, node );
 
 		return this.state.data[index] ? this.state.data[index].value : undefined
 	}
 	get nodeItem(){
-		let level=this._level, 
-				node=this._node,
+		let level=this.attribute('level'), 
+				node=this.attribute('node'),
 				index = this.locate( level, node );
 		return this.state.data[index] || undefined
 	}	
 	get nodeAddress(){
-		return {__l: this._level, __n: this._node}
+		return { __l: this.attribute('level'), __n: this.attribute('node') }
 	}	
 	get root(){
 		this.setNav({level: 0, node: 0})
@@ -149,19 +122,10 @@ class Tree{
 		this.node = arg;
 	}	
 	get children(){
-		return this.childrenList
+		return this.getChildren('node')
 	}
-	get childrenList(){
-		return this._children('node')
-	}
-	get childrenItems(){
-		return this._children('nodeItem')	
-	}
-	get childrenAddresses(){
-		return this._children('nodeAddress')
-	}	
 	set children( vals ){
-		vals.length = this.branches;
+		vals.length = this.attribute('branches');
 
 		vals.map( ( value, index ) =>{
 			this.toNth( index )
@@ -169,9 +133,9 @@ class Tree{
 			this.parent
 		}, this)
 	}	
-	_children(prop){
+	getChildren(prop){
 		let children = [];
-		for(let i = 0; i< this.branches; i++){
+		for(let i = 0; i< this.attribute('branches'); i++){
 			this.toNth( i )
 			children.push(this[prop])
 			this.toParent()
@@ -179,35 +143,30 @@ class Tree{
 		return children;		
 	}	
 	maxNodeIndex( max ){
-		return ( this.nodesAtIndexed( max + 1 ) / this.adjCount ) - 1;
+		return ( this.nodesAtIndexed( max + 1 ) / (this.attribute('branches') - 1) ) - 1;
 	}	
-	makeNode( value, n=this._node, l=this._level ){
+	makeNode( value, n=this.attribute('node'), l=this.attribute('level') ){
 		let val = value == undefined? false : value;
-		return {
-			value: value,
-			__n: n,
-			__l: l
-		}
+		return { value: value, __n: n, __l: l }
 	}
 	nodesAt( level ){
-		level = level || this._level
-		return Math.pow( this.branches, level )
+		level = level || this.attribute('level')
+		return Math.pow( this.attribute('branches'), level )
 	}
 	nodesAtIndexed( level ){
-		level = level || this._level;
+		level = level || this.attribute('level');
 		return this.nodesAt( level ) - 1 
 	}	
 	rootNodeAt( level ){
-		level = level || this._level
-		return this.nodesAtIndexed( level ) / this.adjCount
+		level = level || this.attribute('level')
+		return this.nodesAtIndexed( level ) / (this.attribute('branches') - 1)
 	}
 	getIndex(level, node){
-		let index = node + this.nodesAtIndexed( level ) / this.adjCount 
+		let index = node + this.nodesAtIndexed( level ) / (this.attribute('branches') - 1) 
 		return index
 	}
 	locate( level, node ){
-		let index = this.getIndex(level, node)
-				return index
+		return this.getIndex(level, node)
 	}
 	toFirst(){
 		let l = this.state.nav.level + 1
@@ -226,11 +185,11 @@ class Tree{
 	}
 	toParent(){
 		let l = this.state.nav.level - 1
-		let n = Math.floor( this._node / this.branches )
+		let n = Math.floor( this.attribute('node') / this.attribute('branches') )
 		this.setNav({level: l, node: n })
 	}
 	toParentAtLevel(level=0){
-		while(this._level > level){
+		while(this.attribute('level') > level){
 			this.toParent()
 		}
 	}
@@ -246,8 +205,8 @@ class Tree{
 		this.goTo( n, l )
 	}
 	preOrderDepth( callback, ctx=this ){
-		callback.call(ctx, this.node, this._node, this._level)			
-		for( let i = 0; i< this.branches; i++ ){
+		callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'))			
+		for( let i = 0; i< this.attribute('branches'); i++ ){
 			this.toNth(i)
 			if( this.shouldTraverseDeeper ){
 				this.preOrderDepth( callback, ctx )
@@ -256,35 +215,36 @@ class Tree{
 		}		
 	}	
 	postOrderDepth( callback, ctx=this ){
-			for( let i = 0; i< this.branches; i++ ){
-				this.toNth(i)
-				if( this.shouldTraverseDeeper ){
-					this.postOrderDepth( callback, ctx )					
-				}
-				this.parent
+		for( let i = 0; i< this.attribute('branches'); i++ ){
+			this.toNth(i)
+			if( this.shouldTraverseDeeper ){
+				this.postOrderDepth( callback, ctx )					
 			}
-		callback.call(ctx, this.node, this._node, this._level)	
+			this.parent
+		}
+		callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'))	
 	}
 	preOrderBreadth(callback, ctx=this){
-		var q = [], current, count=0;
-				if( !this.node ){ return }
-				q.push(this.nodeAddress)
+		if( !this.node ){ return }
+		
+		let q = [], current, count=0;
+		q.push(this.nodeAddress)
 
-				while( q.length > 0){
-					current = q[0];
-					q.shift();
-					if( this.getIndex(current.__l, current.__n) < this.state.data.length ){ 
-						this.goToNode(current)					
-						callback.call(ctx, this.node, this._node, this._level)					
-						q = q.concat(this.childrenAddresses)
-					}
-				}
+		while( q.length > 0){
+			current = q[0];
+			q.shift();
+			if( this.getIndex(current.__l, current.__n) < this.state.data.length ){ 
+				this.goToNode(current)					
+				callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'))					
+				q = q.concat(this.getChildren('nodeAddress'))
+			}
+		}
 	}	
 	breadthTraverse( callback, ctx, index ){
 		let node = this.state.data[index];		
 		this.goToNode( node )
 		if( this.node ){
-			callback.call(ctx, this.node, this._node, this._level)			
+			callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'))			
 		}	
 	}
 	reIndex(){
@@ -292,7 +252,7 @@ class Tree{
 			this.node = this.node;
 		}
 		if( this.shouldIndexDeeper ){			
-			for( let i = 0; i< this.branches; i++ ){
+			for( let i = 0; i< this.attribute('branches'); i++ ){
 				this.toNth(i)
 				this.reIndex()
 				this.parent
@@ -302,7 +262,7 @@ class Tree{
 	index(){
 		if(this.node !== undefined){
 			this.node = this.node;
-			for( let i = 0; i< this.branches; i++ ){
+			for( let i = 0; i< this.attribute('branches'); i++ ){
 				this.toNth(i)
 				this.index()
 				this.parent
@@ -310,13 +270,13 @@ class Tree{
 		}
 	}	
 	trim(){
-		if(this.depth && this._level > this.depth){
+		if(this.attribute('depth') && this.attribute('level') > this.attribute('depth')){
 			this.reRoot();
 		}		
 	}	
 	reRoot(){
-		var level = this._level, 
-				node = this._node, 
+		var level = this.attribute('level'), 
+				node = this.attribute('node'), 
 				returnToIndex = 0,
 				returned = [];
 

@@ -1,8 +1,6 @@
 import {expect, assert} from 'chai';
 import {List, Map, fromJS, is} from 'immutable';
 import Tree from '../dist/bundle';
-// var Tree = require('../dist/bundle')
-console.log(Tree)
 
 describe('tree', ()=>{
 	var test, control;
@@ -83,26 +81,26 @@ describe('tree', ()=>{
 	})
 	it('should allow traversal to the first child', ()=>{
 		const tree = new Tree();
-		tree.toFirst()
-		expect(tree._node).to.equal(0)
-		expect(tree._level).to.equal(1)
+		tree.toFirst()	
+		expect(tree.attribute('node')).to.equal(0)
+		expect(tree.attribute('level')).to.equal(1)
 	})
 	it('should allow traversal to the last child', ()=>{
 		const tree = new Tree({config:{branches: 3}});
 		tree.toLast()
-		expect(tree._node).to.equal(2)
-		expect(tree._level).to.equal(1)
+		expect(tree.attribute('node')).to.equal(2)
+		expect(tree.attribute('level')).to.equal(1)
 	})	
 	it('should allow traversal to an nth child', ()=>{
 		const tree = new Tree({config:{branches: 3}});
 		tree.toNth(1)
-		expect(tree._node).to.equal(1)
-		expect(tree._level).to.equal(1)
+		expect(tree.attribute('node')).to.equal(1)
+		expect(tree.attribute('level')).to.equal(1)
 
 		tree.parent
 		tree.toNth(2)
-		expect(tree._node).to.equal(2)
-		expect(tree._level).to.equal(1)		
+		expect(tree.attribute('node')).to.equal(2)
+		expect(tree.attribute('level')).to.equal(1)		
 	})
 
 	it('should allow traversal to the parent', ()=>{
@@ -110,12 +108,12 @@ describe('tree', ()=>{
 		tree.root = 'test'
 		control = {value: 'test', __n: 0, __l: 0};
 		tree.toLast();
-		expect(tree._node).to.equal(2)
-		expect(tree._level).to.equal(1)
+		expect(tree.attribute('node')).to.equal(2)
+		expect(tree.attribute('level')).to.equal(1)
 
 		expect(tree.parent).to.equal('test')
-		expect(tree._node).to.equal(0)
-		expect(tree._level).to.equal(0)
+		expect(tree.attribute('node')).to.equal(0)
+		expect(tree.attribute('level')).to.equal(0)
 
 		tree.toLast();
 		let parent = tree.parentItem;
@@ -138,12 +136,12 @@ describe('tree', ()=>{
 		const tree = new Tree({config:{branches: 3}})
 		expect(tree.nodeAddress.__l).to.equal(0)	
 		expect(tree.nodeAddress.__n).to.equal(0)	
-		expect(tree.childrenAddresses[0].__l).to.equal(1)		
-		expect(tree.childrenAddresses[0].__n).to.equal(0)		
-		expect(tree.childrenAddresses[1].__l).to.equal(1)		
-		expect(tree.childrenAddresses[1].__n).to.equal(1)	
-		expect(tree.childrenAddresses[2].__l).to.equal(1)		
-		expect(tree.childrenAddresses[2].__n).to.equal(2)						
+		expect(tree.getChildren('nodeAddress')[0].__l).to.equal(1)		
+		expect(tree.getChildren('nodeAddress')[0].__n).to.equal(0)		
+		expect(tree.getChildren('nodeAddress')[1].__l).to.equal(1)		
+		expect(tree.getChildren('nodeAddress')[1].__n).to.equal(1)	
+		expect(tree.getChildren('nodeAddress')[2].__l).to.equal(1)		
+		expect(tree.getChildren('nodeAddress')[2].__n).to.equal(2)						
 	})
 	describe('a structured tree', ()=>{
 	let tree;	
@@ -275,15 +273,15 @@ describe('tree', ()=>{
 			tree.toLast()
 			tree.toLast()
 			expect(tree.node).to.equal(13)
-			expect(tree._node).to.equal(8)
-			expect(tree._level).to.equal(2)
+			expect(tree.attribute('node')).to.equal(8)
+			expect(tree.attribute('level')).to.equal(2)
 			tree.toLast()
 			tree.toLast()
 			tree.node = 'test'
 
 			// expect(tree.node).to.equal('test')			
-			// expect(tree._node).to.equal(8)			
-			// expect(tree._level).to.equal(2)
+			// expect(tree.attribute('node')).to.equal(8)			
+			// expect(tree.attribute('level')).to.equal(2)
 			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,32,33,34,35,36,37,38,39,40,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,'test']))	
 		})
 		it('should allow for automatic rerooting when assigning deep children', ()=>{
@@ -291,13 +289,13 @@ describe('tree', ()=>{
 			tree.toFirst()
 			tree.toFirst()
 			expect(tree.node).to.equal(32)
-			expect(tree._node).to.equal(18)
-			expect(tree._level).to.equal(3)
+			expect(tree.attribute('node')).to.equal(18)
+			expect(tree.attribute('level')).to.equal(3)
 			tree.children = ['test1', 'test2', 'test3']
 
 			// expect(tree.node).to.equal(11)			
-			// expect(tree._node).to.equal(0)			
-			// expect(tree._level).to.equal(1)
+			// expect(tree.attribute('node')).to.equal(0)			
+			// expect(tree.attribute('level')).to.equal(1)
 			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,32,33,34,35,36,37,38,39,40,'test1','test2','test3'])) })
 
 		it('should reindex properly', ()=>{
