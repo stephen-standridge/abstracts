@@ -1,8 +1,7 @@
 import {expect, assert} from 'chai';
-import {List, Map, fromJS, is} from 'immutable';
-import Tree from '../dist/bundle';
+import Tree from '../source/tree';
 
-describe('tree', ()=>{
+describe('Tree', ()=>{
 	var test, control;
 	describe('#new Tree', ()=>{
 		it('should default to its initial state', ()=>{
