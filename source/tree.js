@@ -59,20 +59,16 @@ class Tree{
 		return this.attribute('node') * this.attribute('branches')
 	}
 	get firstChildIndex(){
-		return this.locate( this.attribute('level') + 1, this.firstChildNode )
+		return this.getIndex( this.attribute('level') + 1, this.firstChildNode )
 	}
 	get lastChildNode(){
 		return this.attribute('node') * this.attribute('branches') + (this.attribute('branches') - 1);
 	}	
 	get lastChildIndex(){
-		return this.locate( this.attribute('level') + 1, this.lastChildNode )
+		return this.getIndex( this.attribute('level') + 1, this.lastChildNode )
 	}	
 	set node( value ){
-		let level=this.attribute('level'), 
-				node=this.attribute('node'),
-				index = this.locate( level, node );
-
-		this.state.data[index] = this.makeNode(value)
+		this.set({level:this.attribute('level'), node:this.attribute('node')}, value)
 
 		if(this.attribute('level') > this.attribute('maxLevel')){
 			this.setNav({maxLevel: this.attribute('level')})
@@ -81,16 +77,12 @@ class Tree{
 		return
 	}	
 	get node(){
-		let level=this.attribute('level'), 
-				node=this.attribute('node'),
-				index = this.locate( level, node );
-
-		return this.state.data[index] ? this.state.data[index].value : undefined
+		return this.get({level:this.attribute('level'), node:this.attribute('node')})
 	}
 	get nodeItem(){
 		let level=this.attribute('level'), 
 				node=this.attribute('node'),
-				index = this.locate( level, node );
+				index = this.getIndex( level, node );
 		return this.state.data[index] || undefined
 	}	
 	get nodeAddress(){
@@ -110,16 +102,20 @@ class Tree{
 		return this.nodeItem
 	}		
 	get parent(){
-		this.toParent()
-		return this.node
+		return this.get(this.parentAddress)
+	}
+	get parentAddress(){
+		return {
+			level: this.state.nav.level - 1, 
+			node: Math.floor( this.attribute('node') / this.attribute('branches') ) 
+		}
 	}
 	get parentItem(){
-		this.toParent()
-		return this.nodeItem
+		return this.getNodeItem(this.parentAddress)
 	}	
 	set parent( arg ){
-		this.toParent()
-		this.node = arg;
+		this.set(this.parentAddress, arg)
+		return this.parent
 	}	
 	get children(){
 		return this.getChildren('node')
@@ -130,7 +126,7 @@ class Tree{
 		vals.map( ( value, index ) =>{
 			this.toNth( index )
 			this.node = value
-			this.parent
+			this.toParent()
 		}, this)
 	}	
 	getChildren(prop){
@@ -142,12 +138,21 @@ class Tree{
 		}
 		return children;		
 	}	
+	eachChild(block){
+		let children = [];
+		for(let i = 0; i< this.attribute('branches'); i++){
+			this.toNth( i )
+			children.push(block.call(this, this.nodeItem, i))
+			this.toParent()
+		}
+		return children;		
+	}		
 	maxNodeIndex( max ){
 		return ( this.nodesAtIndexed( max + 1 ) / (this.attribute('branches') - 1) ) - 1;
 	}	
-	makeNode( value, n=this.attribute('node'), l=this.attribute('level') ){
+	makeNode( value ){
 		let val = value == undefined? false : value;
-		return { value: value, __n: n, __l: l }
+		return { value: value, __n: this.attribute('node'), __l: this.attribute('level') }
 	}
 	nodesAt( level ){
 		level = level || this.attribute('level')
@@ -163,11 +168,26 @@ class Tree{
 	}
 	getIndex(level, node){
 		let index = node + this.nodesAtIndexed( level ) / (this.attribute('branches') - 1) 
+		index = level == 0 && node == 0 ? 0 : index;		
 		return index
 	}
-	locate( level, node ){
-		return this.getIndex(level, node)
+	get({level, node}){
+		let index = node + this.nodesAtIndexed( level ) / (this.attribute('branches') - 1) 
+		index = level == 0 && node == 0 ? 0 : index;		
+		return this.state.data[index] ? this.state.data[index].value : undefined
 	}
+	set({level, node}, value){
+		let index = node + this.nodesAtIndexed( level ) / (this.attribute('branches') - 1) 
+		index = level == 0 && node == 0 ? 0 : index;		
+		let created = this.makeNode(value)
+		this.state.data[index] = created
+		return created
+	}	
+	getNodeItem({level, node}){
+		let index = node + this.nodesAtIndexed( level ) / (this.attribute('branches') - 1) 
+		index = level == 0 && node == 0 ? 0 : index;
+		return this.state.data[index]
+	}	
 	toFirst(){
 		let l = this.state.nav.level + 1
 		let n = this.firstChildNode
@@ -184,9 +204,7 @@ class Tree{
 		this.setNav({level: l, node: n })
 	}
 	toParent(){
-		let l = this.state.nav.level - 1
-		let n = Math.floor( this.attribute('node') / this.attribute('branches') )
-		this.setNav({level: l, node: n })
+		this.setNav(this.parentAddress)
 	}
 	toParentAtLevel(level=0){
 		while(this.attribute('level') > level){
@@ -211,7 +229,7 @@ class Tree{
 			if( this.shouldTraverseDeeper ){
 				this.preOrderDepth( callback, ctx )
 			}
-			this.parent
+			this.toParent()
 		}		
 	}	
 	postOrderDepth( callback, ctx=this ){
@@ -220,7 +238,7 @@ class Tree{
 			if( this.shouldTraverseDeeper ){
 				this.postOrderDepth( callback, ctx )					
 			}
-			this.parent
+			this.toParent()
 		}
 		callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'))	
 	}
@@ -255,7 +273,7 @@ class Tree{
 			for( let i = 0; i< this.attribute('branches'); i++ ){
 				this.toNth(i)
 				this.reIndex()
-				this.parent
+				this.toParent()
 			}
 		}
 	}
@@ -265,7 +283,7 @@ class Tree{
 			for( let i = 0; i< this.attribute('branches'); i++ ){
 				this.toNth(i)
 				this.index()
-				this.parent
+				this.toParent()
 			}
 		}
 	}	

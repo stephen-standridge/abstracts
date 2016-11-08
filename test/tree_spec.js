@@ -56,6 +56,46 @@ describe('Tree', ()=>{
 			expect(test.state.data[2].__n).to.equal(control[2].__n)
 		})	
 	})	
+	describe('#eachChild', ()=>{
+		before(()=>{
+			test = new Tree({config:{ branches: 3, depth: 2 }})			
+		})
+		it('should call function for each child', ()=>{
+			control = [];
+			test.eachChild((item, index)=>{
+				control.push(index)
+			})
+			expect(control).to.have.members([0,1,2])
+		})
+		it('should return an array of returned items', ()=>{
+			control = [];
+			control = test.eachChild((item, index)=>{
+				return index
+			})
+			expect(control).to.have.members([0,1,2])
+		})
+		it('should be bound to the tree', ()=>{
+			test.test = 'si'
+			control = [];
+			control = test.eachChild(function(item, index){
+				return this.test
+			})
+			expect(control).to.have.members(['si', 'si', 'si'])
+		})
+		it('should have the appropriate children', ()=>{
+			test.setData([ {value:true}, {value: true}, {value: true}, {value: true}])			
+			control = [];
+			control = test.eachChild(function(item, index){
+				return item
+			})
+			expect(control[0]['__l']).to.eq(1)
+			expect(control[0]['__n']).to.eq(0)
+			expect(control[1]['__l']).to.eq(1)
+			expect(control[1]['__n']).to.eq(1)			
+			expect(control[2]['__l']).to.eq(1)
+			expect(control[2]['__n']).to.eq(2)				
+		})
+	})
 	it('should allow a node to be set', ()=>{
 		const tree = new Tree()
 		tree.node = 'test'
@@ -96,7 +136,7 @@ describe('Tree', ()=>{
 		expect(tree.attribute('node')).to.equal(1)
 		expect(tree.attribute('level')).to.equal(1)
 
-		tree.parent
+		tree.toParent()
 		tree.toNth(2)
 		expect(tree.attribute('node')).to.equal(2)
 		expect(tree.attribute('level')).to.equal(1)		
@@ -110,7 +150,8 @@ describe('Tree', ()=>{
 		expect(tree.attribute('node')).to.equal(2)
 		expect(tree.attribute('level')).to.equal(1)
 
-		expect(tree.parent).to.equal('test')
+		tree.toParent()
+		expect(tree.node).to.equal('test')
 		expect(tree.attribute('node')).to.equal(0)
 		expect(tree.attribute('level')).to.equal(0)
 
@@ -119,6 +160,7 @@ describe('Tree', ()=>{
 		expect(parent.__l).to.equal(0)
 		expect(parent.__n).to.equal(0)
 		expect(parent.value).to.equal('test')
+		expect(tree.parent).to.equal('test')
 	})
 	it('should get and set multiple children', ()=>{
 		const tree = new Tree({config:{branches: 3}});
