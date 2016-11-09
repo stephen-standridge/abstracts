@@ -1,7 +1,19 @@
+import guid from './guid';
+
+class Node {
+	constructor({value, level, node}){
+		this.value = value
+		this.__l = level
+		this.__n = node
+		this.__id = guid()
+	}
+}
+
 class Tree{
 	constructor( args={} ){
 		this.state = this.initialState()
 		this.setState( args )
+		this.__id = guid()		
 	}
 	initialState(){
 		return {
@@ -43,29 +55,29 @@ class Tree{
 	attribute(name) {
 		return this.state.config[name] !== undefined ? this.state.config[name] : this.state.nav[name]
 	}
-	get shouldIndexDeeper(){
-		return this.getIndex( this.attribute('level'), this.attribute('branches') ) < this.traversed;
+	shouldIndexDeeper(){
+		return this.getIndex( this.attribute('level'), this.attribute('branches') ) < this.traversed();
 	}
-	get shouldTraverseDeeper(){
+	shouldTraverseDeeper(){
 		return this.getIndex( this.attribute('level'), this.attribute('branches') ) < this.length;		
 	}
 	get length(){
 		return this.maxNodeIndex( this.attribute('depth') ) + 1
 	}
-	get traversed(){
+	traversed(){
 		return this.maxNodeIndex( this.attribute('maxLevel') ) + 1
 	}
-	get firstChildNode(){
+	firstChildNode(){
 		return this.attribute('node') * this.attribute('branches')
 	}
-	get firstChildIndex(){
-		return this.getIndex( this.attribute('level') + 1, this.firstChildNode )
+	firstChildIndex(){
+		return this.getIndex( this.attribute('level') + 1, this.firstChildNode() )
 	}
-	get lastChildNode(){
+	lastChildNode(){
 		return this.attribute('node') * this.attribute('branches') + (this.attribute('branches') - 1);
 	}	
-	get lastChildIndex(){
-		return this.getIndex( this.attribute('level') + 1, this.lastChildNode )
+	lastChildIndex(){
+		return this.getIndex( this.attribute('level') + 1, this.lastChildNode() )
 	}	
 	set node( value ){
 		this.set({level:this.attribute('level'), node:this.attribute('node')}, value)
@@ -76,6 +88,9 @@ class Tree{
 		this.trim()	
 		return
 	}	
+	get data(){
+		return this.state.data
+	}
 	get node(){
 		return this.get({level:this.attribute('level'), node:this.attribute('node')})
 	}
@@ -152,7 +167,7 @@ class Tree{
 	}	
 	makeNode( value ){
 		let val = value == undefined? false : value;
-		return { value: value, __n: this.attribute('node'), __l: this.attribute('level') }
+		return new Node({ value: value, node: this.attribute('node'), level: this.attribute('level') })
 	}
 	nodesAt( level ){
 		level = level || this.attribute('level')
@@ -190,17 +205,17 @@ class Tree{
 	}	
 	toFirst(){
 		let l = this.state.nav.level + 1
-		let n = this.firstChildNode
+		let n = this.firstChildNode()
 		this.setNav({level: l, node: n })
 	}	
 	toLast(){
 		let l = this.state.nav.level + 1
-		let n = this.lastChildNode
+		let n = this.lastChildNode()
 		this.setNav({level: l, node: n })		
 	}
 	toNth( index ){
 		let l = this.state.nav.level + 1
-		let n = this.firstChildNode + index
+		let n = this.firstChildNode() + index
 		this.setNav({level: l, node: n })
 	}
 	toParent(){
@@ -226,7 +241,7 @@ class Tree{
 		callback.call(ctx, this.node, this.attribute('node'), this.attribute('level'))			
 		for( let i = 0; i< this.attribute('branches'); i++ ){
 			this.toNth(i)
-			if( this.shouldTraverseDeeper ){
+			if( this.shouldTraverseDeeper() ){
 				this.preOrderDepth( callback, ctx )
 			}
 			this.toParent()
@@ -235,7 +250,7 @@ class Tree{
 	postOrderDepth( callback, ctx=this ){
 		for( let i = 0; i< this.attribute('branches'); i++ ){
 			this.toNth(i)
-			if( this.shouldTraverseDeeper ){
+			if( this.shouldTraverseDeeper() ){
 				this.postOrderDepth( callback, ctx )					
 			}
 			this.toParent()
@@ -269,7 +284,7 @@ class Tree{
 		if(this.node !== undefined){
 			this.node = this.node;
 		}
-		if( this.shouldIndexDeeper ){			
+		if( this.shouldIndexDeeper() ){			
 			for( let i = 0; i< this.attribute('branches'); i++ ){
 				this.toNth(i)
 				this.reIndex()
@@ -321,4 +336,4 @@ class Tree{
 		return returned;
 	}
 }
-export default Tree;
+export {Tree, Node};
