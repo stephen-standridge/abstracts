@@ -1,6 +1,6 @@
 {
   "name": "basic-tree",
-  "version": "1.2.3",
+  "version": "2.0.0",
   "description": "A one-dimensional immutable tree structure that can generate and traverse an n-branching tree",
   "main": "dist/bundle.js",
   "repository": {
@@ -14,7 +14,7 @@
   "author": "Stephen Standridge <Stephen@formisfunction.io> (www.formisfunction.io)",
   "license": "ISC",
   "dependencies": {
-    "immutable": "^3.7.5"
+    "lodash": "^4.16.6"
   },
   "devDependencies": {
     "babel-cli": "^6.2.0",

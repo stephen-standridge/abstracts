@@ -1,6 +1,7 @@
 import {expect, assert} from 'chai';
 import {SpaceTree, SpaceTreeNode} from '../source/spacetree';
 import BoundingBox from '../source/bounding_box';
+import BoundingSphere from '../source/bounding_sphere';
 
 describe('SpaceTree', ()=>{
 	let space_tree, control, min = [0,40,0], max =[40,0,40], nodes;
@@ -41,22 +42,36 @@ describe('SpaceTree', ()=>{
 			expect(space_tree.nodeItem.objects.length).to.equal(1)
 		})
 		it('should handle objects with a bounds', ()=>{
-			let item = new BoundingBox([8,38,38],[11, 38,30])
+			let item = new BoundingSphere([8,38,38],1)
 			space_tree = new SpaceTree({ region:[min, max], minSize: 10 })			
 			space_tree.insert(item)
 			expect(space_tree.data.length).to.equal(73)
 
 			space_tree.toNth(7)
 			nodes = space_tree.children.filter((item)=> item !== undefined )
-			console.log(space_tree.data)		
-			expect(nodes.length).to.equal(2)	
+			expect(nodes.length).to.equal(1)	
 
 			space_tree.toNth(7)
 			expect(space_tree.nodeItem.objects.length).to.equal(1)		
-			console.log(space_tree.nodeItem)	
 		})
 		it('should handle objects that are not entirely contained', ()=>{
-
+			let item = new BoundingSphere([8,33,33],6)
+			space_tree = new SpaceTree({ region:[min, max], minSize: 10 })			
+			space_tree.insert(item)
+			expect(space_tree.data.length).to.equal(9)
+			space_tree.toNth(7)
+			expect(space_tree.nodeItem.objects.length).to.equal(1)
+		})
+		it('should handle an insertion method', ()=>{
+			let item = new BoundingSphere([8,33,33],6), test = [];
+			space_tree = new SpaceTree({ region:[min, max], minSize: 10 })			
+			space_tree.insert(item, function(item){
+				test.push(item)
+			})
+			expect(test.length).to.equal(1)
+			expect(space_tree.data.length).to.equal(9)
+			space_tree.toNth(7)
+			expect(space_tree.nodeItem.objects.length).to.equal(0)
 		})		
 	})
 })

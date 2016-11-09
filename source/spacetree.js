@@ -65,15 +65,12 @@ class SpaceTree extends Tree {
 		if(coordinates) return new BoundingBox(...coordinates)
 		return 
 	}
-	insert(inserted){
-		//if empty leaf node
-		// if (!this.nodeItem.branch || this.nodeItem.objects.length < 1 ){ return this.nodeItem.add(inserted) }
+	insert(inserted, method){	
 		let nodeSmallerThanMin = this.node.measurement().reduce((bool, m)=>{ 
 			return bool || m <= this.minSize 
 		}, false)
 
-
-		if(nodeSmallerThanMin){ return this.nodeItem.add(inserted) }
+		if(nodeSmallerThanMin){ return method ? method(inserted) : this.nodeItem.add(inserted) }
 
 		let bBox, found = false, parent = this.node;
 
@@ -84,12 +81,12 @@ class SpaceTree extends Tree {
 					this.node = bBox;					
 				}
 				found = true								
-				return this.insert(inserted)			
+				return this.insert(inserted, method)			
 			}
 		})
 
 		if(!found){ 
-			return this.nodeItem.add(inserted) 
+			return method ? method(inserted) : this.nodeItem.add(inserted) 
 		} 
 	}
 	makeNode(value) {

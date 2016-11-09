@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-import Tree from '../source/tree';
+import {Tree} from '../source/tree';
 
 describe('Tree', ()=>{
 	var test, control;
