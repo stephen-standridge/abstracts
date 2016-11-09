@@ -1,53 +1,10 @@
 <html>
 	<head>
-		<script src="index.js"></script>
+		<script src='dist/bundle.js'></script>
 		<script>
-			var test = new Tree( 2, 4 );
-				test.root = 0;
-				test.children = [1, 2];
-				test.toFirst()
-				test.children = [3, 4]
-				test.toFirst()
-				test.children = [7, 8]
-				test.toFirst()
-				test.children = [15, 16]
-				test.parent
-				test.toLast()
-				test.children = [17, 18]
-				test.parent				
-				test.parent
-				test.toLast()
-				test.children = [9, 10]
-				test.toFirst()
-				test.children = [19, 20]
-				test.parent
-				test.toLast()
-				test.children = [21, 22]
-				test.parent							
-				test.parent
-
-				test.parent
-				test.toLast()
-				test.children = [5, 6]
-				test.toFirst()
-				test.children = [11, 12]
-				test.toFirst()
-				test.children = [23, 24]
-				test.parent
-				test.toLast()
-				test.children = [25, 26]
-				test.parent
-
-				test.parent
-				test.toLast()
-				test.children = [13, 14]
-				test.toFirst()
-				test.children = [27, 28]
-				test.parent
-				test.toLast()
-				test.children = [29, 30]
-				test.parent				
-				test.toLast()
+			var test = new Tree.SpaceTree({ region:[[0,0,0], [40,40,40] ], minSize: 20 });
+			test.insert([39,39,39])
+				console.log(test)
 		</script>
 	</head>
 </html>

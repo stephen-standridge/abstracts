@@ -20,7 +20,7 @@ class BoundingBox extends Bounds {
 			if(dimension >= this.dimensions){ return }
 			return this.measurement( dimension ) / 2
 		}
-		return this.measurement( dimension ).map((val)=> val/2 )
+		return this.measurement().map((val)=> val/2 )
 	}
 	center( dimension ){
 		if(dimension !== undefined) {
