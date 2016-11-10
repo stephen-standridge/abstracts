@@ -89,6 +89,46 @@ class SpaceTree extends Tree {
 			return method ? method(inserted) : this.nodeItem.add(inserted) 
 		} 
 	}
+	getClosest(queried){
+		if(!this.nodeItem){ return }
+		let closest, closestDistance, distance;
+		this.nodeItem.objects.forEach((obj,i)=>{
+			if(!obj.distance){ return }
+			distance = obj.distance(queried)
+			if(!closestDistance || distance < closestDistance){
+				closestDistance = distance;
+				closest = obj;
+			}
+		})
+		return closest;
+	}
+	closest(queried, method) {
+		let nodeSmallerThanMin = this.node.measurement().reduce((bool, m)=>{ 
+			return bool || m <= this.minSize 
+		}, false)
+
+		if(nodeSmallerThanMin){ 
+			return this.getClosest(queried)
+		}
+
+		let bBox, found = false, parent = this.node, close;
+
+		this.eachChild(function(item, index){
+			bBox = this.node || this.division(index, parent)
+			if(bBox.contains(queried)){
+				if(!this.node){ return }
+				close = this.closest(queried, method)	
+				if(close){
+					found = true
+				}		
+			}
+		})
+
+		if(!found){ 
+			return this.getClosest(queried)
+		}
+		return close
+	}
 	makeNode(value) {
 		let val = value == undefined? false : value;
 		return new SpaceTreeNode({ value: value, node: this.attribute('node'), level: this.attribute('level') })
