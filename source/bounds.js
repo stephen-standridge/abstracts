@@ -35,6 +35,14 @@ class Bounds {
 			return bool && contained
 		}, true)
 	}	
+	distance(args){
+		let [center2] = args.toParams ?  args.toParams() : [args]
+		let center1 = this.center();
+		let difference = center1.map((value, i)=> value - center2[i] )
+		return Math.sqrt(difference.reduce((sum, value, i)=>{
+			return sum + (value*value)
+		}, 0))
+	}
 }
 
 export default Bounds

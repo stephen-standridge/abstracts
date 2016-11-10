@@ -4,14 +4,14 @@ import BoundingBox from '../source/bounding_box';
 
 
 describe('Bounds', ()=>{
-	let bounding_box;
+	let bounding_box, bBox, bSphere;
 	describe('#intersects', ()=>{
 		before(()=>{
 			bounding_box = new BoundingBox([2,2,2], [-2,-2,-2])
 		})		
 		describe('with a center and array of extents', ()=>{
 			it('should take a bounding box as params', ()=>{
-				let bBox = new BoundingBox([3,4,5],[1,2,1]);
+				bBox = new BoundingBox([3,4,5],[1,2,1]);
 				expect(bounding_box.intersects(bBox)).to.equal(true)			
 			})			
 			it('should return false if the volume of one set of points is contained in the other', ()=>{
@@ -30,7 +30,7 @@ describe('Bounds', ()=>{
 		})
 		describe('with one set of points and a distance', ()=>{
 			it('should take a bounding sphere as params', ()=>{
-				let bBox = new BoundingSphere([1,1,1],1.5);
+				bBox = new BoundingSphere([1,1,1],1.5);
 				expect(bounding_box.intersects(bBox)).to.equal(true)			
 			})			
 			it('should return false if the volume of one set of points is contained in the other', ()=>{
@@ -54,7 +54,7 @@ describe('Bounds', ()=>{
 		})		
 		describe('with a center and array of extents', ()=>{
 			it('should take a bounding box as params', ()=>{
-				let bBox = new BoundingBox([1,1,1],[0.5,1.2,0.9]);
+				bBox = new BoundingBox([1,1,1],[0.5,1.2,0.9]);
 				expect(bounding_box.contains(bBox)).to.equal(true)			
 			})			
 			it('should return true if the volume of one set of points is contained in the other', ()=>{
@@ -73,7 +73,7 @@ describe('Bounds', ()=>{
 		})
 		describe('with one set of points and a distance', ()=>{
 			it('should take a bounding sphere as params', ()=>{
-				let bSphere = new BoundingSphere([1,1,1],0.5);
+				bSphere = new BoundingSphere([1,1,1],0.5);
 				expect(bounding_box.contains(bSphere)).to.equal(true)			
 			})				
 			it('should return true if the volume of one set of points is contained in the other', ()=>{
@@ -87,4 +87,37 @@ describe('Bounds', ()=>{
 			})			
 		})
 	})	
+	describe('#distance', ()=>{
+		before(()=>{
+			bounding_box = new BoundingBox([2,2,2], [-2,-2,-2])
+		})				
+		describe('with a center and array of extents', ()=>{
+			it('should compare the center of the two cubes', ()=>{
+				bBox = new BoundingBox([3,3,3],[0,0,0])
+				expect(Math.round(bounding_box.distance(bBox))).to.equal(3)
+			})
+			it('should handle negative values', ()=>{
+				bBox = new BoundingBox([-1,-1,-1],[-2,-2,-2])
+				expect(Math.round(bounding_box.distance(bBox))).to.equal(3)
+			})			
+		})
+		describe('with a center and a radius', ()=>{
+			it('should compare the center of the two shapes', ()=>{
+				bSphere = new BoundingSphere([3,3,3],0.5)
+				expect(Math.round(bounding_box.distance(bSphere))).to.equal(5)
+			})
+			it('should handle negative values', ()=>{
+				bSphere = new BoundingSphere([-1,-1,-1],0.3)
+				expect(Math.round(bounding_box.distance(bSphere))).to.equal(2)
+			})	
+		})
+		describe('with a point', ()=>{
+			it('should compare the center', ()=>{
+				expect(Math.round(bounding_box.distance([0,1,2]))).to.equal(2)
+			})
+			it('should handle negative values', ()=>{
+				expect(Math.round(bounding_box.distance([-1,0,3]))).to.equal(3)
+			})	
+		})
+	})
 })
