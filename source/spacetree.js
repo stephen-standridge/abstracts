@@ -12,16 +12,18 @@ class SpaceTreeNode extends Node {
 		this.objects = [];
 		this.built = false;
 		this.ready = false;
-		this.__id = guid()
 	}
 	add(item){
 		this.objects.__id = guid()
 		this.objects.push(item)
+		return true
 	}
 	remove(item){
 		this.objects = this.objects.filter((obj, index)=> obj.__id == item.__id )
+		return true
 	}
 }
+
 
 class SpaceTree extends Tree {
 	constructor(args={}){
@@ -29,7 +31,7 @@ class SpaceTree extends Tree {
 		super(args)
 		this.objects = args.objects || [];
 		this.root = new BoundingBox(...args.region);
-		this.minSize = args.minSize;
+		this.minSize = args.minSize || 10;
 	}
 	division(index, bBox) {
 		let center = bBox ? bBox.center() : this.node.center(),
@@ -70,7 +72,9 @@ class SpaceTree extends Tree {
 			return bool || m <= this.minSize 
 		}, false)
 
-		if(nodeSmallerThanMin){ return method ? method(inserted) : this.nodeItem.add(inserted) }
+		if(nodeSmallerThanMin){ 
+			return method ? method(inserted) : this.nodeItem.add(inserted) 
+		}
 
 		let bBox, found = false, parent = this.node;
 
@@ -81,7 +85,7 @@ class SpaceTree extends Tree {
 					this.node = bBox;					
 				}
 				found = true								
-				return this.insert(inserted, method)			
+				this.insert(inserted, method)			
 			}
 		})
 
@@ -129,10 +133,25 @@ class SpaceTree extends Tree {
 		}
 		return close
 	}
+	randomPoint(){
+		return this.node.measurement().map((m, i)=> (Math.random() * m)  + this.node.min[i] )
+	}
+	bestCandidate(numCandidates = 10) {
+	  let bestCandidate, bestDistance = 0, p, c, d;
+	  for (let i = 0; i < numCandidates; ++i) {
+	    p = this.randomPoint(),
+  		c = this.closest(p),
+  		d = c && c.distance ? c.distance(p) : undefined;
+	    if (d == undefined || d > bestDistance) {  	
+	      bestDistance = d;
+	      bestCandidate = p;
+	    }
+	  }
+	  return bestCandidate;
+	}		
 	makeNode(value) {
 		let val = value == undefined? false : value;
 		return new SpaceTreeNode({ value: value, node: this.attribute('node'), level: this.attribute('level') })
 	}
 }
-
 export {SpaceTree, SpaceTreeNode}
