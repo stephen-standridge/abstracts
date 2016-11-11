@@ -1,29 +1,9 @@
 import {filter} from 'lodash';
-import {Tree, Node} from './tree';
-import guid from './guid';
-import BoundingBox from './bounding_box';
-import BoundingSphere from './bounding_sphere';
-
-class SpaceTreeNode extends Node {
-	constructor(args){
-		super(args)
-		this.leaf = true;
-		this.branch = false;
-		this.objects = [];
-		this.built = false;
-		this.ready = false;
-	}
-	add(item){
-		this.objects.__id = guid()
-		this.objects.push(item)
-		return true
-	}
-	remove(item){
-		this.objects = this.objects.filter((obj, index)=> obj.__id == item.__id )
-		return true
-	}
-}
-
+import Tree from './tree';
+import SpaceTreeNode from '../nodes/space_tree_node';
+import guid from '../../generators/guid';
+import BoundingBox from '../bounds/bounding_box';
+import BoundingSphere from '../bounds/bounding_sphere';
 
 class SpaceTree extends Tree {
 	constructor(args={}){
@@ -154,4 +134,4 @@ class SpaceTree extends Tree {
 		return new SpaceTreeNode({ value: value, node: this.attribute('node'), level: this.attribute('level') })
 	}
 }
-export {SpaceTree, SpaceTreeNode}
+export default SpaceTree

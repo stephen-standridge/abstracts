@@ -1,13 +1,5 @@
-import guid from './guid';
-
-class Node {
-	constructor({value, level, node}){
-		this.value = value
-		this.__l = level
-		this.__n = node
-		this.__id = guid()
-	}
-}
+import guid from '../../generators/guid';
+import TreeNode from '../nodes/tree_node';
 
 class Tree{
 	constructor( args={} ){
@@ -167,7 +159,7 @@ class Tree{
 	}	
 	makeNode( value ){
 		let val = value == undefined? false : value;
-		return new Node({ value: value, node: this.attribute('node'), level: this.attribute('level') })
+		return new TreeNode({ value: value, node: this.attribute('node'), level: this.attribute('level') })
 	}
 	nodesAt( level ){
 		level = level || this.attribute('level')
@@ -336,4 +328,4 @@ class Tree{
 		return returned;
 	}
 }
-export {Tree, Node};
+export default Tree

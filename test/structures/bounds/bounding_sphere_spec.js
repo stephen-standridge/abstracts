@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-import BoundingSphere from '../source/bounding_sphere';
+import BoundingSphere from '../../../source/structures/bounds/bounding_sphere';
 
 describe('BoundingSphere', ()=>{
 	let test, control, bounding_sphere;

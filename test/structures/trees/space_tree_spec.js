@@ -1,7 +1,7 @@
 import {expect, assert} from 'chai';
-import {SpaceTree, SpaceTreeNode} from '../source/spacetree';
-import BoundingBox from '../source/bounding_box';
-import BoundingSphere from '../source/bounding_sphere';
+import SpaceTree from '../../../source/structures/trees/space_tree';
+import BoundingBox from '../../../source/structures/bounds/bounding_box';
+import BoundingSphere from '../../../source/structures/bounds/bounding_sphere';
 
 describe('SpaceTree', ()=>{
 	let space_tree, control, min = [0,40,0], max =[40,0,40], nodes;
