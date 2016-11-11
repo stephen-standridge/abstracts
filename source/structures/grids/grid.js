@@ -3,7 +3,7 @@ import { each, times } from 'lodash'
 class Grid {
 	constructor(d){
 		this.dimensions = d.filter((item)=> item );
-		if(this.dimensions.length){ console.warn('no dimensions set')}		
+		if(!this.dimensions.length){ console.warn('no dimensions set')}		
 		this.grid = [];
 		this.grid.length = this.length;
 	}
@@ -22,8 +22,13 @@ class Grid {
 	  }
 	  return returned
 	}	
-	index([x,y,z]) {
-		return (x * this.dimensions[2])  + (y * this.dimensions[0] * this.dimensions[2])
+	index(indices) {
+		let slice;
+		return indices.reduce((sum,k,i)=>{ 
+			if(k >= this.dimensions[i]){ console.warn('index is higher than 0-indexed dimension bounds') }
+			slice = this.dimensions.slice(0,i).reduce((sum, n)=>{ return sum * n },1)	
+			return sum + (k *  slice ) 
+		}, 0)
 	}
 	get([x,y,z=false]){
 	  if (x < 0 || x > this.dimensions[0] - 1 || y < 0 || y > this.dimensions[1] - 1) return;
