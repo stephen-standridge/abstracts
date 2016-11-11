@@ -1,4 +1,5 @@
-const EPSILON = 0.0002
+import {EPSILON} from '../../math/constants';
+
 class Bounds {
 	intersects(arg1, arg2){
 		let [center, extent] = arg1.toParams ?  arg1.toParams() : [arg1, arg2]
