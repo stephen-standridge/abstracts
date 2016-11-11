@@ -56,17 +56,53 @@ describe('Grid', ()=>{
 			})
 		})
 		describe('an address with null values', ()=>{
-			it('should return a list of cells')			
+			it('should return a list of cells')	
+			it('should work with lower dimensions')	
+			it('should work with arbitrary dimensions')									
 		})
 	})
 	describe('#set', ()=>{
 		describe('with a full address', ()=>{
 			describe('with a value', ()=>{
-				it('should set the value of the node')
+				before(()=>{
+					grid = new Grid([3,3,3])
+				})
+				it('should set the value of the node if its within range', ()=>{
+					expect(grid.set([2,2,2], 'hello')).to.eq(true)
+					expect(grid.nodes[26]).to.eq('hello')
+				})
+				it('should return false if the value is outside of range', ()=>{
+					expect(grid.set([2,3,2], 'hello')).to.eq(false)
+					expect(grid.set([3,2,2], 'hello')).to.eq(false)
+					expect(grid.set([2,2,3], 'hello')).to.eq(false)
+				})
 			})
 			describe('with an array of values', ()=>{
-				it('should warn if the array doesnt match the dimension')
-				it('should set the value to the nodes')
+				describe('and an indice is specified for the final dimension', ()=>{
+					it('should warn if the array length doesnt match the dimension plus index', ()=>{
+						expect(grid.set([2,2,1], [true, true, true])).to.equal(false)
+					})
+					it('should set the value to the nodes', ()=>{
+						expect(grid.set([2,2,1], [true, true])).to.equal(true)						
+						expect(grid.nodes[25]).to.equal(true)						
+						expect(grid.nodes[26]).to.equal(true)						
+					})
+				})
+				describe('and an indice is not specified for the final dimension', ()=>{
+					it('should warn if the array length doesnt match the dimension size', ()=>{
+						expect(grid.set([2,2], [true, true])).to.equal(false)
+					})
+					it('should set the value to the nodes', ()=>{
+						expect(grid.set([2,1], [true, true, true])).to.equal(true)
+						expect(grid.nodes[15]).to.equal(true)
+						expect(grid.nodes[16]).to.equal(true)
+						expect(grid.nodes[17]).to.equal(true)
+					})					
+				})
+				describe('with null dimensions', ()=>{
+					it('should warn if the array length doesnt match the total cell count')
+					it('should set the value to the nodes')					
+				})				
 			})
 			it('should work in odd dimensions')
 			it('should work in higher dimensions')
