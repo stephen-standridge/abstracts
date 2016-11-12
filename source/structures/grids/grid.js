@@ -37,32 +37,26 @@ class Grid {
 		}, true)
 	}
 	get(indices){
-		if(!this.inRange(indices)){ return false }
-	  let index = this.index(indices)
-	  if (this.dimensions[2] == 1){
-		  return this.nodes[index]	  	
-	  }
-  	let returned = this.nodes.slice(index, index+this.dimensions[2])
-  	if(z){ return returned[z] }
-  	return returned
+		if(!this.inRange(indices)){ return }
+		let difference =  this.dimensions.length - indices.length,
+		  	index = this.index(indices);
+		if(difference <= 0){
+		  if (!isNaN(Number(index))){
+		  	return this.nodes[index];
+		  }
+		}
+		let d = this.dimensions.length;
+		let lastIndex = index + this.dimensions.slice(d - difference,d)
+				.reduce((sum, n)=>{ return sum * n },1);			
+		return this.nodes.slice(index, lastIndex)
 	}
 	set(indices,value){
 		if(!this.inRange(indices)){ return false }
-	  let index, count = 0, toSet = [], length;
-	  index = this.index(indices)
-
+	  let index = this.index(indices)
 	  if (!isNaN(Number(index))){
 	  	this.nodes[index] = value;
 	  	return true
-	  }	  
-	  if(typeof z == 'number' && z < this.dimensions[2] ){
-			count = z;
-			length = 1;
-	  }	  
-	  toSet = toSet.concat(value);
-	  toSet.length = this.dimensions[2];
-	  this.nodes.splice(index+count,length,...toSet)
-	  return this.nodes.slice(index, index+this.dimensions[2])
+	  }
 	}
 
 }

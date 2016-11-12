@@ -7,6 +7,7 @@ describe('Grid', ()=>{
 		it('should set the length correctly', ()=>{
 			grid = new Grid([3,3,3])
 			expect(grid.length).to.equal(27)
+			expect(grid.indices.length).to.equal(27)
 		})
 		it('should handle multiple dimensions', ()=>{
 			grid = new Grid([2,2])
@@ -76,36 +77,21 @@ describe('Grid', ()=>{
 					expect(grid.set([3,2,2], 'hello')).to.eq(false)
 					expect(grid.set([2,2,3], 'hello')).to.eq(false)
 				})
-			})
-			describe('with an array of values', ()=>{
-				describe('and an indice is specified for the final dimension', ()=>{
-					it('should warn if the array length doesnt match the dimension plus index', ()=>{
-						expect(grid.set([2,2,1], [true, true, true])).to.equal(false)
-					})
-					it('should set the value to the nodes', ()=>{
-						expect(grid.set([2,2,1], [true, true])).to.equal(true)						
-						expect(grid.nodes[25]).to.equal(true)						
-						expect(grid.nodes[26]).to.equal(true)						
-					})
-				})
-				describe('and an indice is not specified for the final dimension', ()=>{
-					it('should warn if the array length doesnt match the dimension size', ()=>{
-						expect(grid.set([2,2], [true, true])).to.equal(false)
-					})
-					it('should set the value to the nodes', ()=>{
-						expect(grid.set([2,1], [true, true, true])).to.equal(true)
-						expect(grid.nodes[15]).to.equal(true)
-						expect(grid.nodes[16]).to.equal(true)
-						expect(grid.nodes[17]).to.equal(true)
-					})					
-				})
-				describe('with null dimensions', ()=>{
-					it('should warn if the array length doesnt match the total cell count')
-					it('should set the value to the nodes')					
+				it('should work in odd dimensions',()=>{
+					grid = new Grid([2,1,3])
+					expect(grid.set([0,0,0],'first')).to.equal(true)
+					expect(grid.set([0,0,2],'second')).to.equal(true)
+					expect(grid.set([1,0,2],'third')).to.equal(true)
+					expect(grid.nodes[0]).to.equal('first')
+					expect(grid.nodes[4]).to.equal('second')
+					expect(grid.nodes[5]).to.equal('third')
 				})				
+				it('should work in higher dimensions', ()=>{
+					grid = new Grid([3,3,3,3])	
+					expect(grid.set([2,2,2,2], 'hello')).to.eq(true)
+					expect(grid.nodes[80]).to.eq('hello')							
+				})
 			})
-			it('should work in odd dimensions')
-			it('should work in higher dimensions')
 		})
 		describe('an address with null values', ()=>{
 			it('should warn if the array doesnt match the dimension')			
@@ -114,18 +100,59 @@ describe('Grid', ()=>{
 	})
 	describe('#get', ()=>{
 		describe('with a full address', ()=>{
-			describe('with a value', ()=>{
-				it('should set the value of the node')
+			before(()=>{
+				grid = new Grid([3,3,3])
 			})
-			describe('with an array of values', ()=>{
-				it('should warn if the array doesnt match the dimension')
-				it('should set the value to the nodes')
+			it('should get the value of the node if its within range', ()=>{
+				expect(grid.set([2,2,2], 'hello')).to.eq(true)
+				expect(grid.get([2,2,2])).to.eq('hello')
 			})
-			it('should work in odd dimensions')
-			it('should work in higher dimensions')
+			it('should return undefined if the value is outside of range', ()=>{
+				expect(grid.get([2,3,2])).to.eq(undefined)
+				expect(grid.get([3,2,2])).to.eq(undefined)
+				expect(grid.get([2,2,3])).to.eq(undefined)
+			})
+			it('should work in odd dimensions',()=>{
+				grid = new Grid([2,1,3])
+				expect(grid.set([0,0,0],'first')).to.equal(true)
+				expect(grid.set([0,0,2],'second')).to.equal(true)
+				expect(grid.set([1,0,2],'third')).to.equal(true)
+				expect(grid.get([0,0,0])).to.equal('first')
+				expect(grid.get([0,0,2])).to.equal('second')
+				expect(grid.get([1,0,2])).to.equal('third')
+			})				
+			it('should work in higher dimensions', ()=>{
+				grid = new Grid([3,3,3,3])	
+				expect(grid.set([2,2,2,2], 'hello')).to.eq(true)
+				expect(grid.get([2,2,2,2])).to.eq('hello')	
+			})
 		})
 		describe('an address with null values', ()=>{
-			it('should return a list of cells')
+			it('should return a list of cells', ()=>{
+				grid = new Grid([3,3,3])
+				expect(grid.get([2,2]).length).to.equal(3)
+				expect(grid.get([0,1]).length).to.equal(3)
+			})
+			it('should work in higher dimensions', ()=>{
+				grid = new Grid([3,3,3,3])
+				grid.set([2,2,2,2], 'first')
+				grid.set([2,2,2,1], 'second')
+				grid.set([2,2,2,0], 'third')
+				grid.set([2,2,1,2], 'fourth')
+				grid.set([2,2,1,1], 'fifth')
+				grid.set([2,2,1,0], 'sixth')		
+				grid.set([2,2,0,2], 'seventh')
+				grid.set([2,2,0,1], 'eighth')
+				grid.set([2,2,0,0], 'ninth')	
+				// console.log(grid.nodes)							
+				expect(grid.get([2,2]).length).to.equal(9)
+				expect(grid.get([2,2])).to.have.members([
+					'seventh', 'eighth', 'ninth',
+					'fourth', 'fifth', 'sixth',
+					'first','second','third'
+				])
+				expect(grid.get([0,1]).length).to.equal(9)				
+			})
 		})
 	})	
 })
