@@ -94,8 +94,13 @@ describe('Grid', ()=>{
 			})
 		})
 		describe('an address with null values', ()=>{
-			it('should warn if the array doesnt match the dimension')			
-			it('should set a list of cells')			
+			it('should take a list of cells', ()=>{
+				grid = new Grid([3,3,3])
+				expect(grid.set([2,2], ['one','two','three'])).to.equal(true)
+				expect(grid.get([2,2,2])).to.equal('three')
+				expect(grid.get([2,2,1])).to.equal('two')
+				expect(grid.get([2,2,0])).to.equal('one')
+			})
 		})
 	})
 	describe('#get', ()=>{
@@ -132,26 +137,6 @@ describe('Grid', ()=>{
 				grid = new Grid([3,3,3])
 				expect(grid.get([2,2]).length).to.equal(3)
 				expect(grid.get([0,1]).length).to.equal(3)
-			})
-			it('should work in higher dimensions', ()=>{
-				grid = new Grid([3,3,3,3])
-				grid.set([2,2,2,2], 'first')
-				grid.set([2,2,2,1], 'second')
-				grid.set([2,2,2,0], 'third')
-				grid.set([2,2,1,2], 'fourth')
-				grid.set([2,2,1,1], 'fifth')
-				grid.set([2,2,1,0], 'sixth')		
-				grid.set([2,2,0,2], 'seventh')
-				grid.set([2,2,0,1], 'eighth')
-				grid.set([2,2,0,0], 'ninth')	
-				// console.log(grid.nodes)							
-				expect(grid.get([2,2]).length).to.equal(9)
-				expect(grid.get([2,2])).to.have.members([
-					'seventh', 'eighth', 'ninth',
-					'fourth', 'fifth', 'sixth',
-					'first','second','third'
-				])
-				expect(grid.get([0,1]).length).to.equal(9)				
 			})
 		})
 	})	
