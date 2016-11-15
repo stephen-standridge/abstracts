@@ -132,5 +132,44 @@ describe('Grid', ()=>{
 		describe('an address with null values', ()=>{
 			it('should return a list of cells')
 		})
-	})	
+	})
+	describe('#traverse', ()=>{
+		it('should call the method on each leaf', ()=>{
+			grid = new GridTree([3,3,3])	
+			grid.set([0,0], [0,1,2])
+			grid.set([1,0], [0,1,2])
+			grid.set([2,0], [0,1,2])
+			grid.set([0,1], [3,4,5])
+			grid.set([1,1], [3,4,5])
+			grid.set([2,1], [3,4,5])
+			grid.set([0,2], [6,7,8])
+			grid.set([1,2], [6,7,8])
+			grid.set([2,2], [6,7,8])
+			let ordered = [];
+			grid.traverse(function(item){
+				ordered.push(item)
+			})
+			expect(ordered[0]).to.have.members([0,1,2])
+			expect(ordered[1]).to.have.members([3,4,5])
+			expect(ordered[2]).to.have.members([6,7,8])
+
+			expect(ordered[3]).to.have.members([0,1,2])
+			expect(ordered[4]).to.have.members([3,4,5])
+			expect(ordered[5]).to.have.members([6,7,8])
+
+			expect(ordered[6]).to.have.members([0,1,2])
+			expect(ordered[7]).to.have.members([3,4,5])
+			expect(ordered[8]).to.have.members([6,7,8])			
+		})
+		it('should allow the node to be set', ()=>{
+			grid = new GridTree([3,3,3])	
+			let ordered = [];
+			grid.traverse(function(item, location){
+				this.value = location.concat('test')
+			})
+			expect(grid.get([0,1])).to.have.members([0,1,'test'])	
+			expect(grid.get([2,2])).to.have.members([2,2,'test'])	
+			expect(grid.get([1,1])).to.have.members([1,1,'test'])	
+		})		
+	})
 })

@@ -1,8 +1,9 @@
 import guid from '../../generators/guid';
 class GridNode {
-	constructor({__l, __first, __last}){
+	constructor({__l, __n, __first, __last}){
 		this.__id = guid();
 		this.__l = __l;
+		this.__n = __n;
 		this.__first = __first;
 		this.__last = __last;
 		this.__children = [];
@@ -20,9 +21,21 @@ class GridNode {
 		this.__children.forEach((child)=> child.children = value )
 		return true
 	}	
-	traverse(callback){
-		if(this.leaf) return callback( this.root.grid.slice( this.__first, this.__last ) )
-		this.__children.forEach((child)=> child.traverse( callback ) )
+	get value(){
+		return this.children
+	}
+	set value( value ){
+		this.children = value
+		return true
+	}
+	traverse(callback, address=[]){
+		if(this.leaf) return callback.call( this, this.root.grid.slice( this.__first, this.__last ), address )
+		let a = address;
+		this.__children.forEach((child, index)=>{
+			a.push(index); 
+			child.traverse( callback, a ) 
+			a.pop()
+		})
 	}
 	index(indices) {
 		let current = indices && indices.length ? indices.shift() : undefined;
@@ -69,6 +82,7 @@ class GridNode {
 		for(let i =0; i< this.density; i++){
 			this.__children[i] = new DimensionNode(this.root, {
 				__l: this.__l + 1, 
+				__n: i,
 				__first: this.__first + (childLength * i), 
 				__last: (this.__first + (childLength * i)) + childLength
 			}, this)

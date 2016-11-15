@@ -43,6 +43,8 @@ export function unit( v ){
 	return v.map(( p )=> p / l)
 }
 
+export const normalize = unit;
+
 export function descale( v, s ){
 	return v.map(( p )=> p / s)
 }
