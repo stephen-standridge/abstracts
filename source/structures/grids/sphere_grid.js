@@ -61,4 +61,4 @@ class SphereGrid extends GridTree {
 	  }
 	}
 }
-export default SphereGrid
+export { SphereGrid }
