@@ -1,8 +1,8 @@
 import {expect, assert} from 'chai';
-import * as vector from '../../source/math/vector';
+import abstracts from '../../dist/bundle'
+const vector = abstracts.vector;
 
 describe('vectors', ()=>{
-
 	describe('#cross', ()=>{
 		it('should return a vector that is the cross product of two given vectors', ()=>{
 			let crossProduct = vector.cross([1,-7,1], [5,2,4]) ;

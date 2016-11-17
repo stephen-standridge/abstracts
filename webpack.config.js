@@ -1,6 +1,6 @@
 module.exports = {
   entry: [
-    './source/spacetree.js'
+    './source/index.js'
   ],
   module: {
 	  loaders: [
@@ -16,8 +16,8 @@ module.exports = {
     path: __dirname + '/dist',
     filename: 'bundle.js',
     // export itself to a global var
-    libraryTarget: "var",
+    libraryTarget: "commonjs2",
     // name of the global var: "Foo"
-    library: "Tree"    
+    library: "abstracts"    
   }
 };

@@ -1,4 +1,4 @@
-import {PHI, E, TAU} from '../constants';
+import {PHI, E, TAU} from '../math/constants';
 
 export function logarithmic( c, r, a ){
 	let angle = a || 0.30635;
