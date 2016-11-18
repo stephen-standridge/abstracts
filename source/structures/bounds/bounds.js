@@ -46,4 +46,4 @@ class Bounds {
 	}
 }
 
-export default Bounds
+export {Bounds}

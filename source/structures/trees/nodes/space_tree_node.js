@@ -1,4 +1,4 @@
-import guid from '../../generators/guid';
+import guid from '../../../generators/guid';
 import TreeNode from './tree_node';
 
 class SpaceTreeNode extends TreeNode {

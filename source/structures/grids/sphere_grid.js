@@ -1,4 +1,4 @@
-import GridTree from '../trees/grid_tree'
+import {GridTree} from '../trees/grid_tree'
 import {normalize, subtract, scale} from '../../math/vector'
 
 class SphereGrid extends GridTree {

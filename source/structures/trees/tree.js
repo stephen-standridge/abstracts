@@ -1,7 +1,7 @@
 import guid from '../../generators/guid';
-import TreeNode from '../nodes/tree_node';
+import TreeNode from './nodes/tree_node';
 
-class Tree{
+class Tree {
 	constructor( args={} ){
 		this.state = this.initialState()
 		this.setState( args )
@@ -328,4 +328,4 @@ class Tree{
 		return returned;
 	}
 }
-export default Tree
+export { Tree }

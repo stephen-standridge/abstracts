@@ -1,4 +1,4 @@
-import HeightMap from './height_map.js'
+import {HeightMap} from './height_map.js'
 
 
 class DiamondSquareHeightMap extends HeightMap{
@@ -76,4 +76,4 @@ class DiamondSquareHeightMap extends HeightMap{
   }  
 }
 
-export default DiamondSquareHeightMap
+export {DiamondSquareHeightMap}

@@ -1,4 +1,4 @@
-import Bounds from './bounds';
+import {Bounds} from './bounds';
 
 class BoundingBox extends Bounds {
 	constructor(min, max){
@@ -34,4 +34,4 @@ class BoundingBox extends Bounds {
 	}
 }
 
-export default BoundingBox
+export {BoundingBox}

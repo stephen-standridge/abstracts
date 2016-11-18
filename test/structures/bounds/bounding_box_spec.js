@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-import BoundingBox from '../../../source/structures/bounds/bounding_box';
+const BoundingBox = abstracts.bounds.BoundingBox;
 
 
 describe('BoundingBox', ()=>{

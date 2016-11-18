@@ -1,4 +1,4 @@
-import Grid from '../grids/grid';
+import {Grid} from '../grids/grid';
 import * as vector from '../../math/vector';
 
 class NurbSurface extends Grid {
@@ -114,4 +114,4 @@ class NurbSurface extends Grid {
 
 }
 
-export default NurbSurface
+export {NurbSurface}

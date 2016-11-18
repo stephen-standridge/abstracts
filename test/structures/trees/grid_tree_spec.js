@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import GridTree from '../../../source/structures/trees/grid_tree';
+const GridTree = abstracts.trees.GridTree
 
 describe('Grid', ()=>{
 	let grid, control, test;

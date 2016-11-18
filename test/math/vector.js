@@ -1,5 +1,4 @@
 import {expect, assert} from 'chai';
-import abstracts from '../../dist/bundle'
 const vector = abstracts.vector;
 
 describe('vectors', ()=>{

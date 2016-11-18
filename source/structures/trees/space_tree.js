@@ -1,9 +1,9 @@
 import {filter} from 'lodash';
-import Tree from './tree';
-import SpaceTreeNode from '../nodes/space_tree_node';
+import {Tree} from './tree';
+import SpaceTreeNode from './nodes/space_tree_node';
 import guid from '../../generators/guid';
-import BoundingBox from '../bounds/bounding_box';
-import BoundingSphere from '../bounds/bounding_sphere';
+import {BoundingBox} from '../bounds/bounding_box';
+import {BoundingSphere} from '../bounds/bounding_sphere';
 
 class SpaceTree extends Tree {
 	constructor(args={}){
@@ -134,4 +134,4 @@ class SpaceTree extends Tree {
 		return new SpaceTreeNode({ value: value, node: this.attribute('node'), level: this.attribute('level') })
 	}
 }
-export default SpaceTree
+export { SpaceTree }

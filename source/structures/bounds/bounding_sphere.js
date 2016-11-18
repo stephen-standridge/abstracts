@@ -1,4 +1,4 @@
-import Bounds from './bounds';
+import {Bounds} from './bounds';
 
 class BoundingSphere extends Bounds {
 	constructor(center, radius){
@@ -33,4 +33,4 @@ class BoundingSphere extends Bounds {
 	}
 }
 
-export default BoundingSphere
+export {BoundingSphere}

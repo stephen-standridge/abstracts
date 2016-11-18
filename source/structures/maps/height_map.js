@@ -1,4 +1,4 @@
-import Grid from '../grids/grid.js'
+import {Grid} from '../grids/grid.js'
 
 
 class HeightMap extends Grid{
@@ -32,4 +32,4 @@ class HeightMap extends Grid{
   }  
 }
 
-export default HeightMap
+export { HeightMap }

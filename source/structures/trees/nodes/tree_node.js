@@ -1,4 +1,4 @@
-import guid from '../../generators/guid';
+import guid from '../../../generators/guid';
 
 class TreeNode {
 	constructor({value, level, node}){

@@ -1,4 +1,5 @@
 import guid from '../../generators/guid';
+
 class GridNode {
 	constructor({__l, __n, __first, __last}){
 		this.__id = guid();
@@ -123,4 +124,4 @@ class GridTree extends GridNode {
 	}		
 }
 
-export default GridTree
+export { GridTree }

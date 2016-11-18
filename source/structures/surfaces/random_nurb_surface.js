@@ -1,4 +1,4 @@
-import NurbSurface from './nurb_surface';
+import {NurbSurface} from './nurb_surface';
 import * as vector from '../../math/vector';
 
 class RandomNurbSurface extends NurbSurface {
@@ -116,4 +116,4 @@ class RandomNurbSurface extends NurbSurface {
   }
 }
 
-export default RandomNurbSurface
+export {RandomNurbSurface}

@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-import Tree from '../../../source/structures/trees/tree';
+const Tree = abstracts.trees.Tree
 
 describe('Tree', ()=>{
 	var test, control;
