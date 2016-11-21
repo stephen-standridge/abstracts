@@ -9,6 +9,7 @@ class GridNode {
 		this.__last = __last;
 		this.__children = [];
 		this.dimensions = [];
+		this.predimensions = [];
 	}
 	get children(){
 		if(this.leaf) return this.root.grid.slice(this.__first, this.__last )
@@ -57,7 +58,7 @@ class GridNode {
 		if(this.leaf){
 			return current !== undefined ? this.children[current] : this.children
 		}
-		return this.__children[current].get(indices)
+		return current !== undefined ? this.__children[current].get(indices) : this.children
 	}
 	set(indices, value) {
 		let current = indices && indices.length ? indices.shift() : undefined;
@@ -78,6 +79,7 @@ class GridNode {
 		return this.__children[current].set(indices, value)
 	}	
 	makeChildren() {
+
 		let dimensions = this.dimensions.slice();
 		let childLength = dimensions.reduce((sum, density)=>{return sum * density},1)
 		for(let i =0; i< this.density; i++){
@@ -94,11 +96,19 @@ class GridNode {
 class DimensionNode extends GridNode {
 	constructor(grid, address, parent){
 		super(address)
-		this.__parent = parent || null;
+		this.parent = parent || null;
 		this.root = grid;		
-		this.dimensions = this.__parent ? this.__parent.dimensions.slice() : this.root.dimensions.slice();
+		if(this.parent){
+			this.dimensions = this.parent.dimensions.slice()
+			this.predimensions = this.parent.predimensions.concat(this.parent.density)
+		} else {
+			this.dimensions = this.root.dimensions.slice();
+			this.predimensions = this.root.predimensions.concat(this.root.density)			
+		}
+		this.dimensions = this.parent ? this.parent.dimensions.slice() : this.root.dimensions.slice();
 		this.density = this.dimensions.shift()
 		if(this.dimensions.length == 0 ){
+			this.__i = this.__first / this.density;
 			this.leaf = true;
 			return
 		}
@@ -112,7 +122,7 @@ class DimensionNode extends GridNode {
 class GridTree extends GridNode {
 	constructor(dimensions){
 		super({ __first: 0, __last: 0, __l: 0})
-		this.dimensions = dimensions.slice();	
+		this.dimensions = dimensions.slice();
 		this.density = this.dimensions.shift()
 		this.grid = [];
 		this.grid.length = this.length;

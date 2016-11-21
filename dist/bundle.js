@@ -392,6 +392,7 @@ module.exports =
 			_this.center = center;
 			_this.radius = radius;
 			_this.buildGrid();
+			_this.toSphere();
 			return _this;
 		}
 
@@ -438,8 +439,14 @@ module.exports =
 		}, {
 			key: 'toSphere',
 			value: function toSphere() {
-				var radius = this.radius;
-				var center = this.center;
+				var radius = this.radius,
+				    center = this.center,
+				    dx = void 0,
+				    dy = void 0,
+				    dz = void 0,
+				    x = void 0,
+				    y = void 0,
+				    z = void 0;
 				this.traverse(function (value) {
 					var diff = (0, _vector.subtract)(value, center);
 					this.value = (0, _vector.scale)((0, _vector.normalize)(diff), radius);
@@ -468,7 +475,7 @@ module.exports =
 						for (var v = 0; v < this.dimensions[1]; v++) {
 							percentV = v / (this.dimensions[1] - 1);
 							value2 = direction * (percentV * range + this.radius * -1.0);
-							toSet = [this.center[0] + axis == 0 ? axisValue : axis == 1 ? value2 : value1, this.center[1] + axis == 1 ? axisValue : axis == 2 ? value2 : value1, this.center[2] + axis == 2 ? axisValue : axis == 0 ? value2 : value1];
+							toSet = [this.center[0] + (axis == 0 ? axisValue : axis == 1 ? value2 : value1), this.center[1] + (axis == 1 ? axisValue : axis == 2 ? value2 : value1), this.center[2] + (axis == 2 ? axisValue : axis == 0 ? value2 : value1)];
 							this.set([i, u, v], toSet);
 						}
 					}
@@ -524,6 +531,7 @@ module.exports =
 			this.__last = __last;
 			this.__children = [];
 			this.dimensions = [];
+			this.predimensions = [];
 		}
 
 		_createClass(GridNode, [{
@@ -562,7 +570,7 @@ module.exports =
 				if (this.leaf) {
 					return current !== undefined ? this.children[current] : this.children;
 				}
-				return this.__children[current].get(indices);
+				return current !== undefined ? this.__children[current].get(indices) : this.children;
 			}
 		}, {
 			key: 'set',
@@ -587,6 +595,7 @@ module.exports =
 		}, {
 			key: 'makeChildren',
 			value: function makeChildren() {
+
 				var dimensions = this.dimensions.slice();
 				var childLength = dimensions.reduce(function (sum, density) {
 					return sum * density;
@@ -642,11 +651,19 @@ module.exports =
 
 			var _this = _possibleConstructorReturn(this, (DimensionNode.__proto__ || Object.getPrototypeOf(DimensionNode)).call(this, address));
 
-			_this.__parent = parent || null;
+			_this.parent = parent || null;
 			_this.root = grid;
-			_this.dimensions = _this.__parent ? _this.__parent.dimensions.slice() : _this.root.dimensions.slice();
+			if (_this.parent) {
+				_this.dimensions = _this.parent.dimensions.slice();
+				_this.predimensions = _this.parent.predimensions.concat(_this.parent.density);
+			} else {
+				_this.dimensions = _this.root.dimensions.slice();
+				_this.predimensions = _this.root.predimensions.concat(_this.root.density);
+			}
+			_this.dimensions = _this.parent ? _this.parent.dimensions.slice() : _this.root.dimensions.slice();
 			_this.density = _this.dimensions.shift();
 			if (_this.dimensions.length == 0) {
+				_this.__i = _this.__first / _this.density;
 				_this.leaf = true;
 				return _possibleConstructorReturn(_this);
 			}

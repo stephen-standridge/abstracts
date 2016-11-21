@@ -1,5 +1,5 @@
 import {GridTree} from '../trees/grid_tree'
-import {normalize, subtract, scale} from '../../math/vector'
+import {normalize, subtract, scale, distance} from '../../math/vector'
 
 class SphereGrid extends GridTree {
 	constructor(resolution, center, radius){
@@ -10,6 +10,7 @@ class SphereGrid extends GridTree {
 		this.center = center;
 		this.radius = radius;
 		this.buildGrid();
+		this.toSphere();
 	}
 	vectorGet([x,y,z], origin=center) {
 		//accesses the grid point that is closest to vector given 
@@ -51,9 +52,9 @@ class SphereGrid extends GridTree {
 	      	percentV = v/(this.dimensions[1] - 1);
 	      	value2 = direction * ((percentV * range) + (this.radius * -1.0));
 	      	toSet = [
-	      		this.center[0] + axis == 0 ? axisValue : axis == 1 ? value2 : value1, 
-	      		this.center[1] + axis == 1 ? axisValue : axis == 2 ? value2 : value1, 
-	      		this.center[2] + axis == 2 ? axisValue : axis == 0 ? value2 : value1
+	      		this.center[0] + (axis == 0 ? axisValue : axis == 1 ? value2 : value1), 
+	      		this.center[1] + (axis == 1 ? axisValue : axis == 2 ? value2 : value1), 
+	      		this.center[2] + (axis == 2 ? axisValue : axis == 0 ? value2 : value1)
 	    		];
 	      	this.set([i,u,v], toSet)
 	      }

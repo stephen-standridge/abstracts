@@ -21,6 +21,36 @@ describe('Grid', ()=>{
 			grid = new GridTree([2,5,2,1])
 			expect(grid.length).to.equal(20)
 		})
+		it('should correctly populare the predimensions of each node', ()=>{
+			grid = new GridTree([3,4,5,3])
+			expect(grid.length).to.equal(180)
+			expect(grid.predimensions).to.have.members([])
+
+			expect(grid.__children[0].predimensions).to.have.members([3])			
+			expect(grid.__children[0].__children[0].predimensions).to.have.members([3,4])			
+			expect(grid.__children[0].__children[0].__children[0].predimensions).to.have.members([3,4,5])			
+
+		})
+		it('should correctly populare the dimensions of each node', ()=>{
+			grid = new GridTree([3,4,5,3])
+			expect(grid.length).to.equal(180)
+			expect(grid.dimensions).to.have.members([4,5,3])
+
+			expect(grid.__children[0].dimensions).to.have.members([5,3])			
+			expect(grid.__children[0].__children[0].dimensions).to.have.members([3])			
+			expect(grid.__children[0].__children[0].__children[0].dimensions).to.have.members([])			
+
+		})	
+		it('should correctly populare the density of each node', ()=>{
+			grid = new GridTree([3,4,5,3])
+			expect(grid.length).to.equal(180)
+			expect(grid.density).to.equal(3)
+
+			expect(grid.__children[0].density).to.equal(4)			
+			expect(grid.__children[0].__children[0].density).to.equal(5)			
+			expect(grid.__children[0].__children[0].__children[0].density).to.equal(3)			
+			
+		})				
 	})
 	describe('#index', ()=>{
 		describe('with a full address', ()=>{
