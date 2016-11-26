@@ -1,3 +1,3 @@
 import chai from 'chai';
-import abstracts from '../dist/bundle'
+import abstracts from '../index'
 global.abstracts = abstracts;

@@ -75,12 +75,13 @@ describe('vectors', ()=>{
 	})
 
 	describe('#direction', ()=>{
-		it('should return a vector that is either -1.0, 1.0, 0.0 depending on the difference between two vectors', ()=>{
+		it('should return a unit vector that is the direction between two vectors', ()=>{
 			let v1 = [-50, 50, 0]
 			let v2 = [50, -50, 0]
 			let dir = vector.direction(v1,v2)
-			expect(dir[0]).to.equal(1)
-			expect(dir[1]).to.equal(-1)
+			expect(1.0 - vector.length(dir) < 0.001).to.equal(true)
+			expect(dir[0].toFixed(1)).to.equal('-0.7')
+			expect(dir[1].toFixed(1)).to.equal('0.7')
 			expect(dir[2]).to.equal(0)
 		})
 	})

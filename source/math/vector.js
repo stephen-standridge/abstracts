@@ -14,7 +14,7 @@ export function cross( a, b ){
 }
 
 export function perpendicular( v, s ){
-	// return vector such that v * vector = 0;
+	// return vector such that v dot vector = 0;
 	// v[0] * vector[0] + v[1] * vector[1] + v[2] * vector[2] = 0
 	// v[2] * vector[2] = -v[0] * vector[0] - v[1] * vector[1]
 	// vector[2] = ( -v[0] * vector[0] - v[1] * vector[1] ) / v[2]
@@ -25,8 +25,8 @@ export function perpendicular( v, s ){
 	];
 }
 
-export function direction(a, b){
-	return a.map((p, i)=> p > b[i] ? -1.0 : p < b[i] ? 1.0 : 0.0 )
+export function direction(to,from){
+	return unit(subtract(to,from))
 }
 
 export function length( v ){
