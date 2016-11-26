@@ -1,4 +1,5 @@
 import {GridTree} from '../trees/grid_tree'
+import {CubeFaceNode} from '../trees/nodes/cube_face_node'
 import {normalize, subtract, scale, distance} from '../../math/vector'
 
 class SphereGrid extends GridTree {
@@ -12,6 +13,9 @@ class SphereGrid extends GridTree {
 		this.buildGrid();
 		this.toSphere();
 	}
+	get DimensionNodeType() {
+		return CubeFaceNode		
+	}	
 	vectorGet([x,y,z], origin=center) {
 		//accesses the grid point that is closest to vector given 
 		//by comparing vector against center
@@ -38,28 +42,35 @@ class SphereGrid extends GridTree {
 			this.value = scale(normalize(diff), radius)
 		})
 	}
+	eachFace(callback){
+		this.__children.forEach((child, index)=>{
+			child.iterate(callback)
+			callback.call(this, child.value, index)
+		})
+	}
+	direction(n) {
+		return n % 2 == 0 ? 1.0 : -1.0
+	}
+	axes(n) {
+		return [n%3, (n+2)%3, (n+1)%3]
+	} 
 	buildGrid(){
-		let direction, axis, percentU, percentV, axisValue, value1, value2, range, toSet;
-		for(let i = 0; i< this.density; i++){		
-			direction = i % 2 == 0 ? 1.0 : -1.0;
-			axis = i % 3;
-			axisValue = (this.radius * direction);
-			range = this.radius - (this.radius * -1.0)
-	    for(let u = 0; u < this.dimensions[0]; u++) {
-				percentU = u/(this.dimensions[0] - 1);
-	    	value1 = direction * ((percentU * range) + (this.radius * -1.0));
-	      for(let v = 0; v < this.dimensions[1]; v++) {
-	      	percentV = v/(this.dimensions[1] - 1);
-	      	value2 = direction * ((percentV * range) + (this.radius * -1.0));
-	      	toSet = [
-	      		this.center[0] + (axis == 0 ? axisValue : axis == 1 ? value2 : value1), 
-	      		this.center[1] + (axis == 1 ? axisValue : axis == 2 ? value2 : value1), 
-	      		this.center[2] + (axis == 2 ? axisValue : axis == 0 ? value2 : value1)
-	    		];
-	      	this.set([i,u,v], toSet)
-	      }
-	    }
-	  }
+		let direction, axes, percentU, percentV, values=[];		
+		this.traverse(function(value, [n,u,v]){
+			direction = this.direction(n)
+			axes = this.axes(n)
+			percentU = u/(this.dimensions()[0] - 1);
+    	percentV = v/(this.dimensions()[1] - 1);			
+
+			values[0] = direction * this.radius * 1.0;
+    	values[1] = direction * this.radius * percentU;
+    	values[2] = direction * this.radius * percentV;
+    	this.set([n,u,v], [
+    		this.center[0] + values[axes[0]], 
+    		this.center[1] + values[axes[1]], 
+    		this.center[2] + values[axes[2]]
+  		])    	
+		}.bind(this))
 	}
 }
 export { SphereGrid }

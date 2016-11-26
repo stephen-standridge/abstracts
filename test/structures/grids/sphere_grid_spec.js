@@ -56,4 +56,70 @@ describe('SphereGrid', ()=>{
 			expect(uniqBy( passed, v => v)).to.have.members([true])
 		})
 	})
+	describe('#eachFace', ()=>{
+		before(()=>{
+			grid = new SphereGrid([2,2], [0,0,0], 1)
+			grid.buildGrid()				
+		})
+		it('should iterate over each face', ()=>{
+			let callCount = 0;
+			let callItems = [];
+			let callIndices = [];
+
+			grid.eachFace((face, index)=>{
+				callCount += 1;
+				callItems.push(face)
+				callIndices.push(index)
+			})
+
+			expect(callCount).to.equal(6)
+			expect(callIndices).to.have.members([0,1,2,3,4,5])
+		})
+		it('should allow setting each face')
+	})	
+	describe('#getFace', ()=>{
+		it('should return the face at index')
+	})
+	describe('#setFace', ()=>{
+		it('should set the face at index')
+	})	
+	describe('CubeFaceNode', ()=>{
+		beforeEach(()=>{
+			grid = new SphereGrid([2,2], [0,0,0], 1)			
+		})
+		describe('#direction', ()=>{
+			it('should return the direction of the face', ()=>{
+				expect(grid.__children[0].direction).to.equal(1)
+				expect(grid.__children[2].direction).to.equal(1)
+				expect(grid.__children[4].direction).to.equal(1)
+				expect(grid.__children[1].direction).to.equal(-1)
+				expect(grid.__children[3].direction).to.equal(-1)
+				expect(grid.__children[5].direction).to.equal(-1)
+			})
+		})
+		describe('#axes', ()=>{
+			it('should return the direction of the face', ()=>{
+				expect(grid.__children[0].axes).to.deep.equal([0,2,1])
+				expect(grid.__children[2].axes).to.deep.equal([2,1,0])
+				expect(grid.__children[4].axes).to.deep.equal([1,0,2])
+				expect(grid.__children[1].axes).to.deep.equal([1,0,2])
+				expect(grid.__children[3].axes).to.deep.equal([0,2,1])
+				expect(grid.__children[5].axes).to.deep.equal([2,1,0])
+			})
+		})
+		describe('#faceUp', ()=>{
+			it('should return the face up from this face orientated towards this face', ()=>{
+				// expect(grid.__children[0].faceUp.length).to.equal(16)
+			})
+		})	
+		describe('#faceLeft', ()=>{
+			it('should return the face left of this face orientated towards this face')
+		})		
+		describe('#faceRight', ()=>{
+			it('should return the face right of this face orientated towards this face')
+		})	
+		describe('#faceDown', ()=>{
+			it('should return the face down from this face orientated towards this face')
+		})							
+	})
 })
