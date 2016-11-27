@@ -4,15 +4,14 @@ import {uniqBy} from 'lodash';
 const SphereGrid = abstracts.grids.SphereGrid;
 
 describe('SphereGrid', ()=>{
-	let grid, test;
+	let grid, test, edge;
 	describe('#new SphereGrid', ()=>{
 		it('should make a new grid')
 		it('should have a bounds')
 	})
 	describe('#buildGrid', ()=>{
-		before(function(){
+		before(()=>{
 			grid = new SphereGrid([5,5], [0,0,0], 1)
-			grid.buildGrid()			
 		})
 		it('should populate with the right number of points', ()=>{
 			expect(grid.grid.length).to.equal(450)
@@ -45,7 +44,6 @@ describe('SphereGrid', ()=>{
 	describe('#toSphere', ()=>{
 		before(function(){
 			grid = new SphereGrid([5,5], [0,0,0], 3)
-			grid.buildGrid()			
 			grid.toSphere()
 		})
 		it('should make all points the length of the radius away from center', ()=>{
@@ -75,51 +73,53 @@ describe('SphereGrid', ()=>{
 			expect(callCount).to.equal(6)
 			expect(callIndices).to.have.members([0,1,2,3,4,5])
 		})
-		it('should allow setting each face')
 	})	
 	describe('#getFace', ()=>{
-		it('should return the face at index')
-	})
-	describe('#setFace', ()=>{
-		it('should set the face at index')
-	})	
-	describe('CubeFaceNode', ()=>{
-		beforeEach(()=>{
-			grid = new SphereGrid([2,2], [0,0,0], 1)			
-		})
-		describe('#direction', ()=>{
-			it('should return the direction of the face', ()=>{
-				expect(grid.__children[0].direction).to.equal(1)
-				expect(grid.__children[2].direction).to.equal(1)
-				expect(grid.__children[4].direction).to.equal(1)
-				expect(grid.__children[1].direction).to.equal(-1)
-				expect(grid.__children[3].direction).to.equal(-1)
-				expect(grid.__children[5].direction).to.equal(-1)
-			})
-		})
-		describe('#axes', ()=>{
-			it('should return the direction of the face', ()=>{
-				expect(grid.__children[0].axes).to.deep.equal([0,2,1])
-				expect(grid.__children[2].axes).to.deep.equal([2,1,0])
-				expect(grid.__children[4].axes).to.deep.equal([1,0,2])
-				expect(grid.__children[1].axes).to.deep.equal([1,0,2])
-				expect(grid.__children[3].axes).to.deep.equal([0,2,1])
-				expect(grid.__children[5].axes).to.deep.equal([2,1,0])
-			})
-		})
-		describe('#faceUp', ()=>{
-			it('should return the face up from this face orientated towards this face', ()=>{
-				// expect(grid.__children[0].faceUp.length).to.equal(16)
-			})
-		})	
-		describe('#faceLeft', ()=>{
-			it('should return the face left of this face orientated towards this face')
+		before(()=>{
+			grid = new SphereGrid([2,2], [0,0,0], 1)
+			grid.buildGrid()			
 		})		
-		describe('#faceRight', ()=>{
-			it('should return the face right of this face orientated towards this face')
-		})	
-		describe('#faceDown', ()=>{
-			it('should return the face down from this face orientated towards this face')
-		})							
+		it('should return the face at index', ()=>{
+			let face = grid.getFace(0)
+			expect(face.children.length).to.equal(12)		
+			expect(face.get([0,0])).to.deep.equal([1,-1,-1])
+			expect(face.get([0,1])).to.deep.equal([1,1,-1])
+			expect(face.get([1,0])).to.deep.equal([1,-1,1])
+			expect(face.get([1,1])).to.deep.equal([1,1,1])
+		})
 	})
+	describe('#getEdge', ()=>{
+		before(()=>{
+			grid = new SphereGrid([2,2], [0,0,0], 1)
+			grid.buildGrid()			
+		})		
+		it('should return the face at index', ()=>{
+			edge = grid.getEdge(0,0)
+			expect(edge.length).to.equal(6)		
+			expect(edge).to.deep.equal([1,-1,-1,1,1,-1])			
+			edge = grid.getEdge(1,1)
+			expect(edge.length).to.equal(6)		
+			expect(edge).to.deep.equal([1,-1,1,1,-1,-1])
+			edge = grid.getEdge(2,2)
+			expect(edge.length).to.equal(6)		
+			expect(edge).to.deep.equal([-1,1,1,1,1,1])
+			edge = grid.getEdge(3,3)
+			expect(edge.length).to.equal(6)		
+			expect(edge).to.deep.equal([-1,-1,1,-1,-1,-1])			
+		})
+		it('should allow reversal', ()=>{
+			edge = grid.getEdge(0,0,-1)
+			expect(edge.length).to.equal(6)		
+			expect(edge).to.deep.equal([1,1,-1, 1,-1,-1])			
+			edge = grid.getEdge(1,1,-1)
+			expect(edge.length).to.equal(6)		
+			expect(edge).to.deep.equal([1,-1,-1, 1,-1,1])
+			edge = grid.getEdge(2,2,-1)
+			expect(edge.length).to.equal(6)		
+			expect(edge).to.deep.equal([1,1,1, -1,1,1])
+			edge = grid.getEdge(3,3,-1)
+			expect(edge.length).to.equal(6)		
+			expect(edge).to.deep.equal([-1,-1,-1,-1,-1,1])			
+		})		
+	})	
 })

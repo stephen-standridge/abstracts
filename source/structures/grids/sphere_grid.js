@@ -1,6 +1,7 @@
 import {GridTree} from '../trees/grid_tree'
 import {CubeFaceNode} from '../trees/nodes/cube_face_node'
 import {normalize, subtract, scale, distance} from '../../math/vector'
+import {filter} from 'lodash'
 
 class SphereGrid extends GridTree {
 	constructor(resolution, center, radius){
@@ -11,30 +12,36 @@ class SphereGrid extends GridTree {
 		this.center = center;
 		this.radius = radius;
 		this.buildGrid();
-		this.toSphere();
 	}
 	get DimensionNodeType() {
 		return CubeFaceNode		
-	}	
-	vectorGet([x,y,z], origin=center) {
-		//accesses the grid point that is closest to vector given 
-		//by comparing vector against center
 	}
-	vectorSet([x,y,z], origin=center) {
-		//accesses the grid point that is closest to vector given 
-		//by comparing vector against center
-	}	
-	uvGet(){
-		// n = Normalize(sphere_surface_point - sphere_center);
-		// u = atan2(n.x, n.z) / (2*pi) + 0.5;
-		// v = n.y * 0.5 + 0.5;		
+	getEdge(face, edge, direction=1) {
+		let f = this.__children[face];
+		let e = filter(f.value, (item, index)=>{
+			switch(edge){
+				case 0:
+					return Math.floor(index / f.dimensions()[2]) / f.dimensions()[1] < 1
+					break;
+				case 1:
+					return Math.floor(index / f.dimensions()[2]) % f.dimensions()[1] == 0
+					break;
+				case 2:
+					return Math.floor(index / f.dimensions()[2]) / f.dimensions()[1] >= (this.dimensions()[2] - 1)
+					break;
+				case 3:
+					return Math.floor(index / f.dimensions()[2]) % f.dimensions()[1] == (this.dimensions()[1] - 1)
+			}
+		})
+		if(direction > 0) return e
+		let returned = [];
+		e.reverse().forEach((item, index)=>{
+			let itemSize = this.dimensions()[3]
+			returned[(Math.floor(index/itemSize) * itemSize) + itemSize-(index%itemSize) -1] = item;
+		})
+		return returned
 	}
-	uvSet(){
-		// n = Normalize(sphere_surface_point - sphere_center);
-		// u = atan2(n.x, n.z) / (2*pi) + 0.5;
-		// v = n.y * 0.5 + 0.5;		
-	}	
-	toSphere(){
+	toSphere() {
 		let radius = this.radius;
 		let center = this.center;
 		this.traverse(function(value){
@@ -44,33 +51,23 @@ class SphereGrid extends GridTree {
 	}
 	eachFace(callback){
 		this.__children.forEach((child, index)=>{
-			child.iterate(callback)
-			callback.call(this, child.value, index)
+			callback.call(this, child, index)
 		})
 	}
 	direction(n) {
 		return n % 2 == 0 ? 1.0 : -1.0
 	}
 	axes(n) {
-		return [n%3, (n+2)%3, (n+1)%3]
-	} 
+		return [!!(n%3) ? 0 : 1, !!((n+2)%3) ? 0 : 1, !!((n+1)%3) ? 0 : 1]
+	}
+	getFace(i=0, dir) {
+		return this.__children[i]
+	}	
 	buildGrid(){
-		let direction, axes, percentU, percentV, values=[];		
-		this.traverse(function(value, [n,u,v]){
-			direction = this.direction(n)
-			axes = this.axes(n)
-			percentU = u/(this.dimensions()[0] - 1);
-    	percentV = v/(this.dimensions()[1] - 1);			
-
-			values[0] = direction * this.radius * 1.0;
-    	values[1] = direction * this.radius * percentU;
-    	values[2] = direction * this.radius * percentV;
-    	this.set([n,u,v], [
-    		this.center[0] + values[axes[0]], 
-    		this.center[1] + values[axes[1]], 
-    		this.center[2] + values[axes[2]]
-  		])    	
-		}.bind(this))
+		let direction, axes, percentU, percentV, values=[];	
+		this.eachFace((face, index)=>{
+			face.buildFace()
+		})	
 	}
 }
 export { SphereGrid }

@@ -1,4 +1,5 @@
 import guid from '../../../generators/guid';
+import {forEachRight} from 'lodash';
 
 class GridNode {
 	constructor({__l, __n, __first, __last}){
@@ -15,10 +16,6 @@ class GridNode {
 	get DimensionNodeType() {
 		return DimensionNode		
 	}
-	// get current(){
-	// 	return { __l:,__n:}
-	// }
-
 	get children(){
 		if(this.leaf) return this.root.grid.slice(this.__first, this.__last )
 
@@ -104,14 +101,15 @@ class DimensionNode extends GridNode {
 	constructor(grid, address, parent){
 		super(address)
 		this.parent = parent || null;
-		this.root = grid;		
-		this.density = this.dimensions()[0]
-		if(this.dimensions().length == 1 ){
-			this.__i = this.__first / this.density;
-			this.leaf = true;
-			return
-		}
+		this.root = grid;
+		if(this.leaf) return
 		this.makeChildren()
+	}
+	get density(){
+		return this.dimensions()[0]
+	}
+	get leaf(){
+		return this.dimensions().length == 1 		
 	}
 	dimensions(level = this.__l){
 		return this.root.dimensions().slice(level)
