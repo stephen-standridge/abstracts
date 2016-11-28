@@ -25,40 +25,51 @@ class CubeFaceNode extends DimensionNode {
 	get axes() {
 		return this.root.axes(this.__n)
 	}
-	getNextEdge(i,dir) {
-		switch(i){
-			case 0:
-				return this.parent.getEdge((this.__n + 5) % 6, 0, -1)
-				break;
-			case 1:
-				return this.parent.getEdge((this.__n + 1) % 6, 0, -1)
-				break;
-			case 2:
-				return this.parent.getEdge((this.__n + 2) % 6, 3)
-				break;
-			case 3:
-				return this.parent.getEdge((this.__n + 3) % 6, 3)
-				break;				
-		}
-	}
 	getEdge(i,dir){
 		return this.parent.getEdge(this.__n, i)
 	}
-	getFace(i) {
-
+	get edgeUp(){ return this.parent.getEdge(this.__n, 2) }
+	get edgeLeft(){ return this.parent.getEdge(this.__n, 1) }
+	get edgeRight(){ return this.parent.getEdge(this.__n, 3) }
+	get edgeDown(){ return this.parent.getEdge(this.__n, 0) }
+	set edgeUp(array){
+		return this.parent.setEdge(this.__n, 2, array)
 	}
-	get faceUp() { return this.parent.getFace((this.__n + 4) % 6) }
-
-	get faceLeft() { 
+	set edgeLeft(array){
+		return this.parent.setEdge(this.__n, 1, array)
+	}
+	set edgeRight(array){
+		return this.parent.setEdge(this.__n, 3, array)
+	}
+	set edgeDown(array){
+		return this.parent.setEdge(this.__n, 0, array)
+	}
+	get nextEdgeUp() { return this.parent.getEdge((this.__n + 4) % 6, 2) }
+	get nextEdgeLeft() { 
 		let offset = this.direction < 0 ? 2 : 5;
+		let edge = this.__n == 0 ? 1 : this.__n == 4 ? 1 : this.__n == 2 ? 0 : this.__n == 5 ? 2 : this.direction < 0 ? 3 : 0;
+		let reverse = this.parent.direction((this.__n + offset) % 6) == this.direction ? 1.0 : -1.0;
+		return this.parent.getEdge((this.__n + offset) % 6, edge, reverse ) 
+	}
+	get nextEdgeRight() {
+		let offset = this.direction > 0 ? 2 : 5;
+		let edge = this.__n == 5 ? 0 : this.direction > 0 ? 3 : 1;
+	 	return this.parent.getEdge((this.__n + offset) % 6, edge, this.direction) 
+	}
+	get nextEdgeDown() { return this.parent.getEdge((this.__n + 4) % 6, 0, -1) }
+
+	get faceUp() { return this.parent.getFace((this.__n + 4) % 6) }
+	get faceLeft() { 
+		let offset = this.direction < 0 ? 2 : 5;		
 		return this.parent.getFace((this.__n + offset) % 6) 
 	}
 	get faceAcross() { return this.parent.getFace((this.__n + 3) % 6) }
 	get faceRight() { 
-		let offset = this.direction > 0 ? 2 : 5;		
+		let offset = this.direction > 0 ? 2 : 5;				
 		return this.parent.getFace((this.__n + offset) % 6) 
 	}
-	get faceDown() { return this.parent.getFace((this.__n + 1) % 6) }
+	get faceDown() { return this.parent.getFace((this.__n + 1) % 6) }	
+
 }
 
 export {CubeFaceNode}

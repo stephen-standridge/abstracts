@@ -1,7 +1,7 @@
 import {GridTree} from '../trees/grid_tree'
 import {CubeFaceNode} from '../trees/nodes/cube_face_node'
 import {normalize, subtract, scale, distance} from '../../math/vector'
-import {filter} from 'lodash'
+import {filter, reduce, reduceRight, forEach, forEachRight} from 'lodash'
 
 class SphereGrid extends GridTree {
 	constructor(resolution, center, radius){
@@ -16,30 +16,47 @@ class SphereGrid extends GridTree {
 	get DimensionNodeType() {
 		return CubeFaceNode		
 	}
+	setEdge(face, edge, array, direction=1) {
+		let f = this.__children[face];
+		let eachType = direction > 0 ? forEach : forEachReverse,
+				length = f.dimensions()[2],
+				iterator = new Array(array.length/length);
+		switch(edge){
+			case 0:
+				//get first row	
+				return eachType(iterator, (item, i) => f.set([0, i], array.slice(i*length, i*length + length)) )
+			case 1:
+				//get first column
+				return eachType(iterator, (item, i) => f.set([i,0], array.slice(i*length, i*length + length)) )
+			case 2:
+					//get last row
+				return eachType(iterator, (item, i) => f.set([this.dimensions()[1]-1, i], array.slice(i*length, i*length + length)) )
+			case 3:
+				//get last column
+				return eachType(iterator, (item, i) => f.set([i,f.dimensions()[1] -1], array.slice(i*length, i*length + length)) )				
+		}				
+	}
 	getEdge(face, edge, direction=1) {
 		let f = this.__children[face];
-		let e = filter(f.value, (item, index)=>{
-			switch(edge){
-				case 0:
-					return Math.floor(index / f.dimensions()[2]) / f.dimensions()[1] < 1
-					break;
-				case 1:
-					return Math.floor(index / f.dimensions()[2]) % f.dimensions()[1] == 0
-					break;
-				case 2:
-					return Math.floor(index / f.dimensions()[2]) / f.dimensions()[1] >= (this.dimensions()[2] - 1)
-					break;
-				case 3:
-					return Math.floor(index / f.dimensions()[2]) % f.dimensions()[1] == (this.dimensions()[1] - 1)
-			}
-		})
-		if(direction > 0) return e
-		let returned = [];
-		e.reverse().forEach((item, index)=>{
-			let itemSize = this.dimensions()[3]
-			returned[(Math.floor(index/itemSize) * itemSize) + itemSize-(index%itemSize) -1] = item;
-		})
-		return returned
+		let iterator = [], reducer = direction > 0 ? reduce : reduceRight;
+		switch(edge){
+			case 0:
+				//get first row			
+				iterator.length = f.dimensions()[1];
+				return reducer(iterator, (sum, a, i) =>{ return sum.concat(f.get([0, i])) }, [])
+			case 1:
+				//get first column
+				iterator.length = f.dimensions()[0];
+				return reducer(iterator, (sum, a, i)=>{ return sum.concat(f.get([i,0])) },[] )
+			case 2:
+					//get last row
+				iterator.length = f.dimensions()[1];			
+				return reducer(iterator, (sum, a, i) =>{ return sum.concat(f.get([this.dimensions()[1]-1, i])) }, [])
+			case 3:
+				//get last column
+				iterator.length = f.dimensions()[0];		
+				return reducer(iterator, (sum, a, i)=>{ return sum.concat(f.get([i,f.dimensions()[1] -1])) },[] )
+		}		
 	}
 	toSphere() {
 		let radius = this.radius;
