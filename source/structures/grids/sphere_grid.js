@@ -3,6 +3,14 @@ import {CubeFaceNode} from '../trees/nodes/cube_face_node'
 import {normalize, subtract, scale, distance} from '../../math/vector'
 import {filter, reduce, reduceRight, forEach, forEachRight} from 'lodash'
 
+
+const EDGE_INDICES = {
+	'down': 0,
+	'left': 1,
+	'up': 2,
+	'right': 3
+}
+
 class SphereGrid extends GridTree {
 	constructor(resolution, center, radius){
 		if(resolution.length !== 2){ console.warn('must have 2 resolution to make each grid'); return false }
@@ -16,11 +24,13 @@ class SphereGrid extends GridTree {
 	get DimensionNodeType() {
 		return CubeFaceNode		
 	}
-	setEdge(face, edge, array, direction=1) {
+	setEdge(face, edge, direction=1, array ) {
 		let f = this.__children[face];
 		let eachType = direction > 0 ? forEach : forEachReverse,
 				length = f.dimensions()[2],
 				iterator = new Array(array.length/length);
+		edge = !isNaN(Number(edge)) ? edge : EDGE_INDICES[edge]
+
 		switch(edge){
 			case 0:
 				//get first row	
@@ -39,6 +49,8 @@ class SphereGrid extends GridTree {
 	getEdge(face, edge, direction=1) {
 		let f = this.__children[face];
 		let iterator = [], reducer = direction > 0 ? reduce : reduceRight;
+		edge = !isNaN(Number(edge)) ? edge : EDGE_INDICES[edge]
+		
 		switch(edge){
 			case 0:
 				//get first row			
@@ -73,9 +85,6 @@ class SphereGrid extends GridTree {
 	}
 	direction(n) {
 		return n % 2 == 0 ? 1.0 : -1.0
-	}
-	axes(n) {
-		return [!!(n%3) ? 0 : 1, !!((n+2)%3) ? 0 : 1, !!((n+1)%3) ? 0 : 1]
 	}
 	getFace(i=0, dir) {
 		return this.__children[i]
