@@ -1,7 +1,7 @@
-import {Grid} from '../grids/grid.js'
+import {Grid} from '../../grids/grid.js'
 
 
-class HeightMap extends Grid{
+class SquareMap extends Grid{
   constructor(size, height_range, roughness){
     super(size);
     this.roughness = roughness
@@ -32,4 +32,4 @@ class HeightMap extends Grid{
   }  
 }
 
-export { HeightMap }
+export { SquareMap }

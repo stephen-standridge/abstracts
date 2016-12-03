@@ -1,7 +1,7 @@
-import {HeightMap} from './height_map.js'
+import {SquareMap} from './square_map.js'
 
 
-class DiamondSquareHeightMap extends HeightMap{
+class DiamondSquareHeightMap extends SquareMap{
   constructor(detail=0, height_range=[0,0], roughness=0){
     let size = Math.pow(2, detail) + 1;
     super(size, height_range, roughness);

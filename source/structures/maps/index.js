@@ -1,2 +1,2 @@
-export * from './height_map';
-export * from './diamond_square_height_map';
+export * from './square';
+export * from './cube';
