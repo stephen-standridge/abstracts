@@ -1,10 +1,10 @@
-export function dot( a, b ){
-	return a.reduce((start, next, index)=>{
+export function dot( a, b ) {
+	return a.reduce((start, next, index)=> {
 		return start + next * b[index]
 	},0)
 }
 
-export function cross( a, b ){
+export function cross( a, b ) {
 	if( a.length !== 3 || b.length !== 3){ throw new Error('can only cross vectors in 3d')}
 	return [ 
 		a[1] * b[2] - a[2] * b[1],
@@ -13,7 +13,7 @@ export function cross( a, b ){
 	]
 }
 
-export function perpendicular( v, s ){
+export function perpendicular( v, s ) {
 	// return vector such that v dot vector = 0;
 	// v[0] * vector[0] + v[1] * vector[1] + v[2] * vector[2] = 0
 	// v[2] * vector[2] = -v[0] * vector[0] - v[1] * vector[1]
@@ -25,55 +25,59 @@ export function perpendicular( v, s ){
 	];
 }
 
-export function direction(to,from){
+export function direction(to,from) {
 	return unit(subtract(to,from))
 }
 
-export function length( v ){
+export function length( v ) {
 	return Math.sqrt( dot(v, v) );
 }
 
-export function toLength( v, s ){
+export function toLength( v, s ) {
 	let u = unit( v );
 	return scale( u, s )
 }
 
-export function unit( v ){
+export function unit( v ) {
 	let l = length( v );
-	return v.map(( p )=> p / l)
+	return v.map( p => p / l)
 }
 
 export const normalize = unit;
 
-export function descale( v, s ){
-	return v.map(( p )=> p / s)
+export function descale( v, s ) {
+	return v.map( p => p / s)
 }
 
-export function multiply( a, b ){
-	return a.map((p, i)=> p * b[i])
+export function multiply( a, b ) {
+	return a.map( (p, i) => p * b[i])
 }
 
-export function divide( a, b ){
-	return a.map((p, i)=> p / b[i])
+export function divide( a, b ) {
+	return a.map( (p, i) => p / b[i])
 }
 
-export function add( a, b ){
-	return a.map(( p, i )=> p + b[i])
+export function add(vectors) {
+	let returned = [];
+	returned.length = vectors.length;
+	return vectors.reduce((sum, vector)=> { 
+		return vector.map((a,i)=> sum[i] ? a + sum[i] : a )
+	}, returned)
 }
 
-export function subtract( a, b ){
-	return a.map(( p, i )=> p - b[i])
+export function subtract( a, b ) {
+	return a.map( (p, i) => p - b[i])
 }
 
-export function distance( a, b ){
-	return a.map(( p, i )=> Math.abs(p - b[i]) )
+export function distance( a, b ) {
+	return a.map( (p, i) => Math.abs(p - b[i]) )
 }
 
-export function scale( v, s ){
-	return v.map((p)=> p * s)
+export function scale( v, s ) {
+	return v.map( p => p * s)
 }
 
-export function copy( v ){
+export function copy( v ) {
 	return v.slice(0)
 }
 
@@ -82,8 +86,15 @@ export function average(a) {
 	return descale(t, a.length);
 }
 
-export function createAxes(v, s){
+export function createAxes(v, s) {
 	let a = unit(perpendicular( v, s || Math.random() ));
 	let b = cross(a, v)
 	return [a, b]	
+}
+
+export function majorAxis(v) {
+	return v.reduce((returned, p, i) => { 
+		if(Math.abs(p) > Math.abs(returned[0]) ) { returned = [p,i] }
+		return returned
+	}, [0,0])
 }

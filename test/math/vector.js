@@ -53,6 +53,19 @@ describe('vectors', ()=>{
 		})
 	})
 
+	describe('#add', ()=>{
+		it('should return a vector that is an addition of every given vector', ()=>{
+			let v = [3,4,5]
+			let v2 = [0,-1,2]
+			let v3 = [2,-2,-1]
+			let added = vector.add([v,v2,v3])
+			expect(added[0]).to.equal(5)
+			expect(added[1]).to.equal(1)
+			expect(added[2]).to.equal(6)
+		})
+	})
+
+
 	describe('#descale', ()=>{
 		it('should return a vector that is the given vector divided by the given scalar', ()=>{
 			let v = [3,4,5]
@@ -96,7 +109,6 @@ describe('vectors', ()=>{
 	})
 
 	describe('#createAxes', ()=>{
-		it('should return two axes vectors that are perpendicular to the given vector')		
 		// it('should return two axes vectors that are perpendicular to the given vector',()=>{
 		// 	let v = [3,4,5]
 		// 	let [a, b] = vector.createAxes(v);
@@ -106,6 +118,15 @@ describe('vectors', ()=>{
 		// 	expect(cross[1]).to.equal(b[1])
 		// 	expect(cross[2]).to.equal(b[2])
 		// })
+	})
+
+	describe('#majorAxis', ()=>{
+		it('should return the largest absolute value of the given vector with the axis index', ()=>{
+			let v = [2,14,0];
+			expect(vector.majorAxis(v)).to.deep.equal([14,1])
+			v = [2, -2.4, 1];
+			expect(vector.majorAxis(v)).to.deep.equal([-2.4, 1])
+		})
 	})
 
 })
