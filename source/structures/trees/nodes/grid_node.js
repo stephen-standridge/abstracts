@@ -13,7 +13,7 @@ class GridNode {
 	get length() {
 		return this.dimensions().reduce((sum, density)=>{return sum * density},1)
 	}		
-	get DimensionNodeType() {
+	get NodeType() {
 		return DimensionNode		
 	}
 	get children(){
@@ -58,7 +58,7 @@ class GridNode {
 		indices = indices.slice()
 		let current = indices && indices.length ? indices.shift() : undefined;
 		if(current >= this.density){ 
-			console.warn(`cannot set to ${current} in dimension ${this.__l}`)			
+			console.warn(`OUT OF RANGE INDICES:: cannot set to ${current} in dimension ${this.__l}`)			
 			return
 		}			
 		if(this.leaf){
@@ -69,7 +69,7 @@ class GridNode {
 	set(indices, value) {
 		let current = indices && indices.length ? indices.shift() : undefined;
 		if(current >= this.density){ 
-			console.warn(`cannot set to ${current} in dimension ${this.__l}`)			
+			console.warn(`OUT OF RANGE INDICES:: cannot set to ${current} in dimension ${this.__l}`)			
 			return false
 		}		
 		if(this.leaf){
@@ -87,7 +87,7 @@ class GridNode {
 	makeChildren() {
 		let childLength = this.dimensions(this.__l+1).reduce((sum, density)=>{return sum * density},1)
 		for(let i =0; i< this.density; i++){
-			this.__children[i] = new this.DimensionNodeType(this.root, {
+			this.__children[i] = new this.NodeType(this.root, {
 				__l: this.__l + 1, 
 				__n: i,
 				__first: this.__first + (childLength * i), 
