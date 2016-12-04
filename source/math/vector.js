@@ -58,11 +58,13 @@ export function divide( a, b ) {
 }
 
 export function add(vectors) {
-	let returned = [];
-	returned.length = vectors.length;
-	return vectors.reduce((sum, vector)=> { 
-		return vector.map((a,i)=> sum[i] ? a + sum[i] : a )
-	}, returned)
+	let returned = [], newVector = [];
+	vectors.forEach((toAdd)=> { 
+		toAdd.forEach((value,i)=>{
+			returned[i] = !isNaN(Number(returned[i])) ? Number(value) + returned[i] : Number(value)
+		})
+	})
+	return returned
 }
 
 export function subtract( a, b ) {
@@ -82,7 +84,7 @@ export function copy( v ) {
 }
 
 export function average(a) {
-	let t = a.reduce((sum, v)=>{ return add(sum, v) },[0,0,0,0])
+	let t = add(a);
 	return descale(t, a.length);
 }
 
