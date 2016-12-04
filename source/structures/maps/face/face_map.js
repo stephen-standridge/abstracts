@@ -7,12 +7,13 @@ class FaceMap extends FaceNode {
   	let maxX = this.dimensions()[0] - 1
   	let maxY = this.dimensions()[1] - 1
 
-    //confvert XY to UV
+    //convert XY to UV
     let x1 = Math.floor(maxX * u);
     let x2 = Math.ceil(maxX * u);
     let y1 = Math.floor(maxY * v);
     let y2 = Math.ceil(maxY * v);
-    //each of these are modified by the distance the uvs are from this point
+
+    //average the 4 nearest points.
     return descale( add([
     	scale(this.get([x1, y1]), (1.0 - ((u + v)/2))),
       scale(this.get([x2, y1]), (1.0 - ((1.0 - u + v)/2))),

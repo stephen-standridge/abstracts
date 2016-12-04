@@ -17,6 +17,7 @@ describe('FaceNode', ()=>{
 			expect(face.direction).to.equal(1)
 		})
 	})
+
 	describe('#edgeUp', ()=>{
 		it('should get the upper edge', ()=>{
 			face = grid.__children[0]			
@@ -129,6 +130,15 @@ describe('FaceNode', ()=>{
 			expect(face.nextEdgeDown).to.deep.equal([ 1, -1, -1, 1, -1, 1])
 		})
 	})
+	describe('#getNextEdge', ()=>{
+		it('should be an alias for the next edge direction', ()=>{
+			face = grid.__children[0]			
+			expect(face.getNextEdge(0)).to.deep.equal([ 1, -1, -1, 1, -1, 1])			
+			expect(face.getNextEdge(1)).to.deep.equal([1, -1, -1, 1, 1, -1])
+			expect(face.getNextEdge(2)).to.deep.equal(grid.__children[4].edgeRight)						
+			expect(face.getNextEdge(3)).to.deep.equal(grid.__children[2].edgeUp)			
+		})
+	})
 	describe('#faceUp', ()=>{
 		it('should return the face up from this face', ()=>{
 			face = grid.__children[0]			
@@ -236,5 +246,17 @@ describe('FaceNode', ()=>{
 			expect(face.faceDown.length).to.equal(12)
 			expect(face.faceDown.__n).to.equal(0)	
 		})	
-	})							
+	})
+	describe('#eachEdge', ()=>{
+		it('should call a callback on each edge', ()=>{
+			face = grid.__children[0]
+			let edges = [], indices = [];
+			face.eachEdge((edge, index)=>{
+				edges.push(edge)
+				indices.push(index)
+			})
+			expect(indices).to.deep.equal([0,1,2,3])
+			expect(edges).to.deep.equal([face.edgeDown, face.edgeLeft, face.edgeUp, face.edgeRight])
+		})
+	})						
 })

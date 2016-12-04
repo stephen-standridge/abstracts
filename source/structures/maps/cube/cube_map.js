@@ -2,19 +2,6 @@ import { CubeGrid } from '../../grids/cube_grid'
 import { FaceMap } from '../face/face_map'
 import { TAU, PI } from '../../../math/constants'
 import * as vector from '../../../math/vector'
-  //  major axis
-  //   direction     target                             sc     tc    ma
-  //   ----------    -------------------------------    ---    ---   ---
-      //    +rx      TEXTURE_CUBE_MAP_POSITIVE_X_ARB    -rz    -ry   rx
-      //    -rx      TEXTURE_CUBE_MAP_NEGATIVE_X_ARB    +rz    -ry   rx
-      //    +ry      TEXTURE_CUBE_MAP_POSITIVE_Y_ARB    +rx    +rz   ry
-      //    -ry      TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB    +rx    -rz   ry
-      //    +rz      TEXTURE_CUBE_MAP_POSITIVE_Z_ARB    +rx    -ry   rz
-      //    -rz      TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB    -rx    -ry   rz
-
-  // s   = ( sc/|ma| + 1 ) / 2
-  // t   = ( tc/|ma| + 1 ) / 2
-
 
 class CubeMap extends CubeGrid {
   get NodeType() {

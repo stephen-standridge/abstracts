@@ -1,68 +1,74 @@
 import { CubeMap } from './cube_map.js'
-
+import { add, descale } from '../../../math/vector'
 
 class DiamondSquareHeightCubeMap extends CubeMap {
-  constructor(detail=0, height_range=[0,0], roughness=0){
+  constructor(detail=0, height_range=[0,0], roughness=1){
     let size = Math.pow(2, detail) + 1;
-    super(size);
+    super([size,size,1]);
     this.max = size - 1;
     this.roughness = roughness
-    this._minHeight = height_range ? height_range[0] : false
-    this._maxHeight = height_range ? height_range[1] : 0;    
+    this._heightRange = height_range; 
   }
   get minHeight(){
-    return this._minHeight || this.max
+    return this._heightRange[0]
   }
   get maxHeight(){
-    return this._maxHeight || 0
+    return this._heightRange[1]
   }
   get randomNumberInRange(){
-    return Math.random() * (this.maxHeight - this.minHeight) + this.minHeight    
+    return (Math.random() * (this.maxHeight - this.minHeight)) + this.minHeight    
   }  
-  generate(){
-    this.set([0,0],this.maxHeight)
-    this.set([this.max,0],this.maxHeight)
-    this.set([this.max,this.max],this.minHeight)
-    this.set([0,this.max],this.minHeight)  
-    this.diamondSquare(this.max)
+  build(){
+    this.eachFace((face, faceIndex)=>{
+      this.set([faceIndex,0,0],this.randomNumberInRange)
+      this.set([faceIndex,this.max,0],this.randomNumberInRange)
+      this.set([faceIndex,this.max,this.max],this.randomNumberInRange)
+      this.set([faceIndex,0,this.max],this.randomNumberInRange) 
+      this.diamondSquare(faceIndex,this.max)  
+    })
+    this.eachFace((face, faceIndex)=>{
+      face.eachEdge((edge, edgeIndex)=>{
+        face.setEdge(edgeIndex, descale(add([edge, face.getNextEdge(edgeIndex)]), 2) )
+      })
+    })    
   }
-  diamondSquare(level) {
+  diamondSquare(faceIndex,level) {
     let half = level / 2, 
         scale = this.roughness * (level/this.max);
 
     if (half < 1) return;
     for (let y = half; y < this.max; y += level) {
       for (let x = half; x < this.max; x += level) {
-        this.square(x, y, half, this.randomNumberInRange * scale );        
+        this.square(faceIndex, x, y, half, this.randomNumberInRange * scale );        
       }
     }
     for (let y = 0; y <= this.max; y += half) {
       for (let x = (y + half) % level; x <= this.max; x += level) {
-        this.diamond(x, y, half, this.randomNumberInRange * scale);
+        this.diamond(faceIndex, x, y, half, this.randomNumberInRange * scale);
       }
     }
-    this.diamondSquare(level / 2);
+    this.diamondSquare(faceIndex, level / 2);
   }
-  square(x, y, level, offset) {   
+  square(faceIndex, x, y, level, offset) {   
     var ave = this.average([
-      this.get([x - level, y - level]),   // upper left
-      this.get([x + level, y - level]),   // upper right
-      this.get([x + level, y + level]),   // lower right
-      this.get([x - level, y + level])    // lower left
+      this.get([faceIndex, x - level, y - level]),   // upper left
+      this.get([faceIndex, x + level, y - level]),   // upper right
+      this.get([faceIndex, x + level, y + level]),   // lower right
+      this.get([faceIndex, x - level, y + level])    // lower left
     ])
    
-    this.set([x, y], ave + offset);
+    this.set([faceIndex, x, y], ave + offset);
   }
 
-  diamond(x, y, level, offset) {
+  diamond(faceIndex, x, y, level, offset) {
     var ave = this.average([
-      this.get([x-level, y]),      // top
-      this.get([x+level, y+(level* 2)]),      // right
-      this.get([x+level, y]),      // bottom
-      this.get([x, y-level])       // left
+      this.get([faceIndex, x-level, y]),      // top
+      this.get([faceIndex, x+level, y+(level* 2)]),      // right
+      this.get([faceIndex, x+level, y]),      // bottom
+      this.get([faceIndex, x, y-level])       // left
     ]);
 
-    this.set([x, y], ave + offset);
+    this.set([faceIndex, x, y], ave + offset);
   }  
   average(values) {
     if( this.dimensions[2] == 1 ) return this._average(values);

@@ -8,7 +8,7 @@ describe('CubeMap', ()=>{
 		cube = new CubeMap([2,2,3], [0,0,0], 1)	
 		cube.build()
 	})		
-	describe('#atUV', ()=>{
+	describe('#getUV', ()=>{
 		it('should get the point at the given Vec2')
 		it('should average the nearest points')
 	})

@@ -40,9 +40,9 @@ class CubeGrid extends GridTree {
 	get NodeType() {
 		return FaceNode		
 	}
-	setEdge(face, edge, direction=1, array ) {
+	setEdge(face, edge, array, direction=1 ) {
 		let f = this.__children[face];
-		let eachType = direction > 0 ? forEach : forEachReverse,
+		let eachType = direction > 0 ? forEach : forEachRight,
 				length = f.dimensions()[2],
 				iterator = new Array(array.length/length);
 		edge = !isNaN(Number(edge)) ? edge : EDGE_INDICES[edge]

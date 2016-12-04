@@ -58,18 +58,18 @@ class GridNode {
 		indices = indices.slice()
 		let current = indices && indices.length ? indices.shift() : undefined;
 		if(current >= this.density){ 
-			console.warn(`OUT OF RANGE INDICES:: cannot set to ${current} in dimension ${this.__l}`)			
+			// console.warn(`OUT OF RANGE INDICES:: cannot set to ${current} in dimension ${this.__l}`)			
 			return
 		}			
 		if(this.leaf){
 			return current !== undefined ? this.children[current] : this.children
 		}
-		return current !== undefined ? this.__children[current].get(indices) : this.children
+		return current !== undefined && this.__children[current] ? this.__children[current].get(indices) : this.children
 	}
 	set(indices, value) {
 		let current = indices && indices.length ? indices.shift() : undefined;
 		if(current >= this.density){ 
-			console.warn(`OUT OF RANGE INDICES:: cannot set to ${current} in dimension ${this.__l}`)			
+			// console.warn(`OUT OF RANGE INDICES:: cannot set to ${current} in dimension ${this.__l}`)			
 			return false
 		}		
 		if(this.leaf){

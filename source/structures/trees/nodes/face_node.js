@@ -1,4 +1,5 @@
 import {DimensionNode} from './grid_node'
+import {times} from 'lodash'
 
 const AXES = {
 	0: [0,1,2],
@@ -25,6 +26,12 @@ const MINOR_AXES = [
 	[2,1],
 	[2,0],
 	[1,0]
+]
+const EDGE_ORDER = [
+	'down',
+	'left',
+	'up',
+	'right'
 ]
 
 const EDGES = {
@@ -67,26 +74,19 @@ const EDGES = {
 }
 
 class FaceNode extends DimensionNode {
-	get direction() {
-		return this.root.direction(this.__n)
-	}
-	get minorAxes() {
-		return MINOR_AXES[this.__n]
-	}
-	get axes() {
-		return AXES[this.__n]
-	}	
-	getEdge(i,dir){
-		return this.parent.getEdge(this.__n, i)
-	}
+	get direction() { return this.root.direction(this.__n) }
+	get minorAxes() { return MINOR_AXES[this.__n] }
+	get axes() { return AXES[this.__n] }	
+
 	get edgeUp(){ return this.parent.getEdge(this.__n, 2) }
 	get edgeLeft(){ return this.parent.getEdge(this.__n, 1) }
 	get edgeRight(){ return this.parent.getEdge(this.__n, 3) }
 	get edgeDown(){ return this.parent.getEdge(this.__n, 0) }
-	set edgeUp(array){ return this.parent.setEdge(this.__n, 2, 1.0, array) }
-	set edgeLeft(array){ return this.parent.setEdge(this.__n, 1, 1.0, array) }
-	set edgeRight(array){ return this.parent.setEdge(this.__n, 3, 1.0, array) }
-	set edgeDown(array){ return this.parent.setEdge(this.__n, 0, 1.0, array) }
+
+	set edgeUp(array){ return this.parent.setEdge(this.__n, 2, array) }
+	set edgeLeft(array){ return this.parent.setEdge(this.__n, 1, array) }
+	set edgeRight(array){ return this.parent.setEdge(this.__n, 3, array) }
+	set edgeDown(array){ return this.parent.setEdge(this.__n, 0, array) }
 
 	get nextEdgeUp() { return this.parent.getEdge(...EDGES[this.__n]['up'])  }
 	get nextEdgeLeft() { return this.parent.getEdge(...EDGES[this.__n]['left'])  }
@@ -105,6 +105,19 @@ class FaceNode extends DimensionNode {
 	}
 	get faceDown() { return this.parent.getFace((this.__n + 1) % 6) }	
 
+	eachEdge(callback) {
+		return times(4, (i)=> callback(this.parent.getEdge(this.__n, i), i) )
+	}
+	getEdge(i) {
+		return this.parent.getEdge(this.__n, i)
+	}	
+	setEdge(i,array) {
+		return this.parent.setEdge(this.__n, i, array)
+	}		
+	getNextEdge(i) {
+		// console.log(i,EDGE_ORDER[i], EDGES[this.__n][EDGE_ORDER[i]])
+		return this.parent.getEdge(...EDGES[this.__n][EDGE_ORDER[i]]) 
+	}
 }
 
 export {FaceNode}
