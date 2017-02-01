@@ -23,8 +23,8 @@ describe('DiamondSquareHeightCubeMap', ()=>{
 		})		
 		it('should fill each face with one number per resolution', ()=>{
 			let value = true;
-			cubeMap.traverse((height) => {
-				value = value && !isNaN(Number(height));
+			cubeMap.children.map((height) => {
+				value = value && typeof height == 'number';
 			})
 			expect(value).to.equal(true)	
 		})
@@ -36,4 +36,5 @@ describe('DiamondSquareHeightCubeMap', ()=>{
 			expect(value).to.equal(true)	
 		})
 	})
+
 })

@@ -16,7 +16,7 @@ class DiamondSquareHeightCubeMap extends CubeMap {
     return this._heightRange[1]
   }
   get randomNumberInRange(){
-    return (Math.random() * (this.maxHeight - this.minHeight)) + this.minHeight    
+    return Number((Math.random() * (this.maxHeight - this.minHeight)) + this.minHeight)
   }  
   build(){
     this.eachFace((face, faceIndex)=>{
@@ -24,6 +24,7 @@ class DiamondSquareHeightCubeMap extends CubeMap {
       this.set([faceIndex,this.max,0],this.randomNumberInRange)
       this.set([faceIndex,this.max,this.max],this.randomNumberInRange)
       this.set([faceIndex,0,this.max],this.randomNumberInRange) 
+
       this.diamondSquare(faceIndex,this.max)  
     })
     this.eachFace((face, faceIndex)=>{
@@ -56,8 +57,7 @@ class DiamondSquareHeightCubeMap extends CubeMap {
       this.get([faceIndex, x + level, y + level]),   // lower right
       this.get([faceIndex, x - level, y + level])    // lower left
     ])
-   
-    this.set([faceIndex, x, y], ave + offset);
+    this.set([faceIndex, x, y], Number(ave + offset));
   }
 
   diamond(faceIndex, x, y, level, offset) {
@@ -68,7 +68,7 @@ class DiamondSquareHeightCubeMap extends CubeMap {
       this.get([faceIndex, x, y-level])       // left
     ]);
 
-    this.set([faceIndex, x, y], ave + offset);
+    this.set([faceIndex, x, y], Number(ave + offset));
   }  
   average(values) {
     if( this.dimensions[2] == 1 ) return this._average(values);
@@ -84,7 +84,6 @@ class DiamondSquareHeightCubeMap extends CubeMap {
       }
       return start
     },[]);
-
     return sum.map((val, i)=> val / total[i] )
   }
   _average(values) {
