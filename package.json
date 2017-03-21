@@ -9,8 +9,8 @@
   },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js  --recursive",
-    "test:grid": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js test/structures/grids/sphere_grid_spec.js",
-    "test:watch:grid": "npm run test:grid -- --watch",
+    "test:nurbs": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js test/structures/surfaces/nurbs_surface_spec.js",
+    "test:watch:nurbs": "npm run test:nurbs -- --watch",
     "test:watch": "npm run test -- --watch"
   },
   "author": "Stephen Standridge <Stephen@formisfunction.io> (www.formisfunction.io)",

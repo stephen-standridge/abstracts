@@ -9,12 +9,12 @@ class GridTree extends GridNode {
 		this.root = this;
 		this.makeChildren()
 	}
-	dimensions(level=0){
-		return this.__dimensions.slice(level)
+	dimensions(start=0, end=this.__dimensions.length){
+		return this.__dimensions.slice(start,end)
 	}
 	get density(){
 		return this.dimensions()[0]
-	}	
+	}
 }
 
 export { GridTree }
