@@ -1,3 +1,4 @@
+import * as algorithms from './algorithms'
 import * as generators from './generators'
 import * as vector from './math/vector'
 import * as matrix from './math/matrix'
@@ -9,5 +10,6 @@ import * as trees from './structures/trees'
 import * as bounds from './structures/bounds'
 import * as surfaces from './structures/surfaces'
 import * as lsystems from './structures/lsystems'
+import * as probability from './structures/probability'
 
-export default { nodes, generators, vector, matrix, constants, grids, maps, trees, bounds, surfaces, lsystems }
+export default { nodes, generators, vector, matrix, constants, grids, maps, trees, bounds, surfaces, lsystems, algorithms, probability }

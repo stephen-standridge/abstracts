@@ -19,22 +19,38 @@ describe('lSystem', ()=>{
 			expect(buildSpy).to.have.been.called;
 		})
 	})
-	describe('#setRules', () => {
-		it('should set the rules to the rule set')
-		it('should not take an undefined rule')
-	})
 	describe('#addRule', () => {
-		it('should not take an undefined rule')
+		it('should not take an undefined rule', () => {
+			expect(lsystem.addRule('B', undefined)).to.equal(false)
+			expect(lsystem.getRule('B')).to.equal(false)
+		})
+		it('should not take a non-string key', () => {
+			expect(lsystem.addRule(5, 'C')).to.equal(false)
+			expect(lsystem.getRule(5)).to.equal(false)
+		})
 		describe('with a string rule', () => {
-			it('should add the rule')
+			it('should add the rule', () => {
+				expect(lsystem.addRule('B', 'C')).to.equal(true)
+				expect(lsystem.getRule('B')).to.equal('C')
+			})
 		})
 		describe('with a function', () => {
-			it('should add the rule')
-			it('should test the return value is a string')
+			it('should add the rule', () => {
+				expect(lsystem.addRule('B', () => 'C')).to.equal(true)
+				expect(lsystem.getRule('B')()).to.equal('C')
+			})
+			it('should test the return value is a string', () => {
+				expect(lsystem.addRule('B', () => 5)).to.equal(false)
+				expect(lsystem.getRule('B')).to.equal(false)
+			})
 		})
 		describe('with an array', () => {
-			it('should add a function that does an even split of probability')
-			it('should test each item is a string')
+			it('should defer to addRuleArray', () => {
+				let arrayRuleSpy = sinon.spy(lsystem, 'addRuleArray')
+				let testArray = ['C', 'D', 'E']
+				lsystem.addRule('B', testArray);
+				expect(arrayRuleSpy).to.have.been.calledWith('B', testArray);
+			})
 		})
 		describe('with an object', () => {
 			it('should only take numeric keys')
@@ -52,11 +68,15 @@ describe('lSystem', ()=>{
 			})
 		})
 	})
-	describe('#setConstants', () => {
+	describe('#setRules', () => {
+		it('should set the rules to the rule set')
+		it('should not take an undefined rule')
+	})
+	describe('#addConstant', () => {
 		it('should set the constant to the constants set')
 		it('should not take an undefined constant')
 	})
-	describe('#addConstant', () => {
+	describe('#setConstants', () => {
 		it('should set the constant to the constants set')
 		it('should not take an undefined constant')
 	})

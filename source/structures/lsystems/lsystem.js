@@ -2,6 +2,7 @@ class lSystem {
 	constructor() {
 		this._axiom;
 		this._production = [];
+		this._rules = {};
 		this.maxStep = 0;
 		this.currentStep = 0;
 	}
@@ -29,7 +30,38 @@ class lSystem {
 
 	setRules(newRules) {
 	}
+	addRuleArray(key, rule) {
+					rule.map(() => {
+
+					})
+	}
 	addRule(key, rule) {
+		if (typeof key !== 'string') return false;
+		switch (typeof rule) {
+			case 'string':
+				this._rules[key] = rule;
+				return true;
+				break;
+			case 'function':
+				if (typeof rule(key) !== 'string') return false;
+				this._rules[key] = rule;
+				return true;
+				break;
+			case 'object':
+				if (rule.constructor == Array) {
+					return this.addRuleArray(key, rule)
+				} else {
+
+				}
+				break;
+			case 'boolean':
+			case 'undefined':
+				return false;
+				break;
+		}
+	}
+	getRule (key) {
+		return this._rules[key] || false;
 	}
 
 	setConstants(newConstants) {
