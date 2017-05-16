@@ -8,5 +8,6 @@ import * as maps from './structures/maps'
 import * as trees from './structures/trees'
 import * as bounds from './structures/bounds'
 import * as surfaces from './structures/surfaces'
+import * as lsystems from './structures/lsystems'
 
-export default { nodes, generators, vector, matrix, constants, grids, maps, trees, bounds, surfaces }
+export default { nodes, generators, vector, matrix, constants, grids, maps, trees, bounds, surfaces, lsystems }

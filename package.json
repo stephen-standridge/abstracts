@@ -9,8 +9,6 @@
   },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js  --recursive",
-    "test:nurbs": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js test/structures/surfaces/nurbs_surface_spec.js",
-    "test:watch:nurbs": "npm run test:nurbs -- --watch",
     "test:watch": "npm run test -- --watch"
   },
   "author": "Stephen Standridge <Stephen@formisfunction.io> (www.formisfunction.io)",
@@ -26,6 +24,8 @@
     "chai": "^3.4.1",
     "chai-immutable": "^1.5.3",
     "mocha": "^2.3.4",
+    "sinon": "^2.2.0",
+    "sinon-chai": "^2.10.0",
     "webpack": "^1.12.9"
   },
   "babel": {
