@@ -1,12 +1,12 @@
 import { RandomProbabilitySet, DiscreetProbabilitySet } from '../probability'
 
 class lSystem {
-	constructor() {
-		this._axiom;
+	constructor(axiom, maxStep = false) {
 		this._production = [];
 		this._rules = {};
 		this._sets = [];
-		this.maxStep = 0;
+		if (axiom) this._production[0] = axiom;
+		this.maxStep = maxStep;
 		this.currentStep = 0;
 	}
 	set production(newProduction) {
@@ -24,11 +24,11 @@ class lSystem {
 	}
 	// getters/setters
 	set axiom(newAxiom) {
-		this._axiom = newAxiom;
+		this._production[0] = newAxiom;
 		this.build();
 	}
 	get axiom() {
-		return this._axiom
+		return this._production[0]
 	}
 	isStringable(item) {
 		return typeof item !== undefined && (typeof item == 'string' || typeof item == 'string' || typeof item == 'boolean')
@@ -118,17 +118,37 @@ class lSystem {
 		this._rules[key] && delete this._rules[key];
 		this._sets[key] && delete this._sets[key];
 	}
-	getRule (key) {
-		let rule = this._rules[key];
+	getRule (key, args=false, left=false, right=false) {
+		let betweenContext = left && right && `${left}<${key}>${right}` || false;
+		let leftContext = left && `${left}<${key}` || false;
+		let rightContext = right && `${key}>${right}` || false;
+		let rule = betweenContext && this._rules[betweenContext] || //get between
+							 leftContext && this._rules[leftContext] || //get left
+							 rightContext && this._rules[rightContext] || //get right
+							 this._rules[key]; //default rule
 		//call a rule if it's a function, try returning it if not, else return false
-		return (rule && rule.call && rule(key)) || rule || false;
+		let a = args && [key].concat(args) || [key]
+		return (rule && rule.call && rule(...a)) || rule || false;
 	}
 
 	build(start=0, end=this.maxStep) {
 		//builds out the whole lSystem
 	}
 	step(count=1) {
-		//step count times and build
+		let thisStep, thisProduction, currentStep = this.currentStep, newProduction = '';
+		if (typeof this._production[this.currentStep] !== 'string') { console.warn(`production at step ${thisStep} is not defined, cannot create a new production.`); return }
+
+		for (let i = 1; i <= count; i++) {
+			thisStep = currentStep + i;
+			if (this.maxStep && (thisStep >= this.maxStep)) { console.warn(`a max step was defined, cannot step past step ${this.maxStep}`); return }
+			thisProduction = this._production[currentStep];
+			for (let j = 0; j< thisProduction.length; j++) {
+				newProduction += this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || thisProduction[j];
+			}
+			this._production[thisStep] = newProduction;
+		}
+		this.currentStep += count;
+		this._production.length = this.currentStep + 1;
 	}
 	getProduction(step=this.currentStep) {
 		//get sentence at step

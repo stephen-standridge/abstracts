@@ -7,6 +7,7 @@ describe('lSystem', ()=>{
 
 	beforeEach(() => {
 		lsystem = new lSystem();
+		lsystem.axiom = 'A';
 	})
 	describe('#axiom', ()=>{
 		it('should set the axiom',() => {
@@ -17,6 +18,10 @@ describe('lSystem', ()=>{
 			let buildSpy = sinon.spy(lsystem, 'build')
 			lsystem.axiom = 'B';
 			expect(buildSpy).to.have.been.called;
+		})
+		it('should set the axiom as the first production', () => {
+			lsystem.axiom = 'B'
+			expect(lsystem._production[0]).to.equal('B')
 		})
 	})
 	describe('#addRule', () => {
@@ -65,6 +70,11 @@ describe('lSystem', ()=>{
 				lsystem.addRule('B', testArray);
 				expect(arrayRuleSpy).to.have.been.calledWith('B', testArray);
 			})
+		})
+		describe('with stochastic rules', () => {
+			it('should convert the rule to a discreet probability rule')
+			it('should extend existing discreet probability rules')
+			it('should convert existing random probability rules to discreet probability rules')
 		})
 	})
 	describe('#addRuleArray', () => {
@@ -181,6 +191,7 @@ describe('lSystem', ()=>{
 			})
 		})
 	})
+
 	describe('#addRules', () => {
 		it('should set the rules to the rule set', () => {
 			let rules = {
@@ -217,37 +228,169 @@ describe('lSystem', ()=>{
 			expect(['O','N'].includes(lsystem.getRule('G'))).to.equal(true)
 		})
 	})
-	describe('#iterateSteps', () => {
-		it('should iterate over each production')
+
+	describe('#getRule', () => {
+		beforeEach(() => {
+			lsystem.addRules({
+				'B': 'G',
+				'A<B': 'D',
+				'B>A': 'E',
+				'A<B>A': 'F',
+				'B>H': 'I',
+				'H<B': 'J'
+			})
+		})
+		it('should get basic rules', () => {
+			expect(lsystem.getRule('B')).to.equal('G')
+		})
+		it('should return false if not found', () => {
+			expect(lsystem.getRule('A')).to.equal(false)
+		})
+		it('should call the rule with the given arguments', () => {
+			let testFunction = function(key, arg1, arg2, arg3){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem.addRule('Z', testObject.testFunction)
+			lsystem.getRule('Z', [1, 2, 3])
+			expect(testSpy).to.have.been.calledWith('Z', 1, 2, 3);
+		})
+		describe('context-specific rules', () => {
+			describe('left context match', () => {
+				it('should get the context-specific rule', () => {
+					expect(lsystem.getRule('B', [false], 'A', false)).to.equal('D')
+				})
+				it('should return false for inverse matching', () => {
+					expect(lsystem.getRule('A', [false], false, 'B')).to.equal(false)
+				})
+				it('should return the default rule if not found', () => {
+					expect(lsystem.getRule('B', [false], 'C', false)).to.equal('G')
+				})
+			})
+			describe('right context match', () => {
+				it('should get the context-specific rule', () => {
+					expect(lsystem.getRule('B', [false], false, 'A')).to.equal('E')
+				})
+				it('should return false for inverse matching', () => {
+					expect(lsystem.getRule('A', [false], 'B', false)).to.equal(false)
+				})
+				it('should return the default rule if not found', () => {
+					expect(lsystem.getRule('B', [false], false, 'C')).to.equal('G')
+				})
+			})
+			describe('between context match', () => {
+				it('should get the context-specific rule with a matching between', () => {
+					expect(lsystem.getRule('B', [false], 'A', 'A')).to.equal('F')
+				})
+				it('should partially match left', () => {
+					expect(lsystem.getRule('B', [false], 'C', 'A')).to.equal('E')
+				})
+				it('should partially match right', () => {
+					expect(lsystem.getRule('B', [false], 'A', 'C')).to.equal('D')
+				})
+				it('should return default rule if not found', () => {
+					expect(lsystem.getRule('B', [false], 'C', 'C')).to.equal('G')
+				})
+			})
+			it('should prioritize between, left, then right', () => {
+				expect(lsystem.getRule('B', [false], 'A', 'A')).to.equal('F')
+				expect(lsystem.getRule('B', [false], 'H', 'A')).to.equal('J')
+				expect(lsystem.getRule('B', [false], false, 'A')).to.equal('E')
+				expect(lsystem.getRule('B', [false], 'A', 'H')).to.equal('D')
+				expect(lsystem.getRule('B', [false], false, 'H')).to.equal('I')
+			})
+		})
 	})
-	describe('#iterateItems', () => {
+
+	describe('#step', () => {
+		beforeEach(() => {
+			lsystem.addRules({
+				'A': 'BC',
+				'B': 'ABC',
+				'C': 'AB'
+			})
+		})
+		it('should change the current level to the next level', () => {
+			expect(lsystem.currentStep).to.equal(0)
+			lsystem.step();
+			expect(lsystem.currentStep).to.equal(1)
+		})
+		it('should build the next step', () => {
+			lsystem.step();
+			expect(lsystem._production[0]).to.equal('A')
+			expect(lsystem._production[1]).to.equal('BC')
+			lsystem.step();
+			expect(lsystem._production[0]).to.equal('A')
+			expect(lsystem._production[1]).to.equal('BC')
+			expect(lsystem._production[2]).to.equal('ABCAB')
+			lsystem.step();
+			expect(lsystem._production[0]).to.equal('A')
+			expect(lsystem._production[1]).to.equal('BC')
+			expect(lsystem._production[2]).to.equal('ABCAB')
+			expect(lsystem._production[3]).to.equal('BCABCABBCABC')
+		})
+		it('should transfer non-found rules to the string', () => {
+			lsystem._production[1] = 'BC+C';
+			lsystem.currentStep = 1;
+			lsystem.step();
+			expect(lsystem._production[2]).to.equal('ABCAB+AB')
+		})
+		it('should not allow stepping past the maxStep', () => {
+			lsystem.maxStep = 3;
+			lsystem.step();
+			expect(lsystem._production[0]).to.equal('A')
+			expect(lsystem._production[1]).to.equal('BC')
+			lsystem.step();
+			expect(lsystem._production[0]).to.equal('A')
+			expect(lsystem._production[1]).to.equal('BC')
+			expect(lsystem._production[2]).to.equal('ABCAB')
+			lsystem.step();
+			expect(lsystem._production[3]).to.equal(undefined)
+		})
+		it('should destroy all future steps', () => {
+			lsystem._production[1] = 'BC+C';
+			lsystem._production[2] = 'ABCDEFGH';
+			lsystem._production[3] = 'DDDDD';
+			lsystem.currentStep = 1;
+			lsystem.step();
+			expect(lsystem._production.length).to.equal(3);
+			expect(lsystem._production[3]).to.equal(undefined);
+		})
+		it('should pass the current key and index into function rules', () => {
+			let testFunction = function(key, arg1, arg2, arg3){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem.addRule('B', testObject.testFunction)
+			lsystem.step();
+			lsystem.step();
+			expect(testSpy).to.have.been.calledWith('B', 0)
+		})
+	})
+
+	describe('#iterateSteps', () => {
 		it('should iterate over each item in each production')
 	})
+
+	describe('#iterateStep', () => {
+		it('should iterate over each item in the given/current production')
+	})
+
+	describe('#iterateStepsWithContext', () => {
+		it('should iterate over each item in each production')
+		it('should correctly pass the left and right context within a step')
+		it('should not pass context between steps')
+	})
+
+	describe('#iterateStep', () => {
+		it('should iterate over each item in the given/current production')
+		it('should correctly pass the left and right context')
+	})
+
 	describe('#build', () => {
 		it('should build from the starting index to the ending index')
 		it('should not go past the maxStep')
 		it('should iterate from 0 to maxStep by default')
 	})
-	describe('#step', () => {
-		it('should build the next step')
-		it('should change the current level to the next level')
-		it('should not allow stepping past the maxStep')
-		it('should destroy all future steps')
-		describe('with a string rule', () => {
-			it('should add a determined node to the production')
-		})
-		describe('with a function', () => {
-			it('should evaluate the function and add it to the production')
-			it('should only add strings')
-		})
-		describe('with an array', () => {
-			it('should add one of the items as a node to the production')
-			it('should only add strings')
-		})
-		describe('with an object', () => {
-			it('should only add strings')
-		})
-	})
+
 	describe('#getProduction', () => {
 		it('should build to the step if it is not built')
 		it('should get the production at the given step')
