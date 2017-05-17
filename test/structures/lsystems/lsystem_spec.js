@@ -24,9 +24,9 @@ describe('lSystem', ()=>{
 			expect(lsystem.addRule('B', undefined)).to.equal(false)
 			expect(lsystem.getRule('B')).to.equal(false)
 		})
-		it('should not take a non-string key', () => {
-			expect(lsystem.addRule(5, 'C')).to.equal(false)
-			expect(lsystem.getRule(5)).to.equal(false)
+		it('should stringify a non-string key', () => {
+			expect(lsystem.addRule(5, 'C')).to.equal(true)
+			expect(lsystem.getRule(5)).to.equal('C')
 		})
 		describe('with a string rule', () => {
 			it('should add the rule', () => {
@@ -37,7 +37,7 @@ describe('lSystem', ()=>{
 		describe('with a function', () => {
 			it('should add the rule', () => {
 				expect(lsystem.addRule('B', () => 'C')).to.equal(true)
-				expect(lsystem.getRule('B')()).to.equal('C')
+				expect(lsystem.getRule('B')).to.equal('C')
 			})
 			it('should test the return value is a string', () => {
 				expect(lsystem.addRule('B', () => 5)).to.equal(false)
@@ -52,19 +52,120 @@ describe('lSystem', ()=>{
 				expect(arrayRuleSpy).to.have.been.calledWith('B', testArray);
 			})
 		})
-		describe('with an object', () => {
-			it('should only take numeric keys')
-			it('should distribute the probability over the sum of the given keys')
-			describe('with a string value', () => {
-				it('should add the rule')
+	})
+	describe('#addRuleArray', () => {
+		it('should add a RandomProbabilitySet', () => {
+			let testArray = ['C', 'D', 'E'];
+			lsystem.addRuleArray('B', testArray);
+			expect(testArray.includes(lsystem.getRule('B'))).to.equal(true);
+		})
+		it('should add a RandomProbabilitySet with functions that return strings', () => {
+			let testFunctions = [function(){ return 'C'}, function(){ return 'D'}];
+			lsystem.addRuleArray('B', testFunctions);
+			expect(['C', 'D'].includes(lsystem.getRule('B'))).to.equal(true);
+		})
+		it('should add a RandomProbabilitySet with mixed', () => {
+			let testFunctions = [function(){ return 'C'}, 'D'];
+			lsystem.addRuleArray('B', testFunctions);
+			expect(['C', 'D'].includes(lsystem.getRule('B'))).to.equal(true);
+		})
+		describe('with objects', () => {
+			it('should not add anything when probability is not present', (done) => {
+				let testArray = [{ value: 'C', probability: 20 }, { value: 'D', probability: 10 }, { value: 'E' }];
+				try {
+					lsystem.addRuleArray('B', testArray);
+					done('did not throw error')
+				} catch (e) {
+					expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
+					expect(lsystem.getRule('B')).to.equal(false);
+					done();
+				}
 			})
-			describe('with a function value', () => {
-				it('should add the rule')
-				it('should test the return value is a string')
+			describe('with value', () => {
+				it('should add a DistributedProbabilitySet when the value is a string', () => {
+					let testArray = [{ value: 'C', probability: 20 }, { value: 'D', probability: 10 }, { value: 'E', probability: 10 }];
+					lsystem.addRuleArray('B', testArray);
+					expect(['C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
+				})
+				it('should add a DistributedProbabilitySet when the value returns a string', () => {
+					let testFunctionValues = [
+						{ value: function() { return 'C' }, probability: 20 },
+						{ value: function() { return 'D' }, probability: 10 },
+						{ value: function() { return 'E' }, probability: 15 }];
+					lsystem.addRuleArray('B', testFunctionValues);
+					expect(['C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
+				})
+				it('should add a DistributedProbabilitySet when mixed', () => {
+					let testFunctionValues = [
+						{ value: function() { return 'C' }, probability: 20 },
+						{ value: 'D', probability: 10 },
+						{ value: function() { return 'E' }, probability: 15 }];
+					lsystem.addRuleArray('B', testFunctionValues);
+					expect(['C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
+				})
+				it('should not add undefined values', (done) => {
+					let testArray = [{ value: 'C', probability: 20 }, { value: undefined, probability: 10 }, { value: 'E', probability: 15 }];
+					try {
+						lsystem.addRuleArray('B', testArray);
+						done('did not throw error')
+					} catch (e) {
+						expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
+						expect(lsystem.getRule('B')).to.equal(false);
+						done();
+					}
+				})
+				it('should not add functions that return undefined values', (done) => {
+					let testFunctionValues = [
+						{ value: function() { return 'C' }, probability: 20 },
+						{ value: function() { 'D' }, probability: 10 },
+						{ value: function() { return 'E' }, probability: 15 }];
+						try {
+							lsystem.addRuleArray('B', testFunctionValues);
+							done('did not throw error')
+						} catch (e) {
+							expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
+							expect(lsystem.getRule('B')).to.equal(false);
+							done();
+						}
+				})
 			})
-			describe('with an array value', () => {
-				it('should add a function that does an even split of probability')
-				it('should test each item is a string')
+			describe('with set/max', () => {
+				it('should add a DistributedProbabilitySet when the set contains string', () => {
+					let testArray = [{ set: ['C', 'D', 'E'], probability: 20 }, { value: 'F', probability: 10 }];
+					lsystem.addRuleArray('B', testArray);
+					expect(['C', 'D', 'E', 'F'].includes(lsystem.getRule('B'))).to.equal(true);
+				})
+				it('should add a DistributedProbabilitySet when the value returns a string', () => {
+					let testFunctionValues = [
+						{ set: [function() { return 'C' }, function() { return 'D' }], probability: 20 },
+						{ value: function() { return 'E' }, probability: 15 }];
+					lsystem.addRuleArray('B', testFunctionValues);
+					expect(['C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
+				})
+				it('should not add undefined values', (done) => {
+					let testArray = [{ set: ['C', undefined], probability: 20 }, { value: 'E', probability: 15 }];
+						try {
+							lsystem.addRuleArray('B', testArray);
+							done('did not throw error')
+						} catch (e) {
+							expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
+							expect(lsystem.getRule('B')).to.equal(false);
+							done();
+						}
+				})
+				it('should not add functions that return undefined values', (done) => {
+					let testFunctionValues = [
+						{ set: [function() { return 'C' }, function(){} ], probability: 20 },
+						{ value: function() { return 'E' }, probability: 15 }];
+						try {
+							lsystem.addRuleArray('B', testFunctionValues);
+							done('did not throw error')
+						} catch (e) {
+							expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
+							expect(lsystem.getRule('B')).to.equal(false);
+							done();
+						}
+				})
 			})
 		})
 	})
