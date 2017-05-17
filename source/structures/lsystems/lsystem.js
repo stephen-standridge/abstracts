@@ -131,6 +131,14 @@ class lSystem {
 		return (rule && rule.call && rule(...a)) || rule || false;
 	}
 
+	iterateSteps(callback) {
+		return this._production.map((production, pIndex) => this.iterateStep(callback, pIndex))
+	}
+
+	iterateStep(callback, step=this.currentStep) {
+ 		return this._production[step].split('').map((item, iIndex) => callback(item, step, iIndex))
+	}
+
 	build(start=0, end=this.maxStep) {
 		//builds out the whole lSystem
 	}

@@ -363,26 +363,62 @@ describe('lSystem', ()=>{
 			lsystem.step();
 			lsystem.step();
 			expect(testSpy).to.have.been.calledWith('B', 0)
+			testSpy.restore();
 		})
 	})
 
 	describe('#iterateSteps', () => {
-		it('should iterate over each item in each production')
+		it('should iterate over each item in each production', () => {
+			let testFunction = function(key, step, index){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem._production[1] = 'BC+C';
+			lsystem._production[2] = 'DDD';
+			lsystem.iterateSteps(testObject.testFunction);
+			expect(testSpy).to.have.been.calledWith('A', 0, 0)
+			expect(testSpy).to.have.been.calledWith('B', 1, 0)
+			expect(testSpy).to.have.been.calledWith('C', 1, 1)
+			expect(testSpy).to.have.been.calledWith('+', 1, 2)
+			expect(testSpy).to.have.been.calledWith('C', 1, 3)
+			expect(testSpy).to.have.been.calledWith('D', 2, 0)
+			expect(testSpy).to.have.been.calledWith('D', 2, 0)
+			expect(testSpy).to.have.been.calledWith('D', 2, 0)
+			testSpy.restore();
+		})
 	})
 
 	describe('#iterateStep', () => {
-		it('should iterate over each item in the given/current production')
-	})
+		it('should iterate over each item in the current production', () => {
+			let testFunction = function(key, step, index){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem._production[1] = 'BC+C';
+			lsystem._production[2] = 'DDD';
+			lsystem.currentStep = 1;
 
-	describe('#iterateStepsWithContext', () => {
-		it('should iterate over each item in each production')
-		it('should correctly pass the left and right context within a step')
-		it('should not pass context between steps')
-	})
+			lsystem.iterateStep(testObject.testFunction);
+			expect(testSpy).not.to.have.been.calledWith('A', 0, 0)
+			expect(testSpy).to.have.been.calledWith('B', 1, 0)
+			expect(testSpy).to.have.been.calledWith('C', 1, 1)
+			expect(testSpy).to.have.been.calledWith('+', 1, 2)
+			expect(testSpy).to.have.been.calledWith('C', 1, 3)
+			expect(testSpy).not.to.have.been.calledWith('D', 2, 0)
+		})
+		it('should iterate over each item in the given production', () => {
+			let testFunction = function(key, step, index){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem._production[1] = 'BC+C';
+			lsystem._production[2] = 'DDD';
+			lsystem.currentStep = 1;
 
-	describe('#iterateStep', () => {
-		it('should iterate over each item in the given/current production')
-		it('should correctly pass the left and right context')
+			lsystem.iterateStep(testObject.testFunction, 2);
+			expect(testSpy).not.to.have.been.calledWith('A', 0, 0)
+			expect(testSpy).not.to.have.been.calledWith('B', 1, 0)
+			expect(testSpy).to.have.been.calledWith('D', 2, 0)
+			expect(testSpy).to.have.been.calledWith('D', 2, 1)
+			expect(testSpy).to.have.been.calledWith('D', 2, 2)
+		})
 	})
 
 	describe('#build', () => {
