@@ -33,11 +33,25 @@ describe('lSystem', ()=>{
 				expect(lsystem.addRule('B', 'C')).to.equal(true)
 				expect(lsystem.getRule('B')).to.equal('C')
 			})
+			it('should call remove rule', () => {
+				expect(lsystem.addRule('B', 'C')).to.equal(true)
+				let removeRuleSpy = sinon.spy(lsystem, 'removeRule');
+				expect(lsystem.addRule('B', 'D')).to.equal(true)
+				expect(removeRuleSpy).to.have.been.calledWith('B')
+				expect(lsystem.getRule('B')).to.equal('D')
+			})
 		})
 		describe('with a function', () => {
 			it('should add the rule', () => {
 				expect(lsystem.addRule('B', () => 'C')).to.equal(true)
 				expect(lsystem.getRule('B')).to.equal('C')
+			})
+			it('should call remove rule', () => {
+				expect(lsystem.addRule('B', () => 'C')).to.equal(true)
+				let removeRuleSpy = sinon.spy(lsystem, 'removeRule');
+				lsystem.addRule('B', () => 'D')
+				expect(removeRuleSpy).to.have.been.calledWith('B')
+				expect(lsystem.getRule('B')).to.equal('D')
 			})
 			it('should test the return value is a string', () => {
 				expect(lsystem.addRule('B', () => 5)).to.equal(false)
@@ -59,6 +73,15 @@ describe('lSystem', ()=>{
 			lsystem.addRuleArray('B', testArray);
 			expect(testArray.includes(lsystem.getRule('B'))).to.equal(true);
 		})
+		it('should remove existing rules', () => {
+			let testArray = ['C', 'D', 'E'];
+			let testArray2 = ['F', 'G', 'H'];
+			lsystem.addRuleArray('B', testArray2);
+			let removeRuleSpy = sinon.spy(lsystem, 'removeRule');
+			lsystem.addRuleArray('B', testArray);
+			expect(removeRuleSpy).to.have.been.calledWith('B');
+			expect(testArray.includes(lsystem.getRule('B'))).to.equal(true);
+		})
 		it('should add a RandomProbabilitySet with functions that return strings', () => {
 			let testFunctions = [function(){ return 'C'}, function(){ return 'D'}];
 			lsystem.addRuleArray('B', testFunctions);
@@ -70,21 +93,24 @@ describe('lSystem', ()=>{
 			expect(['C', 'D'].includes(lsystem.getRule('B'))).to.equal(true);
 		})
 		describe('with objects', () => {
-			it('should not add anything when probability is not present', (done) => {
+			it('should not add anything when probability is not present', () => {
 				let testArray = [{ value: 'C', probability: 20 }, { value: 'D', probability: 10 }, { value: 'E' }];
-				try {
 					lsystem.addRuleArray('B', testArray);
-					done('did not throw error')
-				} catch (e) {
-					expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
 					expect(lsystem.getRule('B')).to.equal(false);
-					done();
-				}
 			})
 			describe('with value', () => {
 				it('should add a DistributedProbabilitySet when the value is a string', () => {
 					let testArray = [{ value: 'C', probability: 20 }, { value: 'D', probability: 10 }, { value: 'E', probability: 10 }];
 					lsystem.addRuleArray('B', testArray);
+					expect(['C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
+				})
+				it('should remove existing rules', () => {
+					let testArray = [{ value: 'C', probability: 20 }, { value: 'D', probability: 10 }, { value: 'E', probability: 10 }];
+					let testArray2 = [{ value: 'F', probability: 20 }, { value: 'G', probability: 10 }, { value: 'H', probability: 10 }];
+					lsystem.addRuleArray('B', testArray2);
+					let removeRuleSpy = sinon.spy(lsystem, 'removeRule')
+					lsystem.addRuleArray('B', testArray);
+					expect(removeRuleSpy).to.have.been.calledWith('B')
 					expect(['C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
 				})
 				it('should add a DistributedProbabilitySet when the value returns a string', () => {
@@ -103,30 +129,19 @@ describe('lSystem', ()=>{
 					lsystem.addRuleArray('B', testFunctionValues);
 					expect(['C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
 				})
-				it('should not add undefined values', (done) => {
+				it('should not add undefined values', () => {
 					let testArray = [{ value: 'C', probability: 20 }, { value: undefined, probability: 10 }, { value: 'E', probability: 15 }];
-					try {
-						lsystem.addRuleArray('B', testArray);
-						done('did not throw error')
-					} catch (e) {
-						expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
-						expect(lsystem.getRule('B')).to.equal(false);
-						done();
-					}
+					lsystem.addRuleArray('B', testArray);
+					expect(lsystem.getRule('B')).to.equal(false);
 				})
-				it('should not add functions that return undefined values', (done) => {
+				it('should not add functions that return undefined values', () => {
 					let testFunctionValues = [
 						{ value: function() { return 'C' }, probability: 20 },
 						{ value: function() { 'D' }, probability: 10 },
 						{ value: function() { return 'E' }, probability: 15 }];
-						try {
-							lsystem.addRuleArray('B', testFunctionValues);
-							done('did not throw error')
-						} catch (e) {
-							expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
-							expect(lsystem.getRule('B')).to.equal(false);
-							done();
-						}
+						lsystem.addRuleArray('B', testFunctionValues);
+						expect(lsystem.getRule('B')).to.equal(false);
+
 				})
 			})
 			describe('with set/max', () => {
@@ -135,6 +150,15 @@ describe('lSystem', ()=>{
 					lsystem.addRuleArray('B', testArray);
 					expect(['C', 'D', 'E', 'F'].includes(lsystem.getRule('B'))).to.equal(true);
 				})
+				it('should remove existing rules', () => {
+					let testArray = [{ set: ['C', 'D', 'E'], probability: 20 }, { value: 'B', probability: 10 }];
+					let testArray2 = [{ set: ['F', 'G', 'H'], probability: 20 }, { value: 'I', probability: 10 }];
+					lsystem.addRuleArray('B', testArray2);
+					let removeRuleSpy = sinon.spy(lsystem, 'removeRule')
+					lsystem.addRuleArray('B', testArray);
+					expect(removeRuleSpy).to.have.been.calledWith('B')
+					expect(['B', 'C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
+				})
 				it('should add a DistributedProbabilitySet when the value returns a string', () => {
 					let testFunctionValues = [
 						{ set: [function() { return 'C' }, function() { return 'D' }], probability: 20 },
@@ -142,47 +166,62 @@ describe('lSystem', ()=>{
 					lsystem.addRuleArray('B', testFunctionValues);
 					expect(['C', 'D', 'E'].includes(lsystem.getRule('B'))).to.equal(true);
 				})
-				it('should not add undefined values', (done) => {
+				it('should not add undefined values', () => {
 					let testArray = [{ set: ['C', undefined], probability: 20 }, { value: 'E', probability: 15 }];
-						try {
-							lsystem.addRuleArray('B', testArray);
-							done('did not throw error')
-						} catch (e) {
-							expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
-							expect(lsystem.getRule('B')).to.equal(false);
-							done();
-						}
+					lsystem.addRuleArray('B', testArray);
+					expect(lsystem.getRule('B')).to.equal(false);
 				})
-				it('should not add functions that return undefined values', (done) => {
+				it('should not add functions that return undefined values', () => {
 					let testFunctionValues = [
 						{ set: [function() { return 'C' }, function(){} ], probability: 20 },
 						{ value: function() { return 'E' }, probability: 15 }];
-						try {
-							lsystem.addRuleArray('B', testFunctionValues);
-							done('did not throw error')
-						} catch (e) {
-							expect(e.message).to.equal(`lSystem: could not add rule B is the rule formatted properly?`)
-							expect(lsystem.getRule('B')).to.equal(false);
-							done();
-						}
+						lsystem.addRuleArray('B', testFunctionValues);
+						expect(lsystem.getRule('B')).to.equal(false);
 				})
 			})
 		})
 	})
-	describe('#setRules', () => {
-		it('should set the rules to the rule set')
-		it('should not take an undefined rule')
+	describe('#addRules', () => {
+		it('should set the rules to the rule set', () => {
+			let rules = {
+				'B': [{ set: ['Z', 'X'], probability: 20 }, { value: 'Y', probability: 15 }],
+				'C': [{ value: 'W', probability: 20 }, { value: 'V', probability: 10 }, { value: 'U', probability: 5 }],
+				'D': () => { return 'T' },
+				'E': 'S',
+				'F': ['R', 'Q', 'P'],
+				'G': [function(){ return 'O'}, function(){ return 'N'}]
+			}
+			expect(lsystem.addRules(rules)).to.deep.equal([true, true, true, true, true, true]);
+			expect(['Z','X','Y'].includes(lsystem.getRule('B'))).to.equal(true)
+			expect(['U','V','W'].includes(lsystem.getRule('C'))).to.equal(true)
+			expect(lsystem.getRule('D')).to.equal('T')
+			expect(lsystem.getRule('E')).to.equal('S')
+			expect(['P','Q','R'].includes(lsystem.getRule('F'))).to.equal(true)
+			expect(['O','N'].includes(lsystem.getRule('G'))).to.equal(true)
+		})
+		it('should warn about invalid rules', () => {
+			let rules = {
+				'B': [{ set: ['Z', undefined], probability: 20 }, { value: 'Y', probability: 15 }],
+				'C': [{ value: 'W', probability: 20 }, { value: 'V', probability: 10 }, { value: 'U', probability: 5 }],
+				'D': () => { 'T' },
+				'E': 'S',
+				'F': ['R', 'Q', undefined],
+				'G': [function(){ return 'O'}, function(){ return 'N'}]
+			}
+			expect(lsystem.addRules(rules)).to.deep.equal([false, true, false, true, false, true]);
+			expect(['Z','X','Y'].includes(lsystem.getRule('B'))).to.equal(false)
+			expect(['U','V','W'].includes(lsystem.getRule('C'))).to.equal(true)
+			expect(lsystem.getRule('D')).to.equal(false)
+			expect(lsystem.getRule('E')).to.equal('S')
+			expect(['P','Q','R'].includes(lsystem.getRule('F'))).to.equal(false)
+			expect(['O','N'].includes(lsystem.getRule('G'))).to.equal(true)
+		})
 	})
-	describe('#addConstant', () => {
-		it('should set the constant to the constants set')
-		it('should not take an undefined constant')
-	})
-	describe('#setConstants', () => {
-		it('should set the constant to the constants set')
-		it('should not take an undefined constant')
-	})
-	describe('#iterate', () => {
+	describe('#iterateSteps', () => {
 		it('should iterate over each production')
+	})
+	describe('#iterateItems', () => {
+		it('should iterate over each item in each production')
 	})
 	describe('#build', () => {
 		it('should build from the starting index to the ending index')
