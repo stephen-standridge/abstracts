@@ -1,12 +1,12 @@
 import { RandomProbabilitySet, DiscreetProbabilitySet } from '../probability'
 
 class lSystem {
-	constructor(axiom, maxStep = false) {
+	constructor(axiom, maxSteps = false) {
 		this._production = [];
 		this._rules = {};
 		this._sets = [];
 		if (axiom) this._production[0] = axiom;
-		this.maxStep = maxStep;
+		this.maxSteps = maxSteps;
 		this.currentStep = 0;
 	}
 	set production(newProduction) {
@@ -26,6 +26,7 @@ class lSystem {
 	set axiom(newAxiom) {
 		this._production[0] = newAxiom;
 		this.build();
+		this.currentStep = 0;
 	}
 	get axiom() {
 		return this._production[0]
@@ -139,19 +140,26 @@ class lSystem {
  		return this._production[step].split('').map((item, iIndex) => callback(item, step, iIndex))
 	}
 
-	build(start=0, end=this.maxStep) {
+	build(start=0, end=this.maxSteps) {
+		let startingStep = start;
+		if (!this.axiom) { console.warn('no axiom defined, cannot build without an axiom'); return false; }
+		while (!this._production[startingStep]) startingStep--;
+		this.currentStep = startingStep;
+		this.step(end - startingStep);
 		//builds out the whole lSystem
 	}
 	step(count=1) {
-		let thisStep, thisProduction, currentStep = this.currentStep, newProduction = '';
+		let thisStep, thisProduction, prevStep, currentStep = this.currentStep, newProduction = '';
 		if (typeof this._production[this.currentStep] !== 'string') { console.warn(`production at step ${thisStep} is not defined, cannot create a new production.`); return }
 
 		for (let i = 1; i <= count; i++) {
+			newProduction = '';
 			thisStep = currentStep + i;
-			if (this.maxStep && (thisStep >= this.maxStep)) { console.warn(`a max step was defined, cannot step past step ${this.maxStep}`); return }
-			thisProduction = this._production[currentStep];
+			prevStep = currentStep + (i - 1);
+			if (this.maxSteps && (thisStep > this.maxSteps)) { console.warn(`a max step was defined, cannot step past step ${this.maxSteps}`); return }
+			thisProduction = this._production[prevStep];
 			for (let j = 0; j< thisProduction.length; j++) {
-				newProduction += this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || thisProduction[j];
+				newProduction += this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
 			}
 			this._production[thisStep] = newProduction;
 		}

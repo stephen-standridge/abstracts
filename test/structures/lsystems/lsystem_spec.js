@@ -334,8 +334,8 @@ describe('lSystem', ()=>{
 			lsystem.step();
 			expect(lsystem._production[2]).to.equal('ABCAB+AB')
 		})
-		it('should not allow stepping past the maxStep', () => {
-			lsystem.maxStep = 3;
+		it('should not allow stepping past the maxSteps', () => {
+			lsystem.maxSteps = 3;
 			lsystem.step();
 			expect(lsystem._production[0]).to.equal('A')
 			expect(lsystem._production[1]).to.equal('BC')
@@ -344,7 +344,9 @@ describe('lSystem', ()=>{
 			expect(lsystem._production[1]).to.equal('BC')
 			expect(lsystem._production[2]).to.equal('ABCAB')
 			lsystem.step();
-			expect(lsystem._production[3]).to.equal(undefined)
+			expect(lsystem._production[3]).to.equal('BCABCABBCABC')
+			lsystem.step();
+			expect(lsystem._production[4]).to.equal(undefined)
 		})
 		it('should destroy all future steps', () => {
 			lsystem._production[1] = 'BC+C';
@@ -422,28 +424,45 @@ describe('lSystem', ()=>{
 	})
 
 	describe('#build', () => {
-		it('should build from the starting index to the ending index')
-		it('should not go past the maxStep')
-		it('should iterate from 0 to maxStep by default')
-	})
-
-	describe('#getProduction', () => {
-		it('should build to the step if it is not built')
-		it('should get the production at the given step')
-		it('should get the current step by default')
-	})
-	describe('#setProduction', () => {
-		it('should build to the step if it is not built')
-		it('should set the production at the given step')
-		it('should set the current step by default')
-		it('should warn if the production doesnt match the rules')
-	})
-	describe('#getProductions', () => {
-		it('should get the productions')
-		it('should take a delimeter')
-	})
-	describe('#setProductions', () => {
-		it('should set the productions to the array')
-		it('should warn if the production doesnt match the rules')
+		beforeEach(() => {
+			lsystem.addRules({
+				'A': 'BC',
+				'B': 'ABC',
+				'C': 'AB'
+			})
+			lsystem.maxSteps = 3
+		})
+		describe('with a start index', () => {
+			it('should build from the start to the maxSteps', () => {
+				lsystem._production[1] = 'BC+C';
+				lsystem._production[2] = 'DDD';
+				lsystem.build(1,3)
+				expect(lsystem._production.length).to.equal(4)
+				expect(lsystem._production[2]).to.equal('ABCAB+AB')
+				expect(lsystem._production[3]).to.equal('BCABCABBCABC+BCABC')
+			})
+			it('should rebuild if the production at index is not built', () => {
+				lsystem._production[1] = 'BC+C';
+				lsystem._production[2] = undefined;
+				lsystem.build(2)
+				expect(lsystem._production.length).to.equal(4)
+				expect(lsystem._production[2]).to.equal('ABCAB+AB')
+				expect(lsystem._production[3]).to.equal('BCABCABBCABC+BCABC')
+			})
+		})
+		it('should iterate from 0 to maxSteps by default', () => {
+			lsystem.build();
+			expect(lsystem._production.length).to.equal(4);
+		})
+		it('should return false if an axiom is not defined', () => {
+			lsystem.axiom = undefined;
+			expect(lsystem.build()).to.equal(false);
+		})
+		it('should clear anything past end', () => {
+			lsystem._production[1] = 'BC+C';
+			lsystem._production[2] = 'DDD';
+			lsystem.build(0, 1);
+			expect(lsystem._production[2]).to.equal(undefined)
+		})
 	})
 })
