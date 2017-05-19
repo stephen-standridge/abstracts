@@ -1,4 +1,4 @@
-import { FYShuffle } from '../../algorithms/shuffle';
+import { FYShuffle } from '../../utils/shuffle';
 
 class RandomProbabilitySet {
 	constructor(set, choices=1){

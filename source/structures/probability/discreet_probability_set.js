@@ -1,4 +1,4 @@
-import { FYShuffle } from '../../algorithms/shuffle';
+import { FYShuffle } from '../../utils/shuffle';
 import { RandomProbabilitySet } from './random_probability_set';
 
 class DiscreetProbabilitySet {
