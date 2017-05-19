@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-const BoundingBox = abstracts.bounds.BoundingBox;
+import { BoundingBox } from '../../../source/structures/bounds';
 
 
 describe('BoundingBox', ()=>{
@@ -15,7 +15,7 @@ describe('BoundingBox', ()=>{
 			bounding_box = new BoundingBox([1,7],[3,4,5])
 			expect(bounding_box.dimensions).to.equal(2)
 			expect(bounding_box.min).to.have.members([1,4])
-			expect(bounding_box.max).to.have.members([3,7])			
+			expect(bounding_box.max).to.have.members([3,7])
 		})
 	})
 	describe('#center', ()=>{
@@ -50,7 +50,7 @@ describe('BoundingBox', ()=>{
 			it('should be undefined for greater dimensions', ()=>{
 				expect(bounding_box.measurement(2)).to.equal(undefined)
 			})
-		})		
+		})
 	})
 	describe('#extent', ()=>{
 		it('should calculate the half length of the bounding box', ()=>{
@@ -67,8 +67,8 @@ describe('BoundingBox', ()=>{
 			it('should be undefined for greater dimensions', ()=>{
 				expect(bounding_box.extent(2)).to.equal(undefined)
 			})
-		})		
-	})	
+		})
+	})
 	describe('#toParams', ()=>{
 		it('should return its center and extents', ()=>{
 			bounding_box = new BoundingBox([1,2],[3,4])

@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-const lSystem = abstracts.lsystems.lSystem;
+import { lSystem } from '../../../source/structures/lsystems';
 
 describe('lSystem', ()=>{
 	let lsystem;

@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-const SphereGrid = abstracts.grids.SphereGrid;
-const vector = abstracts.vector;
+import { SphereGrid } from '../../../source/structures/grids';
+import * as vector from '../../../source/math/vector';
 
 describe('SphereGrid', ()=>{
 	let grid, test, edge;

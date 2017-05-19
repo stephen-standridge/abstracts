@@ -1,7 +1,6 @@
 import {expect} from 'chai';
 import {includes, filter} from 'lodash';
-const DiscreetProbabilitySet = abstracts.probability.DiscreetProbabilitySet;
-const RandomProbabilitySet = abstracts.probability.RandomProbabilitySet;
+import { DiscreetProbabilitySet, RandomProbabilitySet } from '../../../source/structures/probability';
 
 describe('DiscreetProbabilitySet', ()=>{
 	let set, otherSet;

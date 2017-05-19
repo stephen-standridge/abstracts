@@ -1,5 +1,5 @@
-import {expect} from 'chai';
-const GridTree = abstracts.trees.GridTree
+import { expect } from 'chai';
+import { GridTree } from '../../../source/structures/trees'
 
 describe('Grid', ()=>{
 	let grid, control, test;
@@ -13,7 +13,7 @@ describe('Grid', ()=>{
 			grid = new GridTree([2,2])
 			expect(grid.length).to.equal(4)
 			grid = new GridTree([2,2,2,2])
-			expect(grid.length).to.equal(16)			
+			expect(grid.length).to.equal(16)
 		})
 		it('should handle arbitrary dimensions', ()=>{
 			grid = new GridTree([2,4,3])
@@ -26,20 +26,20 @@ describe('Grid', ()=>{
 			expect(grid.length).to.equal(180)
 			expect(grid.dimensions()).to.deep.equal([3,4,5,3])
 
-			expect(grid.__children[0].dimensions()).to.deep.equal([4,5,3])			
-			expect(grid.__children[0].__children[0].dimensions()).to.deep.equal([5,3])			
-			expect(grid.__children[0].__children[0].__children[0].dimensions()).to.deep.equal([3])			
+			expect(grid.__children[0].dimensions()).to.deep.equal([4,5,3])
+			expect(grid.__children[0].__children[0].dimensions()).to.deep.equal([5,3])
+			expect(grid.__children[0].__children[0].__children[0].dimensions()).to.deep.equal([3])
 
-		})	
+		})
 		it('should correctly populare the density of each node', ()=>{
 			grid = new GridTree([3,4,5,3])
 			expect(grid.length).to.equal(180)
 			expect(grid.density).to.equal(3)
-			expect(grid.__children[0].density).to.equal(4)			
-			expect(grid.__children[0].__children[0].density).to.equal(5)			
-			expect(grid.__children[0].__children[0].__children[0].density).to.equal(3)			
-			
-		})				
+			expect(grid.__children[0].density).to.equal(4)
+			expect(grid.__children[0].__children[0].density).to.equal(5)
+			expect(grid.__children[0].__children[0].__children[0].density).to.equal(3)
+
+		})
 	})
 	describe('#index', ()=>{
 		describe('with a full address', ()=>{
@@ -50,7 +50,7 @@ describe('Grid', ()=>{
 				expect(grid.index([0,2])).to.equal(2)
 				expect(grid.index([2,1])).to.equal(7)
 				expect(grid.index([1,1])).to.equal(4)
-				expect(grid.index([2,2])).to.equal(8)	
+				expect(grid.index([2,2])).to.equal(8)
 			})
 			it('should work in three dimensions', ()=>{
 				grid = new GridTree([3,3,3])
@@ -58,16 +58,16 @@ describe('Grid', ()=>{
 				expect(grid.index([2,1,2])).to.equal(23)
 				expect(grid.index([1,2,0])).to.equal(15)
 				expect(grid.index([1,2,1])).to.equal(16)
-				expect(grid.index([2,2,2])).to.equal(26)				
+				expect(grid.index([2,2,2])).to.equal(26)
 			})
 			it('should handle arbitrary dimensions', ()=>{
 				grid = new GridTree([1,2,3])
 				expect(grid.index([0,0,0])).to.equal(0)
 				expect(grid.index([0,1,0])).to.equal(3)
-				expect(grid.index([0,0,1])).to.equal(1)				
+				expect(grid.index([0,0,1])).to.equal(1)
 				expect(grid.index([0,1,1])).to.equal(4)
-				expect(grid.index([0,0,2])).to.equal(2)					
-				expect(grid.index([0,1,2])).to.equal(5)					
+				expect(grid.index([0,0,2])).to.equal(2)
+				expect(grid.index([0,1,2])).to.equal(5)
 			})
 			it('should handle higher dimensions', ()=>{
 				grid = new GridTree([3,3,3,3])
@@ -80,11 +80,11 @@ describe('Grid', ()=>{
 		describe('an address with null values', ()=>{
 			it('should return a list of cells', ()=>{
 				grid = new GridTree([3,3,3])
-				expect(grid.index([2,2])).to.equal(24)				
-				expect(grid.index([1])).to.equal(9)				
+				expect(grid.index([2,2])).to.equal(24)
+				expect(grid.index([1])).to.equal(9)
 			})
-			it('should work with higher dimensions')	
-			it('should work with arbitrary dimensions')									
+			it('should work with higher dimensions')
+			it('should work with arbitrary dimensions')
 		})
 	})
 	describe('#set', ()=>{
@@ -110,11 +110,11 @@ describe('Grid', ()=>{
 					expect(grid.grid[0]).to.equal('first')
 					expect(grid.grid[2]).to.equal('second')
 					expect(grid.grid[5]).to.equal('third')
-				})				
+				})
 				it('should work in higher dimensions', ()=>{
-					grid = new GridTree([3,3,3,3])	
+					grid = new GridTree([3,3,3,3])
 					expect(grid.set([2,2,2,2], 'hello')).to.eq(true)
-					expect(grid.grid[80]).to.eq('hello')							
+					expect(grid.grid[80]).to.eq('hello')
 				})
 			})
 		})
@@ -141,11 +141,11 @@ describe('Grid', ()=>{
 				expect(grid.get([0,0,0])).to.equal('first')
 				expect(grid.get([0,0,2])).to.equal('second')
 				expect(grid.get([1,0,2])).to.equal('third')
-			})				
+			})
 			it('should work in higher dimensions', ()=>{
-				grid = new GridTree([3,3,3,3])	
+				grid = new GridTree([3,3,3,3])
 				expect(grid.set([2,2,2,2], 'hello')).to.eq(true)
-				expect(grid.get([2,2,2,2])).to.eq('hello')	
+				expect(grid.get([2,2,2,2])).to.eq('hello')
 			})
 		})
 		describe('an address with null values', ()=>{
@@ -154,7 +154,7 @@ describe('Grid', ()=>{
 	})
 	describe('#traverse', ()=>{
 		it('should call the method on each leaf', ()=>{
-			grid = new GridTree([3,3,3])	
+			grid = new GridTree([3,3,3])
 			grid.set([0,0], [0,1,2])
 			grid.set([1,0], [0,1,2])
 			grid.set([2,0], [0,1,2])
@@ -178,17 +178,17 @@ describe('Grid', ()=>{
 
 			expect(ordered[6]).to.have.members([0,1,2])
 			expect(ordered[7]).to.have.members([3,4,5])
-			expect(ordered[8]).to.have.members([6,7,8])			
+			expect(ordered[8]).to.have.members([6,7,8])
 		})
 		it('should allow the node to be set', ()=>{
-			grid = new GridTree([3,3,3])	
+			grid = new GridTree([3,3,3])
 			let ordered = [];
 			grid.traverse(function(item, location){
 				this.value = location.concat('test')
 			})
-			expect(grid.get([0,1])).to.have.members([0,1,'test'])	
-			expect(grid.get([2,2])).to.have.members([2,2,'test'])	
-			expect(grid.get([1,1])).to.have.members([1,1,'test'])	
-		})		
+			expect(grid.get([0,1])).to.have.members([0,1,'test'])
+			expect(grid.get([2,2])).to.have.members([2,2,'test'])
+			expect(grid.get([1,1])).to.have.members([1,1,'test'])
+		})
 	})
 })

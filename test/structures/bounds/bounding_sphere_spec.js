@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-const BoundingSphere = abstracts.bounds.BoundingSphere;
+import { BoundingSphere } from '../../../source/structures/bounds';
 
 describe('BoundingSphere', ()=>{
 	let test, control, bounding_sphere;
@@ -43,7 +43,7 @@ describe('BoundingSphere', ()=>{
 			it('should be undefined for greater dimensions', ()=>{
 				expect(bounding_sphere.measurement(2)).to.equal(undefined)
 			})
-		})		
+		})
 	})
 	describe('#extent', ()=>{
 		it('should calculate the half length of the bounding box', ()=>{
@@ -60,8 +60,8 @@ describe('BoundingSphere', ()=>{
 			it('should be undefined for greater dimensions', ()=>{
 				expect(bounding_sphere.extent(2)).to.equal(undefined)
 			})
-		})		
-	})	
+		})
+	})
 	describe('#toParams', ()=>{
 		it('should return its center and radius', ()=>{
 			bounding_sphere = new BoundingSphere([1,2],3)

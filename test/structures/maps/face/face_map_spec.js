@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-const CubeMap = abstracts.maps.CubeMap;
+import { CubeMap } from '../../../../source/structures/maps';
 
 describe('FaceMap', ()=>{
 	let cube, value, face;

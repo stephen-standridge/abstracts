@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {uniq} from 'lodash';
-const RandomProbabilitySet = abstracts.probability.RandomProbabilitySet;
+import { RandomProbabilitySet } from '../../../source/structures/probability';
 
 describe('RandomProbabilitySet', ()=>{
 	let set;

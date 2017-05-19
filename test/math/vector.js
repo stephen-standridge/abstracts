@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-const vector = abstracts.vector;
+import * as vector from '../../source/math/vector';
 
 describe('vectors', ()=>{
 	describe('#cross', ()=>{

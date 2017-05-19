@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-const Tree = abstracts.trees.Tree
+import { Tree } from '../../../source/structures/trees'
 
 describe('Tree', ()=>{
 	var test, control;
@@ -22,7 +22,7 @@ describe('Tree', ()=>{
 				},
 				nav: {
 					level: 1,
-					node: 1, 
+					node: 1,
 					maxLevel: 5
 				}})
 			expect(test.state.nav.level ).to.equal(1)
@@ -39,14 +39,14 @@ describe('Tree', ()=>{
 			expect(test.state.nav.level ).to.equal(2)
 			expect(test.state.nav.node ).to.equal(1)
 			expect(test.state.nav.maxLevel ).to.equal(3)
-		})				
+		})
 	})
 	describe('#setData', ()=>{
 		it('should set the data state', ()=>{
 			test = new Tree()
 			test.setData([ {value: true}, {value: true}, {value: true}])
-			control = [{value: true, __l: 0, __n: 0}, 
-								{value: true, __l: 1, __n: 0}, 
+			control = [{value: true, __l: 0, __n: 0},
+								{value: true, __l: 1, __n: 0},
 								{value: true, __l: 1, __n: 1}];
 			expect(test.state.data[0].__l).to.equal(control[0].__l)
 			expect(test.state.data[0].__n).to.equal(control[0].__n)
@@ -54,11 +54,11 @@ describe('Tree', ()=>{
 			expect(test.state.data[1].__n).to.equal(control[1].__n)
 			expect(test.state.data[2].__l).to.equal(control[2].__l)
 			expect(test.state.data[2].__n).to.equal(control[2].__n)
-		})	
-	})	
+		})
+	})
 	describe('#eachChild', ()=>{
 		before(()=>{
-			test = new Tree({config:{ branches: 3, depth: 2 }})			
+			test = new Tree({config:{ branches: 3, depth: 2 }})
 		})
 		it('should call function for each child', ()=>{
 			control = [];
@@ -83,7 +83,7 @@ describe('Tree', ()=>{
 			expect(control).to.have.members(['si', 'si', 'si'])
 		})
 		it('should have the appropriate children', ()=>{
-			test.setData([ {value:true}, {value: true}, {value: true}, {value: true}])			
+			test.setData([ {value:true}, {value: true}, {value: true}, {value: true}])
 			control = [];
 			control = test.eachChild(function(item, index){
 				return item
@@ -91,9 +91,9 @@ describe('Tree', ()=>{
 			expect(control[0]['__l']).to.eq(1)
 			expect(control[0]['__n']).to.eq(0)
 			expect(control[1]['__l']).to.eq(1)
-			expect(control[1]['__n']).to.eq(1)			
+			expect(control[1]['__n']).to.eq(1)
 			expect(control[2]['__l']).to.eq(1)
-			expect(control[2]['__n']).to.eq(2)				
+			expect(control[2]['__n']).to.eq(2)
 		})
 	})
 	it('should allow a node to be set', ()=>{
@@ -108,8 +108,8 @@ describe('Tree', ()=>{
 		expect(tree.nodeItem.__l).to.equal(0)
 		expect(tree.nodeItem.__n).to.equal(0)
 		expect(tree.nodeItem.value).to.equal('test')
-		expect(tree.length).to.equal(1)		
-	})	
+		expect(tree.length).to.equal(1)
+	})
 	it('should allow a root to be set', ()=>{
 		const tree = new Tree(2);
 		tree.root = 'test'
@@ -120,7 +120,7 @@ describe('Tree', ()=>{
 	})
 	it('should allow traversal to the first child', ()=>{
 		const tree = new Tree();
-		tree.toFirst()	
+		tree.toFirst()
 		expect(tree.attribute('node')).to.equal(0)
 		expect(tree.attribute('level')).to.equal(1)
 	})
@@ -129,7 +129,7 @@ describe('Tree', ()=>{
 		tree.toLast()
 		expect(tree.attribute('node')).to.equal(2)
 		expect(tree.attribute('level')).to.equal(1)
-	})	
+	})
 	it('should allow traversal to an nth child', ()=>{
 		const tree = new Tree({config:{branches: 3}});
 		tree.toNth(1)
@@ -139,7 +139,7 @@ describe('Tree', ()=>{
 		tree.toParent()
 		tree.toNth(2)
 		expect(tree.attribute('node')).to.equal(2)
-		expect(tree.attribute('level')).to.equal(1)		
+		expect(tree.attribute('level')).to.equal(1)
 	})
 
 	it('should allow traversal to the parent', ()=>{
@@ -175,17 +175,17 @@ describe('Tree', ()=>{
 	})
 	it('should allow getting the address', ()=>{
 		const tree = new Tree({config:{branches: 3}})
-		expect(tree.nodeAddress.__l).to.equal(0)	
-		expect(tree.nodeAddress.__n).to.equal(0)	
-		expect(tree.getChildren('nodeAddress')[0].__l).to.equal(1)		
-		expect(tree.getChildren('nodeAddress')[0].__n).to.equal(0)		
-		expect(tree.getChildren('nodeAddress')[1].__l).to.equal(1)		
-		expect(tree.getChildren('nodeAddress')[1].__n).to.equal(1)	
-		expect(tree.getChildren('nodeAddress')[2].__l).to.equal(1)		
-		expect(tree.getChildren('nodeAddress')[2].__n).to.equal(2)						
+		expect(tree.nodeAddress.__l).to.equal(0)
+		expect(tree.nodeAddress.__n).to.equal(0)
+		expect(tree.getChildren('nodeAddress')[0].__l).to.equal(1)
+		expect(tree.getChildren('nodeAddress')[0].__n).to.equal(0)
+		expect(tree.getChildren('nodeAddress')[1].__l).to.equal(1)
+		expect(tree.getChildren('nodeAddress')[1].__n).to.equal(1)
+		expect(tree.getChildren('nodeAddress')[2].__l).to.equal(1)
+		expect(tree.getChildren('nodeAddress')[2].__n).to.equal(2)
 	})
 	describe('a structured tree', ()=>{
-	let tree;	
+	let tree;
 		beforeEach(()=>{
 			tree = new Tree({config: {branches: 3,depth: 3}});
 			tree.root = 1
@@ -206,7 +206,7 @@ describe('Tree', ()=>{
 
 			tree.toParent()
 			tree.toNth(1)
-			expect(tree.node).to.equal(3)		
+			expect(tree.node).to.equal(3)
 
 			tree.children = [8, 9, 10]
 			tree.toNth(0)
@@ -221,7 +221,7 @@ describe('Tree', ()=>{
 
 			tree.toParent()
 			tree.toNth(2)
-			expect(tree.node).to.equal(4)		
+			expect(tree.node).to.equal(4)
 			tree.children = [11, 12, 13]
 			tree.toNth(0)
 			tree.children = [32, 33, 34]
@@ -231,12 +231,12 @@ describe('Tree', ()=>{
 			tree.toParent()
 			tree.toNth(2)
 			tree.children = [38,39,40]
-			tree.toParent()			
+			tree.toParent()
 
 			tree.root
 		})
 		it('should allow a 1-dimensional view', ()=>{
-			expect(String(tree.toJS('value'))).to.equal(String([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]))	
+			expect(String(tree.toJS('value'))).to.equal(String([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]))
 			expect(String(tree.toJS())).to.equal(String([
 				{ value:1, __n:0, __l:0 },
 				{ value:2, __n:0, __l:1 },
@@ -259,7 +259,7 @@ describe('Tree', ()=>{
 				{ value:19, __n:5, __l:3 },
 				{	value:20, __n:6, __l:3 },
 				{ value:21, __n:7, __l:3 },
-				{ value:22, __n:8, __l:3 },	
+				{ value:22, __n:8, __l:3 },
 				{ value:23, __n:9, __l:3 },
 				{ value:24, __n:10, __l:3 },
 				{ value:25, __n:11, __l:3 },
@@ -269,7 +269,7 @@ describe('Tree', ()=>{
 				{ value:29, __n:15, __l:3 },
 				{	value:30, __n:16, __l:3 },
 				{ value:31, __n:17, __l:3 },
-				{ value:32, __n:18, __l:3 },	
+				{ value:32, __n:18, __l:3 },
 				{ value:33, __n:19, __l:3 },
 				{ value:34, __n:20, __l:3 },
 				{ value:35, __n:21, __l:3 },
@@ -278,7 +278,7 @@ describe('Tree', ()=>{
 				{ value:38, __n:24, __l:3 },
 				{ value:39, __n:25, __l:3 },
 				{	value:40, __n:26, __l:3 }
-			]))		
+			]))
 		})
 		it('should allow for pre-order depth-first traversal', ()=>{
 			let testArray = [],
@@ -295,7 +295,7 @@ describe('Tree', ()=>{
 					}
 					tree.postOrderDepth( callback )
 					expect(String(testArray)).to.equal(String([14,15,16,5, 17,18,19,6, 20,21,22,7,2,23,24,25,8,26,27,28,9,29,30,31,10,3,32,33,34,11,35,36,37,12,38,39,40,13,4,1]))
-		})		
+		})
 		it('should allow for pre-order breadth-first traversal', ()=>{
 			let testArray = [],
 					callback = function(value, node, item){
@@ -308,8 +308,8 @@ describe('Tree', ()=>{
 		it('should allow replacement of nodes', ()=>{
 			tree.toFirst();
 			tree.children = [false, false, false]
-			expect(String(tree.toJS('value'))).to.equal(String([1,2,3,4,false,false,false,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]))	
-		})	
+			expect(String(tree.toJS('value'))).to.equal(String([1,2,3,4,false,false,false,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]))
+		})
 		it('should allow for automatic rerooting when assigning a deep node', ()=>{
 			tree.toLast()
 			tree.toLast()
@@ -320,10 +320,10 @@ describe('Tree', ()=>{
 			tree.toLast()
 			tree.node = 'test'
 
-			// expect(tree.node).to.equal('test')			
-			// expect(tree.attribute('node')).to.equal(8)			
+			// expect(tree.node).to.equal('test')
+			// expect(tree.attribute('node')).to.equal(8)
 			// expect(tree.attribute('level')).to.equal(2)
-			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,32,33,34,35,36,37,38,39,40,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,'test']))	
+			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,32,33,34,35,36,37,38,39,40,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,'test']))
 		})
 		it('should allow for automatic rerooting when assigning deep children', ()=>{
 			tree.toLast()
@@ -334,8 +334,8 @@ describe('Tree', ()=>{
 			expect(tree.attribute('level')).to.equal(3)
 			tree.children = ['test1', 'test2', 'test3']
 
-			// expect(tree.node).to.equal(11)			
-			// expect(tree.attribute('node')).to.equal(0)			
+			// expect(tree.node).to.equal(11)
+			// expect(tree.attribute('node')).to.equal(0)
 			// expect(tree.attribute('level')).to.equal(1)
 			expect(String(tree.toJS('value')) ).to.equal(String([4,11,12,13,32,33,34,35,36,37,38,39,40,'test1','test2','test3'])) })
 
@@ -365,7 +365,7 @@ describe('Tree', ()=>{
 				{ value:22, __n:5, __l:3 },
 				{	value:21, __n:6, __l:3 },
 				{ value:20, __n:7, __l:3 },
-				{ value:19, __n:8, __l:3 },	
+				{ value:19, __n:8, __l:3 },
 				{ value:18, __n:9, __l:3 },
 				{ value:17, __n:10, __l:3 },
 				{ value:16, __n:11, __l:3 },
@@ -375,7 +375,7 @@ describe('Tree', ()=>{
 				{ value:12, __n:15, __l:3 },
 				{	value:11, __n:16, __l:3 },
 				{ value:10, __n:17, __l:3 },
-				{ value:9, __n:18, __l:3 },	
+				{ value:9, __n:18, __l:3 },
 				{ value:8, __n:19, __l:3 },
 				{ value:7, __n:20, __l:3 },
 				{ value:6, __n:21, __l:3 },
@@ -390,7 +390,7 @@ describe('Tree', ()=>{
 				expect(item.__l).to.equal(control[index].__l)
 				expect(item.__n).to.equal(control[index].__n)
 			})
-		})	
+		})
 	})
 
 })
