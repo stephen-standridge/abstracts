@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-import { BoundingBox } from '../../../source/structures/bounds';
+import { BoundingBox } from '../../../source/space/bounds';
 
 
 describe('BoundingBox', ()=>{

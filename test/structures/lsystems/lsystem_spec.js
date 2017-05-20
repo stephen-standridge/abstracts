@@ -14,10 +14,10 @@ describe('lSystem', ()=>{
 			lsystem.axiom = 'B'
 			expect(lsystem.axiom).to.equal('B')
 		})
-		it('should rebuild the entire tree', () => {
-			let buildSpy = sinon.spy(lsystem, 'build')
+		it('should rewrite the entire tree', () => {
+			let writeSpy = sinon.spy(lsystem, 'write')
 			lsystem.axiom = 'B';
-			expect(buildSpy).to.have.been.called;
+			expect(writeSpy).to.have.been.called;
 		})
 		it('should set the axiom as the first production', () => {
 			lsystem.axiom = 'B'
@@ -247,7 +247,7 @@ describe('lSystem', ()=>{
 			expect(lsystem.getRule('A')).to.equal(false)
 		})
 		it('should call the rule with the given arguments', () => {
-			let testFunction = function(key, arg1, arg2, arg3){ return 'yes'}
+			let testFunction = function(...args){ return 'yes'}
 			let testObject = { testFunction };
 			let testSpy = sinon.spy(testObject, 'testFunction');
 			lsystem.addRule('Z', testObject.testFunction)
@@ -314,7 +314,7 @@ describe('lSystem', ()=>{
 			lsystem.step();
 			expect(lsystem.currentStep).to.equal(1)
 		})
-		it('should build the next step', () => {
+		it('should write the next step', () => {
 			lsystem.step();
 			expect(lsystem._production[0]).to.equal('A')
 			expect(lsystem._production[1]).to.equal('BC')
@@ -366,6 +366,20 @@ describe('lSystem', ()=>{
 			lsystem.step();
 			expect(testSpy).to.have.been.calledWith('B', 0)
 			testSpy.restore();
+		})
+		describe('parametric rules', () => {
+			it('should attempt to call the method with the arguments if it encounters a parametric rule', () => {
+				let testFunction = function(...args){ return 'yes'}
+				let testObject = { testFunction };
+				let testSpy = sinon.spy(testObject, 'testFunction');
+
+				lsystem.addRule('K', testObject.testFunction)
+				lsystem._production[1] = 'K(1,2)K(2,3,4,5)';
+				lsystem.currentStep = 1;
+				lsystem.step();
+				expect(testSpy).to.have.been.calledWith('K','1','2',0);
+				expect(testSpy).to.have.been.calledWith('K','2','3','4','5',1);
+			})
 		})
 	})
 
@@ -423,7 +437,7 @@ describe('lSystem', ()=>{
 		})
 	})
 
-	describe('#build', () => {
+	describe('#write', () => {
 		beforeEach(() => {
 			lsystem.addRules({
 				'A': 'BC',
@@ -433,35 +447,35 @@ describe('lSystem', ()=>{
 			lsystem.maxSteps = 3
 		})
 		describe('with a start index', () => {
-			it('should build from the start to the maxSteps', () => {
+			it('should write from the start to the maxSteps', () => {
 				lsystem._production[1] = 'BC+C';
 				lsystem._production[2] = 'DDD';
-				lsystem.build(1,3)
+				lsystem.write(1,3)
 				expect(lsystem._production.length).to.equal(4)
 				expect(lsystem._production[2]).to.equal('ABCAB+AB')
 				expect(lsystem._production[3]).to.equal('BCABCABBCABC+BCABC')
 			})
-			it('should rebuild if the production at index is not built', () => {
+			it('should rewrite if the production at index is not built', () => {
 				lsystem._production[1] = 'BC+C';
 				lsystem._production[2] = undefined;
-				lsystem.build(2)
+				lsystem.write(2)
 				expect(lsystem._production.length).to.equal(4)
 				expect(lsystem._production[2]).to.equal('ABCAB+AB')
 				expect(lsystem._production[3]).to.equal('BCABCABBCABC+BCABC')
 			})
 		})
 		it('should iterate from 0 to maxSteps by default', () => {
-			lsystem.build();
+			lsystem.write();
 			expect(lsystem._production.length).to.equal(4);
 		})
 		it('should return false if an axiom is not defined', () => {
 			lsystem.axiom = undefined;
-			expect(lsystem.build()).to.equal(false);
+			expect(lsystem.write()).to.equal(false);
 		})
 		it('should clear anything past end', () => {
 			lsystem._production[1] = 'BC+C';
 			lsystem._production[2] = 'DDD';
-			lsystem.build(0, 1);
+			lsystem.write(0, 1);
 			expect(lsystem._production[2]).to.equal(undefined)
 		})
 	})

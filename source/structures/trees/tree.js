@@ -21,7 +21,7 @@ class Tree {
 			}
 		};
 	}
-	setState( state ){
+	setState(state){
 		if (state.config){ this.setConfig( state.config ) }
 		if (state.data){ this.setData( state.data ) }
 		if (state.nav){ this.setNav( state.nav )	}

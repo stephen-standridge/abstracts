@@ -11,7 +11,7 @@ class SpaceTreeNode extends TreeNode {
 		this.ready = false;
 	}
 	add(item){
-		this.objects.__id = guid()
+		this.objects.__id = guid();
 		this.objects.push(item)
 		return true
 	}

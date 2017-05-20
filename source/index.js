@@ -7,9 +7,9 @@ import * as grids from './structures/grids'
 import * as nodes from './structures/trees/nodes'
 import * as maps from './structures/maps'
 import * as trees from './structures/trees'
-import * as bounds from './structures/bounds'
+import * as space from './space'
 import * as surfaces from './structures/surfaces'
 import * as lsystems from './structures/lsystems'
 import * as probability from './structures/probability'
 
-export default { nodes, generators, vector, matrix, constants, grids, maps, trees, bounds, surfaces, lsystems, utils, probability }
+export default { nodes, generators, vector, matrix, constants, grids, maps, trees, space, surfaces, lsystems, utils, probability }

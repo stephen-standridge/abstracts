@@ -1,4 +1,5 @@
 import { RandomProbabilitySet, DiscreetProbabilitySet } from '../probability'
+import { matchAll, PARAMETRIC_GRAMMAR_REGEX, IN_PARAMS_REGEX } from '../../utils/regex';
 
 class lSystem {
 	constructor(axiom, maxSteps = false) {
@@ -25,7 +26,7 @@ class lSystem {
 	// getters/setters
 	set axiom(newAxiom) {
 		this._production[0] = newAxiom;
-		this.build();
+		this.write();
 		this.currentStep = 0;
 	}
 	get axiom() {
@@ -119,7 +120,16 @@ class lSystem {
 		this._rules[key] && delete this._rules[key];
 		this._sets[key] && delete this._sets[key];
 	}
-	getRule (key, args=false, left=false, right=false) {
+	getRule (lookup, args=false, left=false, right=false) {
+		let key = String(lookup).slice(), params = [];
+		if (key.length > 1) {
+			//remove the first letter and get the
+			params = key.slice(1,key.length).match(IN_PARAMS_REGEX)[0];
+			params = params.split(',')
+			key = key.slice(0,1);
+		}
+		params.unshift(key)
+
 		let betweenContext = left && right && `${left}<${key}>${right}` || false;
 		let leftContext = left && `${left}<${key}` || false;
 		let rightContext = right && `${key}>${right}` || false;
@@ -128,8 +138,8 @@ class lSystem {
 							 rightContext && this._rules[rightContext] || //get right
 							 this._rules[key]; //default rule
 		//call a rule if it's a function, try returning it if not, else return false
-		let a = args && [key].concat(args) || [key]
-		return (rule && rule.call && rule(...a)) || rule || false;
+		params = args && params.concat(args) || params;
+		return (rule && rule.call && rule(...params)) || rule || false;
 	}
 
 	iterateSteps(callback) {
@@ -140,16 +150,16 @@ class lSystem {
  		return this._production[step].split('').map((item, iIndex) => callback(item, step, iIndex))
 	}
 
-	build(start=0, end=this.maxSteps) {
+	write(start=0, end=this.maxSteps) {
 		let startingStep = start;
-		if (!this.axiom) { console.warn('no axiom defined, cannot build without an axiom'); return false; }
+		if (!this.axiom) { console.warn('no axiom defined, cannot write without an axiom'); return false; }
 		while (!this._production[startingStep]) startingStep--;
 		this.currentStep = startingStep;
 		this.step(end - startingStep);
-		//builds out the whole lSystem
+		//writes out the whole lSystem
 	}
 	step(count=1) {
-		let thisStep, thisProduction, prevStep, currentStep = this.currentStep, newProduction = '';
+		let thisStep, thisProduction, prevStep, currentStep = this.currentStep, newProduction = '', args=[];
 		if (typeof this._production[this.currentStep] !== 'string') { console.warn(`production at step ${thisStep} is not defined, cannot create a new production.`); return }
 
 		for (let i = 1; i <= count; i++) {
@@ -157,10 +167,11 @@ class lSystem {
 			thisStep = currentStep + i;
 			prevStep = currentStep + (i - 1);
 			if (this.maxSteps && (thisStep > this.maxSteps)) { console.warn(`a max step was defined, cannot step past step ${this.maxSteps}`); return }
-			thisProduction = this._production[prevStep];
+			thisProduction = matchAll(this._production[prevStep], PARAMETRIC_GRAMMAR_REGEX);
 			for (let j = 0; j< thisProduction.length; j++) {
 				newProduction += this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
 			}
+
 			this._production[thisStep] = newProduction;
 		}
 		this.currentStep += count;

@@ -2,8 +2,8 @@ import {filter} from 'lodash';
 import {Tree} from './tree';
 import SpaceTreeNode from './nodes/space_tree_node';
 import guid from '../../generators/guid';
-import {BoundingBox} from '../bounds/bounding_box';
-import {BoundingSphere} from '../bounds/bounding_sphere';
+import {BoundingBox} from '../../space/bounds/bounding_box';
+import {BoundingSphere} from '../../space/bounds/bounding_sphere';
 
 class SpaceTree extends Tree {
 	constructor(args={}){
@@ -45,15 +45,15 @@ class SpaceTree extends Tree {
 
 		}
 		if(coordinates) return new BoundingBox(...coordinates)
-		return 
+		return
 	}
-	insert(inserted, method){	
-		let nodeSmallerThanMin = this.node.measurement().reduce((bool, m)=>{ 
-			return bool || m <= this.minSize 
+	insert(inserted, method){
+		let nodeSmallerThanMin = this.node.measurement().reduce((bool, m)=>{
+			return bool || m <= this.minSize
 		}, false)
 
-		if(nodeSmallerThanMin){ 
-			return method ? method(inserted) : this.nodeItem.add(inserted) 
+		if(nodeSmallerThanMin){
+			return method ? method(inserted) : this.nodeItem.add(inserted)
 		}
 
 		let bBox, found = false, parent = this.node;
@@ -61,17 +61,17 @@ class SpaceTree extends Tree {
 		this.eachChild(function(item, index){
 			bBox = this.node || this.division(index, parent)
 			if(bBox.contains(inserted)){
-				if (!item){ 
-					this.node = bBox;					
+				if (!item){
+					this.node = bBox;
 				}
-				found = true								
-				this.insert(inserted, method)			
+				found = true
+				this.insert(inserted, method)
 			}
 		})
 
-		if(!found){ 
-			return method ? method(inserted) : this.nodeItem.add(inserted) 
-		} 
+		if(!found){
+			return method ? method(inserted) : this.nodeItem.add(inserted)
+		}
 	}
 	getClosest(queried){
 		if(!this.nodeItem){ return }
@@ -87,11 +87,11 @@ class SpaceTree extends Tree {
 		return closest;
 	}
 	closest(queried, method) {
-		let nodeSmallerThanMin = this.node.measurement().reduce((bool, m)=>{ 
-			return bool || m <= this.minSize 
+		let nodeSmallerThanMin = this.node.measurement().reduce((bool, m)=>{
+			return bool || m <= this.minSize
 		}, false)
 
-		if(nodeSmallerThanMin){ 
+		if(nodeSmallerThanMin){
 			return this.getClosest(queried)
 		}
 
@@ -101,14 +101,14 @@ class SpaceTree extends Tree {
 			bBox = this.node || this.division(index, parent)
 			if(bBox.contains(queried)){
 				if(!this.node){ return }
-				close = this.closest(queried, method)	
+				close = this.closest(queried, method)
 				if(close){
 					found = true
-				}		
+				}
 			}
 		})
 
-		if(!found){ 
+		if(!found){
 			return this.getClosest(queried)
 		}
 		return close
@@ -122,13 +122,13 @@ class SpaceTree extends Tree {
 	    p = this.randomPoint(),
   		c = this.closest(p),
   		d = c && c.distance ? c.distance(p) : undefined;
-	    if (d == undefined || d > bestDistance) {  	
+	    if (d == undefined || d > bestDistance) {
 	      bestDistance = d;
 	      bestCandidate = p;
 	    }
 	  }
 	  return bestCandidate;
-	}		
+	}
 	makeNode(value) {
 		let val = value == undefined? false : value;
 		return new SpaceTreeNode({ value: value, node: this.attribute('node'), level: this.attribute('level') })

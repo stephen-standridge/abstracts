@@ -8,25 +8,25 @@ class BoundingBox extends Bounds {
 		this.dimensions = this.min.length;
 		this.max.length = this.dimensions;
 	}
-	measurement( dimension ){
-		if(dimension !== undefined) {
-			if(dimension >= this.dimensions){ return }
-			return Math.abs(this.min[dimension] - this.max[dimension])
+	measurement(whichDimension){
+		if(whichDimension !== undefined) {
+			if(whichDimension >= this.dimensions){ return }
+			return Math.abs(this.min[whichDimension] - this.max[whichDimension])
 		}
 		return this.min.map((value, index) => Math.abs(value - this.max[index]) )
 	}
-	extent( dimension ){
-		if(dimension !== undefined) {
-			if(dimension >= this.dimensions){ return }
-			return this.measurement( dimension ) / 2
+	extent(whichDimension){
+		if(whichDimension !== undefined) {
+			if(whichDimension >= this.dimensions){ return }
+			return this.measurement(whichDimension) / 2
 		}
 		return this.measurement().map((val)=> val/2 )
 	}
-	center( dimension ){
-		if(dimension !== undefined) {
-			if(dimension >= this.dimensions){ return }
-			return (this.min[dimension] + this.max[dimension]) / 2
-		}		
+	center(whichDimension){
+		if(whichDimension !== undefined) {
+			if(whichDimension >= this.dimensions){ return }
+			return (this.min[whichDimension] + this.max[whichDimension]) / 2
+		}
 		return this.min.map((value, index)=> (value + this.max[index]) / 2 )
 	}
 	toParams(){

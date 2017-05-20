@@ -1,5 +1,5 @@
 import { SpaceTree } from '../../structures/trees';
-import { BoundingSphere } from '../../structures/bounds';
+import { BoundingSphere } from '../../space/bounds';
 
 export function generateBubbleHeightMap({ min, max, minSize, radius_range, count, detail, roughness }){
   //needs to iterate over width/height and getHeight
@@ -13,6 +13,6 @@ export function generateBubbleHeightMap({ min, max, minSize, radius_range, count
   }
   console.warn('should insert spheres with height map grids')
   console.warn('spacetree should have cube grid')
-  console.warn('spheres should project onto spacetree cube')  
+  console.warn('spheres should project onto spacetree cube')
   console.warn('spacetree cube grid should normalize to sphere')
 }

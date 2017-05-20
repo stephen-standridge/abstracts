@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { matchAll, PARAMETRIC_GRAMMAR_REGEX } from '../../source/utils/regex';
+import { matchAll, PARAMETRIC_GRAMMAR_REGEX, IN_PARAMS_REGEX } from '../../source/utils/regex';
 
 describe('#matchAll', () => {
 	it('should return an array of all matches in a string', () => {
@@ -22,5 +22,12 @@ describe('PARAMETRIC_GRAMMAR_REGEX', () => {
 	it('should identify punctuation', () => {
 		let str = '[a]B?0|B(2.1)0&+-1cC/2';
 		expect(matchAll(str, PARAMETRIC_GRAMMAR_REGEX)).to.deep.equal(['[', 'a', ']', 'B', '?', '|', 'B(2.1)', '&', '+', '-', 'c', 'C', '/'])
+	})
+})
+
+describe('IN_PARAMS_REGEX', () => {
+	it('should identify parametric grammar', () => {
+		let str = '(1.0,3.3)';
+		expect(str.match(IN_PARAMS_REGEX)[0]).to.deep.equal('1.0,3.3')
 	})
 })

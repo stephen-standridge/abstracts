@@ -14,7 +14,8 @@
   "author": "Stephen Standridge <Stephen@formisfunction.io> (www.formisfunction.io)",
   "license": "ISC",
   "dependencies": {
-    "lodash": "^4.16.6"
+    "lodash": "^4.16.6",
+    "rx": "^4.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.2.0",

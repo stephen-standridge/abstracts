@@ -1,5 +1,4 @@
 import Grid from '../grids/grid';
-import {BoundingBox} from '../bounds/bounding_box';
 
 class Cube extends Grid {
 	constructor({detail,min,max,center,extents,dimensions=4}){
