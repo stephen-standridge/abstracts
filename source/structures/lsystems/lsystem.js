@@ -120,7 +120,8 @@ class lSystem {
 		this._rules[key] && delete this._rules[key];
 		this._sets[key] && delete this._sets[key];
 	}
-	getRule (lookup, args=false, left=false, right=false) {
+	getRule(lookup, args=false, ctx={}) {
+		let { left, right } = ctx;
 		let key = String(lookup).slice(), params = [];
 		if (key.length > 1) {
 			//remove the first letter and get the
@@ -147,7 +148,22 @@ class lSystem {
 	}
 
 	iterateStep(callback, step=this.currentStep) {
- 		return this._production[step].split('').map((item, iIndex) => callback(item, step, iIndex))
+		let left, right;
+		let productionArray = matchAll(this._production[step], PARAMETRIC_GRAMMAR_REGEX);
+ 		return productionArray.map((item, index) => {
+ 			if(index !== 0) left = productionArray[index - 1];
+ 			right = productionArray[index+1];
+			let key = String(item).slice(), params = false;
+			if (left && left.length > 1) left = left.slice(0,1);
+			if (right && right.length > 1) right = right.slice(0,1);
+			if (key.length > 1) {
+				//remove the first letter and get the
+				params = key.slice(1,key.length).match(IN_PARAMS_REGEX)[0];
+				params = params.split(',')
+				key = key.slice(0,1);
+			}
+ 			return callback(key, params, { step, index, left, right })
+ 		})
 	}
 
 	write(start=0, end=this.maxSteps) {

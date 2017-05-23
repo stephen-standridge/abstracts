@@ -257,46 +257,46 @@ describe('lSystem', ()=>{
 		describe('context-specific rules', () => {
 			describe('left context match', () => {
 				it('should get the context-specific rule', () => {
-					expect(lsystem.getRule('B', [false], 'A', false)).to.equal('D')
+					expect(lsystem.getRule('B', [false], { left: 'A', right: undefined })).to.equal('D')
 				})
 				it('should return false for inverse matching', () => {
-					expect(lsystem.getRule('A', [false], false, 'B')).to.equal(false)
+					expect(lsystem.getRule('A', [false], { left: undefined, right: 'B' })).to.equal(false)
 				})
 				it('should return the default rule if not found', () => {
-					expect(lsystem.getRule('B', [false], 'C', false)).to.equal('G')
+					expect(lsystem.getRule('B', [false], { left: 'C', right: undefined })).to.equal('G')
 				})
 			})
 			describe('right context match', () => {
 				it('should get the context-specific rule', () => {
-					expect(lsystem.getRule('B', [false], false, 'A')).to.equal('E')
+					expect(lsystem.getRule('B', [false], { left: undefined, right: 'A' })).to.equal('E')
 				})
 				it('should return false for inverse matching', () => {
-					expect(lsystem.getRule('A', [false], 'B', false)).to.equal(false)
+					expect(lsystem.getRule('A', [false], { left: 'B', right: undefined })).to.equal(false)
 				})
 				it('should return the default rule if not found', () => {
-					expect(lsystem.getRule('B', [false], false, 'C')).to.equal('G')
+					expect(lsystem.getRule('B', [false], { left: false, right: 'C' })).to.equal('G')
 				})
 			})
 			describe('between context match', () => {
 				it('should get the context-specific rule with a matching between', () => {
-					expect(lsystem.getRule('B', [false], 'A', 'A')).to.equal('F')
+					expect(lsystem.getRule('B', [false], { left: 'A', right: 'A' })).to.equal('F')
 				})
 				it('should partially match left', () => {
-					expect(lsystem.getRule('B', [false], 'C', 'A')).to.equal('E')
+					expect(lsystem.getRule('B', [false], { left: 'C', right: 'A' })).to.equal('E')
 				})
 				it('should partially match right', () => {
-					expect(lsystem.getRule('B', [false], 'A', 'C')).to.equal('D')
+					expect(lsystem.getRule('B', [false], { left: 'A', right: 'C' })).to.equal('D')
 				})
 				it('should return default rule if not found', () => {
-					expect(lsystem.getRule('B', [false], 'C', 'C')).to.equal('G')
+					expect(lsystem.getRule('B', [false], { left: 'C', right: 'C' })).to.equal('G')
 				})
 			})
 			it('should prioritize between, left, then right', () => {
-				expect(lsystem.getRule('B', [false], 'A', 'A')).to.equal('F')
-				expect(lsystem.getRule('B', [false], 'H', 'A')).to.equal('J')
-				expect(lsystem.getRule('B', [false], false, 'A')).to.equal('E')
-				expect(lsystem.getRule('B', [false], 'A', 'H')).to.equal('D')
-				expect(lsystem.getRule('B', [false], false, 'H')).to.equal('I')
+				expect(lsystem.getRule('B', [false], { left: 'A', right: 'A' })).to.equal('F')
+				expect(lsystem.getRule('B', [false], { left: 'H', right: 'A' })).to.equal('J')
+				expect(lsystem.getRule('B', [false], { left: undefined, right: 'A' })).to.equal('E')
+				expect(lsystem.getRule('B', [false], { left: 'A', right: 'H' })).to.equal('D')
+				expect(lsystem.getRule('B', [false], { left: undefined,  right: 'H' })).to.equal('I')
 			})
 		})
 	})
@@ -391,14 +391,14 @@ describe('lSystem', ()=>{
 			lsystem._production[1] = 'BC+C';
 			lsystem._production[2] = 'DDD';
 			lsystem.iterateSteps(testObject.testFunction);
-			expect(testSpy).to.have.been.calledWith('A', 0, 0)
-			expect(testSpy).to.have.been.calledWith('B', 1, 0)
-			expect(testSpy).to.have.been.calledWith('C', 1, 1)
-			expect(testSpy).to.have.been.calledWith('+', 1, 2)
-			expect(testSpy).to.have.been.calledWith('C', 1, 3)
-			expect(testSpy).to.have.been.calledWith('D', 2, 0)
-			expect(testSpy).to.have.been.calledWith('D', 2, 0)
-			expect(testSpy).to.have.been.calledWith('D', 2, 0)
+			expect(testSpy).to.have.been.calledWith('A', false, { step: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).to.have.been.calledWith('B', false, { step: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { step: 1, index: 1, left: 'B', right: '+' })
+			expect(testSpy).to.have.been.calledWith('+', false, { step: 1, index: 2, left: 'C', right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { step: 1, index: 3, left: '+', right: undefined })
+			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 0, left: undefined, right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 1, left: 'D', right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 2, left: 'D', right: undefined })
 			testSpy.restore();
 		})
 	})
@@ -413,12 +413,12 @@ describe('lSystem', ()=>{
 			lsystem.currentStep = 1;
 
 			lsystem.iterateStep(testObject.testFunction);
-			expect(testSpy).not.to.have.been.calledWith('A', 0, 0)
-			expect(testSpy).to.have.been.calledWith('B', 1, 0)
-			expect(testSpy).to.have.been.calledWith('C', 1, 1)
-			expect(testSpy).to.have.been.calledWith('+', 1, 2)
-			expect(testSpy).to.have.been.calledWith('C', 1, 3)
-			expect(testSpy).not.to.have.been.calledWith('D', 2, 0)
+			expect(testSpy).not.to.have.been.calledWith('A', false, { step: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).to.have.been.calledWith('B', false, { step: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { step: 1, index: 1, left: 'B', right: '+' })
+			expect(testSpy).to.have.been.calledWith('+', false, { step: 1, index: 2, left: 'C', right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { step: 1, index: 3, left: '+', right: undefined })
+			expect(testSpy).not.to.have.been.calledWith('D', false, { step: 2, index: 0, left: undefined, right: undefined })
 		})
 		it('should iterate over each item in the given production', () => {
 			let testFunction = function(key, step, index){ return 'yes'}
@@ -429,11 +429,22 @@ describe('lSystem', ()=>{
 			lsystem.currentStep = 1;
 
 			lsystem.iterateStep(testObject.testFunction, 2);
-			expect(testSpy).not.to.have.been.calledWith('A', 0, 0)
-			expect(testSpy).not.to.have.been.calledWith('B', 1, 0)
-			expect(testSpy).to.have.been.calledWith('D', 2, 0)
-			expect(testSpy).to.have.been.calledWith('D', 2, 1)
-			expect(testSpy).to.have.been.calledWith('D', 2, 2)
+			expect(testSpy).not.to.have.been.calledWith('A', false, { step: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).not.to.have.been.calledWith('B', false, { step: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 0, left: undefined, right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 1, left: 'D', right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 2, left: 'D', right: undefined })
+		})
+		it('should pass in  parametric darguments', () => {
+			let testFunction = function(...args){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+
+			lsystem._production[1] = 'K(1,2)K(2,3,4,5)';
+			lsystem.currentStep = 1;
+			lsystem.iterateStep(testObject.testFunction, 1);
+			expect(testSpy).to.have.been.calledWith('K',['1','2'], { step: 1, index: 0, left: undefined, right: 'K' });
+			expect(testSpy).to.have.been.calledWith('K',['2','3','4','5'], { step: 1, index: 1, left: 'K', right: undefined });
 		})
 	})
 
