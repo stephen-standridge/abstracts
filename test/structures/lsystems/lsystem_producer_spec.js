@@ -301,7 +301,7 @@ describe('lSystemProducer', ()=>{
 		})
 	})
 
-	describe('#step', () => {
+	describe('#produce', () => {
 		beforeEach(() => {
 			lsystem.addRules({
 				'A': 'BC',
@@ -310,19 +310,19 @@ describe('lSystemProducer', ()=>{
 			})
 		})
 		it('should change the current level to the next level', () => {
-			expect(lsystem.currentStep).to.equal(0)
-			lsystem.step();
-			expect(lsystem.currentStep).to.equal(1)
+			expect(lsystem.currentLevel).to.equal(0)
+			lsystem.produce();
+			expect(lsystem.currentLevel).to.equal(1)
 		})
-		it('should write the next step', () => {
-			lsystem.step();
+		it('should write the next production', () => {
+			lsystem.produce();
 			expect(lsystem._production[0]).to.equal('A')
 			expect(lsystem._production[1]).to.equal('BC')
-			lsystem.step();
+			lsystem.produce();
 			expect(lsystem._production[0]).to.equal('A')
 			expect(lsystem._production[1]).to.equal('BC')
 			expect(lsystem._production[2]).to.equal('ABCAB')
-			lsystem.step();
+			lsystem.produce();
 			expect(lsystem._production[0]).to.equal('A')
 			expect(lsystem._production[1]).to.equal('BC')
 			expect(lsystem._production[2]).to.equal('ABCAB')
@@ -330,30 +330,30 @@ describe('lSystemProducer', ()=>{
 		})
 		it('should transfer non-found rules to the string', () => {
 			lsystem._production[1] = 'BC+C';
-			lsystem.currentStep = 1;
-			lsystem.step();
+			lsystem.currentLevel = 1;
+			lsystem.produce();
 			expect(lsystem._production[2]).to.equal('ABCAB+AB')
 		})
-		it('should not allow stepping past the maxSteps', () => {
-			lsystem.maxSteps = 3;
-			lsystem.step();
+		it('should not allow stepping past the maxLevels', () => {
+			lsystem.maxLevels = 3;
+			lsystem.produce();
 			expect(lsystem._production[0]).to.equal('A')
 			expect(lsystem._production[1]).to.equal('BC')
-			lsystem.step();
+			lsystem.produce();
 			expect(lsystem._production[0]).to.equal('A')
 			expect(lsystem._production[1]).to.equal('BC')
 			expect(lsystem._production[2]).to.equal('ABCAB')
-			lsystem.step();
+			lsystem.produce();
 			expect(lsystem._production[3]).to.equal('BCABCABBCABC')
-			lsystem.step();
+			lsystem.produce();
 			expect(lsystem._production[4]).to.equal(undefined)
 		})
 		it('should destroy all future steps', () => {
 			lsystem._production[1] = 'BC+C';
 			lsystem._production[2] = 'ABCDEFGH';
 			lsystem._production[3] = 'DDDDD';
-			lsystem.currentStep = 1;
-			lsystem.step();
+			lsystem.currentLevel = 1;
+			lsystem.produce();
 			expect(lsystem._production.length).to.equal(3);
 			expect(lsystem._production[3]).to.equal(undefined);
 		})
@@ -362,8 +362,8 @@ describe('lSystemProducer', ()=>{
 			let testObject = { testFunction };
 			let testSpy = sinon.spy(testObject, 'testFunction');
 			lsystem.addRule('B', testObject.testFunction)
-			lsystem.step();
-			lsystem.step();
+			lsystem.produce();
+			lsystem.produce();
 			expect(testSpy).to.have.been.calledWith('B', 0)
 			testSpy.restore();
 		})
@@ -375,50 +375,84 @@ describe('lSystemProducer', ()=>{
 
 				lsystem.addRule('K', testObject.testFunction)
 				lsystem._production[1] = 'K(1,2)K(2,3,4,5)';
-				lsystem.currentStep = 1;
-				lsystem.step();
+				lsystem.currentLevel = 1;
+				lsystem.produce();
 				expect(testSpy).to.have.been.calledWith('K','1','2',0);
 				expect(testSpy).to.have.been.calledWith('K','2','3','4','5',1);
 			})
 		})
 	})
 
-	describe('#iterateSteps', () => {
+	describe('#iterateLevels', () => {
 		it('should iterate over each item in each production', () => {
 			let testFunction = function(key, step, index){ return 'yes'}
 			let testObject = { testFunction };
 			let testSpy = sinon.spy(testObject, 'testFunction');
 			lsystem._production[1] = 'BC+C';
 			lsystem._production[2] = 'DDD';
-			lsystem.iterateSteps(testObject.testFunction);
-			expect(testSpy).to.have.been.calledWith('A', false, { step: 0, index: 0, left: undefined, right: undefined })
-			expect(testSpy).to.have.been.calledWith('B', false, { step: 1, index: 0, left: undefined, right: 'C' })
-			expect(testSpy).to.have.been.calledWith('C', false, { step: 1, index: 1, left: 'B', right: '+' })
-			expect(testSpy).to.have.been.calledWith('+', false, { step: 1, index: 2, left: 'C', right: 'C' })
-			expect(testSpy).to.have.been.calledWith('C', false, { step: 1, index: 3, left: '+', right: undefined })
-			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 0, left: undefined, right: 'D' })
-			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 1, left: 'D', right: 'D' })
-			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 2, left: 'D', right: undefined })
+			lsystem.iterateLevels(testObject.testFunction);
+			expect(testSpy).to.have.been.calledWith('A', false, { level: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).to.have.been.calledWith('B', false, { level: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { level: 1, index: 1, left: 'B', right: '+' })
+			expect(testSpy).to.have.been.calledWith('+', false, { level: 1, index: 2, left: 'C', right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { level: 1, index: 3, left: '+', right: undefined })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 0, left: undefined, right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 1, left: 'D', right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 2, left: 'D', right: undefined })
+			testSpy.restore();
+		})
+		it('should take a start', () => {
+			let testFunction = function(key, step, index){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem._production[1] = 'BC+C';
+			lsystem._production[2] = 'DDD';
+			lsystem.iterateLevels(testObject.testFunction, 1);
+			expect(testSpy).not.to.have.been.calledWith('A', false, { level: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).to.have.been.calledWith('B', false, { level: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { level: 1, index: 1, left: 'B', right: '+' })
+			expect(testSpy).to.have.been.calledWith('+', false, { level: 1, index: 2, left: 'C', right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { level: 1, index: 3, left: '+', right: undefined })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 0, left: undefined, right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 1, left: 'D', right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 2, left: 'D', right: undefined })
+			testSpy.restore();
+		})
+		it('should take an end', () => {
+			let testFunction = function(key, step, index){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem._production[1] = 'BC+C';
+			lsystem._production[2] = 'DDD';
+			lsystem.iterateLevels(testObject.testFunction, 1, 2);
+			expect(testSpy).not.to.have.been.calledWith('A', false, { level: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).to.have.been.calledWith('B', false, { level: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { level: 1, index: 1, left: 'B', right: '+' })
+			expect(testSpy).to.have.been.calledWith('+', false, { level: 1, index: 2, left: 'C', right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { level: 1, index: 3, left: '+', right: undefined })
+			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 0, left: undefined, right: 'D' })
+			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 1, left: 'D', right: 'D' })
+			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 2, left: 'D', right: undefined })
 			testSpy.restore();
 		})
 	})
 
-	describe('#iterateStep', () => {
+	describe('#iterateLevel', () => {
 		it('should iterate over each item in the current production', () => {
 			let testFunction = function(key, step, index){ return 'yes'}
 			let testObject = { testFunction };
 			let testSpy = sinon.spy(testObject, 'testFunction');
 			lsystem._production[1] = 'BC+C';
 			lsystem._production[2] = 'DDD';
-			lsystem.currentStep = 1;
+			lsystem.currentLevel = 1;
 
-			lsystem.iterateStep(testObject.testFunction);
-			expect(testSpy).not.to.have.been.calledWith('A', false, { step: 0, index: 0, left: undefined, right: undefined })
-			expect(testSpy).to.have.been.calledWith('B', false, { step: 1, index: 0, left: undefined, right: 'C' })
-			expect(testSpy).to.have.been.calledWith('C', false, { step: 1, index: 1, left: 'B', right: '+' })
-			expect(testSpy).to.have.been.calledWith('+', false, { step: 1, index: 2, left: 'C', right: 'C' })
-			expect(testSpy).to.have.been.calledWith('C', false, { step: 1, index: 3, left: '+', right: undefined })
-			expect(testSpy).not.to.have.been.calledWith('D', false, { step: 2, index: 0, left: undefined, right: undefined })
+			lsystem.iterateLevel(testObject.testFunction);
+			expect(testSpy).not.to.have.been.calledWith('A', false, { level: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).to.have.been.calledWith('B', false, { level: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { level: 1, index: 1, left: 'B', right: '+' })
+			expect(testSpy).to.have.been.calledWith('+', false, { level: 1, index: 2, left: 'C', right: 'C' })
+			expect(testSpy).to.have.been.calledWith('C', false, { level: 1, index: 3, left: '+', right: undefined })
+			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 0, left: undefined, right: undefined })
 		})
 		it('should iterate over each item in the given production', () => {
 			let testFunction = function(key, step, index){ return 'yes'}
@@ -426,14 +460,14 @@ describe('lSystemProducer', ()=>{
 			let testSpy = sinon.spy(testObject, 'testFunction');
 			lsystem._production[1] = 'BC+C';
 			lsystem._production[2] = 'DDD';
-			lsystem.currentStep = 1;
+			lsystem.currentLevel = 1;
 
-			lsystem.iterateStep(testObject.testFunction, 2);
-			expect(testSpy).not.to.have.been.calledWith('A', false, { step: 0, index: 0, left: undefined, right: undefined })
-			expect(testSpy).not.to.have.been.calledWith('B', false, { step: 1, index: 0, left: undefined, right: 'C' })
-			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 0, left: undefined, right: 'D' })
-			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 1, left: 'D', right: 'D' })
-			expect(testSpy).to.have.been.calledWith('D', false, { step: 2, index: 2, left: 'D', right: undefined })
+			lsystem.iterateLevel(testObject.testFunction, 2);
+			expect(testSpy).not.to.have.been.calledWith('A', false, { level: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).not.to.have.been.calledWith('B', false, { level: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 0, left: undefined, right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 1, left: 'D', right: 'D' })
+			expect(testSpy).to.have.been.calledWith('D', false, { level: 2, index: 2, left: 'D', right: undefined })
 		})
 		it('should pass in  parametric darguments', () => {
 			let testFunction = function(...args){ return 'yes'}
@@ -441,10 +475,27 @@ describe('lSystemProducer', ()=>{
 			let testSpy = sinon.spy(testObject, 'testFunction');
 
 			lsystem._production[1] = 'K(1,2)K(2,3,4,5)';
-			lsystem.currentStep = 1;
-			lsystem.iterateStep(testObject.testFunction, 1);
-			expect(testSpy).to.have.been.calledWith('K',['1','2'], { step: 1, index: 0, left: undefined, right: 'K' });
-			expect(testSpy).to.have.been.calledWith('K',['2','3','4','5'], { step: 1, index: 1, left: 'K', right: undefined });
+			lsystem.currentLevel = 1;
+			lsystem.iterateLevel(testObject.testFunction, 1);
+			expect(testSpy).to.have.been.calledWith('K',['1','2'], { level: 1, index: 0, left: undefined, right: 'K' });
+			expect(testSpy).to.have.been.calledWith('K',['2','3','4','5'], { level: 1, index: 1, left: 'K', right: undefined });
+		})
+		it('should warn about nonexistent levels', () => {
+			let testFunction = function(key, step, index){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem._production[1] = 'BC+C';
+			lsystem._production[2] = 'DDD';
+			lsystem.iterateLevel(testObject.testFunction, 3);
+			expect(testSpy).not.to.have.been.calledWith('A', false, { level: 0, index: 0, left: undefined, right: undefined })
+			expect(testSpy).not.to.have.been.calledWith('B', false, { level: 1, index: 0, left: undefined, right: 'C' })
+			expect(testSpy).not.to.have.been.calledWith('C', false, { level: 1, index: 1, left: 'B', right: '+' })
+			expect(testSpy).not.to.have.been.calledWith('+', false, { level: 1, index: 2, left: 'C', right: 'C' })
+			expect(testSpy).not.to.have.been.calledWith('C', false, { level: 1, index: 3, left: '+', right: undefined })
+			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 0, left: undefined, right: 'D' })
+			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 1, left: 'D', right: 'D' })
+			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 2, left: 'D', right: undefined })
+			testSpy.restore();
 		})
 	})
 
@@ -455,10 +506,10 @@ describe('lSystemProducer', ()=>{
 				'B': 'ABC',
 				'C': 'AB'
 			})
-			lsystem.maxSteps = 3
+			lsystem.maxLevels = 3
 		})
 		describe('with a start index', () => {
-			it('should write from the start to the maxSteps', () => {
+			it('should write from the start to the maxLevels', () => {
 				lsystem._production[1] = 'BC+C';
 				lsystem._production[2] = 'DDD';
 				lsystem.write(1,3)
@@ -475,7 +526,7 @@ describe('lSystemProducer', ()=>{
 				expect(lsystem._production[3]).to.equal('BCABCABBCABC+BCABC')
 			})
 		})
-		it('should iterate from 0 to maxSteps by default', () => {
+		it('should iterate from 0 to maxLevels by default', () => {
 			lsystem.write();
 			expect(lsystem._production.length).to.equal(4);
 		})

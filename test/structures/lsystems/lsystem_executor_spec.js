@@ -28,9 +28,9 @@ describe('lSystemExecutor', () => {
 			'A<B>A': 'B',
 			'K': function(key, arg1, arg2) { return 'I' }
 		})
-		lsystem.step();
-		lsystem.step();
-		lsystem.step();
+		lsystem.produce();
+		lsystem.produce();
+		lsystem.produce();
 	})
 	describe('#addInstruction', () => {
 		it('should not take anything other than a function or array')
@@ -217,6 +217,53 @@ describe('lSystemExecutor', () => {
 				expect(lsystem.getInstruction('B', [false], { left: 'A', right: 'H' })).to.equal('function2')
 				expect(lsystem.getInstruction('B', [false], { left: undefined,  right: 'H' })).to.equal('function5')
 			})
+		})
+	})
+
+	describe('#execute', () => {
+		beforeEach(() => {
+			lsystem.addRules({
+				'A': 'BC',
+				'B': 'ABC',
+				'C': 'AB'
+			})
+		})
+		it('should write the next level if it doesnt exist', () => {
+			lsystem.produce();
+			expect(lsystem._production[0]).to.equal('A')
+			expect(lsystem._production[1]).to.equal('BC')
+			lsystem.produce();
+			expect(lsystem._production[0]).to.equal('A')
+			expect(lsystem._production[1]).to.equal('BC')
+			expect(lsystem._production[2]).to.equal('ABCAB')
+			lsystem.produce();
+			expect(lsystem._production[0]).to.equal('A')
+			expect(lsystem._production[1]).to.equal('BC')
+			expect(lsystem._production[2]).to.equal('ABCAB')
+			expect(lsystem._production[3]).to.equal('BCABCABBCABC')
+		})
+		it('should pass the current key and index into function instructions', () => {
+			let testFunction = function(key, arg1, arg2, arg3){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem.addRule('B', testObject.testFunction)
+			lsystem.produce();
+			lsystem.produce();
+			expect(testSpy).to.have.been.calledWith('B', 0)
+			testSpy.restore();
+		})
+
+		it('should attempt to call the method with the arguments if it encounters a parametric instruction', () => {
+			let testFunction = function(...args){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+
+			lsystem.addRule('K', testObject.testFunction)
+			lsystem._production[1] = 'K(1,2)K(2,3,4,5)';
+			lsystem.currentLevel = 1;
+			lsystem.produce();
+			expect(testSpy).to.have.been.calledWith('K','1','2',0);
+			expect(testSpy).to.have.been.calledWith('K','2','3','4','5',1);
 		})
 	})
 })
