@@ -5,7 +5,7 @@ class lSystem {
 	constructor(axiom, maxSteps = false) {
 		this._production = [];
 		this._rules = {};
-		this._sets = [];
+		this._ruleSets = {};
 		if (axiom) this._production[0] = axiom;
 		this.maxSteps = maxSteps;
 		this.currentStep = 0;
@@ -36,7 +36,7 @@ class lSystem {
 		return typeof item !== undefined && (typeof item == 'string' || typeof item == 'string' || typeof item == 'boolean')
 	}
 	getFromSet(key) {
-		let found = this._sets[key] && this._sets[key].choose();
+		let found = this._ruleSets[key] && this._ruleSets[key].choose();
 		if (!found) return false;
 		return String(found.call && found(key) || found);
 	}
@@ -52,7 +52,7 @@ class lSystem {
 		let randomSettableItems = rule.filter((item) => this.isStringable(item) || (item && item.call && this.isStringable(item(key))) );
 		if (randomSettableItems.length == rule.length) {
 			this.removeRule(key);
-			this._sets[key] = new RandomProbabilitySet(rule);
+			this._ruleSets[key] = new RandomProbabilitySet(rule);
 			this._rules[key] = this.getFromSet.bind(this, key);
 			return true;
 		}
@@ -74,7 +74,7 @@ class lSystem {
 		});
 		if (discreetSettableItems.length == rule.length) {
 			this.removeRule(key);
-			this._sets[key] = new DiscreetProbabilitySet(rule);
+			this._ruleSets[key] = new DiscreetProbabilitySet(rule);
 			this._rules[key] = this.getFromSet.bind(this, key);
 			return true;
 		}
@@ -118,7 +118,7 @@ class lSystem {
 	}
 	removeRule(key) {
 		this._rules[key] && delete this._rules[key];
-		this._sets[key] && delete this._sets[key];
+		this._ruleSets[key] && delete this._ruleSets[key];
 	}
 	getRule(lookup, args=false, ctx={}) {
 		let { left, right } = ctx;
