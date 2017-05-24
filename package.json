@@ -1,6 +1,6 @@
 {
   "name": "abstracts",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Abstract data structures, algorithms, math",
   "main": "index.js",
   "repository": {
