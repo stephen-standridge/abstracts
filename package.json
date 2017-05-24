@@ -1,11 +1,11 @@
 {
   "name": "abstracts",
   "version": "0.0.1",
-  "description": "A lot of abstract data structures and some math",
+  "description": "Abstract data structures, algorithms, math",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/stephen-standridge/basic-tree"
+    "url": "https://github.com/stephen-standridge/abstracts"
   },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js  --recursive",
@@ -14,8 +14,7 @@
   "author": "Stephen Standridge <Stephen@formisfunction.io> (www.formisfunction.io)",
   "license": "ISC",
   "dependencies": {
-    "lodash": "^4.16.6",
-    "rx": "^4.1.0"
+    "lodash": "^4.16.6"
   },
   "devDependencies": {
     "babel-cli": "^6.2.0",
@@ -29,7 +28,8 @@
     "sinon": "^2.2.0",
     "sinon-chai": "^2.10.0",
     "webpack": "^2.2.1",
-    "webpack-dev-server": "^2.4.1"
+    "webpack-dev-server": "^2.4.1",
+    "rx": "^4.1.0"
   },
   "babel": {
     "presets": [
