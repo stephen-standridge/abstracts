@@ -4,9 +4,7 @@ var prodOutput = {
   path: __dirname + '/dist',
   filename: 'bundle.commonjs.js',
   // export itself to a global var
-  libraryTarget: "commonjs",
-  // name of the global var: "Foo"
-  library: "abstracts"
+  libraryTarget: "commonjs"
 }
 
 var devOutput = {
