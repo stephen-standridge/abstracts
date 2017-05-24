@@ -1,4 +1,4 @@
-import { FYShuffle } from '../../utils/shuffle';
+import { fisherYatesShuffle } from '../../utils/shuffle';
 import { RandomProbabilitySet } from './random_probability_set';
 
 class DiscreetProbabilitySet {
@@ -23,7 +23,7 @@ class DiscreetProbabilitySet {
 	}
 	redistribute() {
 		this._chosen = [];
-		this._shuffled = FYShuffle(Object.keys(this._probabilities));
+		this._shuffled = fisherYatesShuffle(Object.keys(this._probabilities));
 	}
 	choose(seed) {
     //if this set has exhausted its choices, reshuffle

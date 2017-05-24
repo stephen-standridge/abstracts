@@ -1,12 +1,12 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-import { lSystem } from '../../../source/structures/lsystems';
+import { lSystemProducer } from '../../../source/structures/lsystems';
 
-describe('lSystem', ()=>{
+describe('lSystemProducer', ()=>{
 	let lsystem;
 
 	beforeEach(() => {
-		lsystem = new lSystem();
+		lsystem = new lSystemProducer();
 		lsystem.axiom = 'A';
 	})
 	describe('#axiom', ()=>{

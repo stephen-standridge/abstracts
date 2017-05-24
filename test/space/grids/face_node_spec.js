@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import { CubeGrid } from '../../../source/structures/grids';
+import { CubeGrid } from '../../../source/space/grids';
 
 describe('FaceNode', ()=>{
 	let face, grid, value;

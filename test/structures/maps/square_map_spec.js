@@ -1,8 +1,8 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-import { CubeMap } from '../../../../source/structures/maps';
+import { CubeMap } from '../../../source/structures/maps';
 
-describe('FaceMap', ()=>{
+describe('SquareMap', ()=>{
 	let cube, value, face;
 	beforeEach(()=>{
 		cube = new CubeMap([2,2,3], [0,0,0], 1)

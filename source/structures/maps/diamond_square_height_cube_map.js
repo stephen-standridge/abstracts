@@ -1,5 +1,5 @@
 import { CubeMap } from './cube_map.js'
-import { add, descale } from '../../../math/vector'
+import { add, descale } from '../../math/vector'
 
 class DiamondSquareHeightCubeMap extends CubeMap {
   constructor(detail=0, height_range=[0,0], roughness=1){
@@ -7,7 +7,7 @@ class DiamondSquareHeightCubeMap extends CubeMap {
     super([size,size,1]);
     this.max = size - 1;
     this.roughness = roughness
-    this._heightRange = height_range; 
+    this._heightRange = height_range;
   }
   get minHeight(){
     return this._heightRange[0]
@@ -17,30 +17,30 @@ class DiamondSquareHeightCubeMap extends CubeMap {
   }
   get randomNumberInRange(){
     return Number((Math.random() * (this.maxHeight - this.minHeight)) + this.minHeight)
-  }  
+  }
   build(){
     this.eachFace((face, faceIndex)=>{
       this.set([faceIndex,0,0],this.randomNumberInRange)
       this.set([faceIndex,this.max,0],this.randomNumberInRange)
       this.set([faceIndex,this.max,this.max],this.randomNumberInRange)
-      this.set([faceIndex,0,this.max],this.randomNumberInRange) 
+      this.set([faceIndex,0,this.max],this.randomNumberInRange)
 
-      this.diamondSquare(faceIndex,this.max)  
+      this.diamondSquare(faceIndex,this.max)
     })
     this.eachFace((face, faceIndex)=>{
       face.eachEdge((edge, edgeIndex)=>{
         face.setEdge(edgeIndex, descale(add([edge, face.getNextEdge(edgeIndex)]), 2) )
       })
-    })    
+    })
   }
   diamondSquare(faceIndex,level) {
-    let half = level / 2, 
+    let half = level / 2,
         scale = this.roughness * (level/this.max);
 
     if (half < 1) return;
     for (let y = half; y < this.max; y += level) {
       for (let x = half; x < this.max; x += level) {
-        this.square(faceIndex, x, y, half, this.randomNumberInRange * scale );        
+        this.square(faceIndex, x, y, half, this.randomNumberInRange * scale );
       }
     }
     for (let y = 0; y <= this.max; y += half) {
@@ -50,7 +50,7 @@ class DiamondSquareHeightCubeMap extends CubeMap {
     }
     this.diamondSquare(faceIndex, level / 2);
   }
-  square(faceIndex, x, y, level, offset) {   
+  square(faceIndex, x, y, level, offset) {
     var ave = this.average([
       this.get([faceIndex, x - level, y - level]),   // upper left
       this.get([faceIndex, x + level, y - level]),   // upper right
@@ -69,7 +69,7 @@ class DiamondSquareHeightCubeMap extends CubeMap {
     ]);
 
     this.set([faceIndex, x, y], Number(ave + offset));
-  }  
+  }
   average(values) {
     if( this.dimensions[2] == 1 ) return this._average(values);
     let total = [];
@@ -90,7 +90,7 @@ class DiamondSquareHeightCubeMap extends CubeMap {
     let valid = values.filter((val)=> val !== undefined && val !== -1 );
     var total = valid.reduce((sum, val)=>{ return sum + val; }, 0);
     return total / valid.length;
-  }  
+  }
 }
 
 export { DiamondSquareHeightCubeMap }

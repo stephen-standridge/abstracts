@@ -1,5 +1,6 @@
+var HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
-  watch: false, 
+  watch: false,
   entry: [
     './source/index.js'
   ],
@@ -8,17 +9,27 @@ module.exports = {
 	    {
 	      test: /\.js?$/,
 	      exclude: /node_modules/,
-	      loader: 'babel' // 'babel-loader' is also a legal name to reference
+	      loader: 'babel-loader', // 'babel-loader' is also a legal name to reference
+        query: {
+          presets: ['es2015']
+        }
 	    }
 	  ]
-  },  
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      filename: 'index.html',
+      template: 'index.html',
+      inject: true
+    })
+  ],
   watch: true,
   output: {
     path: __dirname + '/dist',
     filename: 'bundle.js',
     // export itself to a global var
-    libraryTarget: "commonjs2",
+    libraryTarget: "var",
     // name of the global var: "Foo"
-    library: "abstracts"    
+    library: "abstracts"
   }
 };

@@ -1,2 +1,2 @@
 export * from './shuffle';
-export * from './emitter';
+export * from './regex';

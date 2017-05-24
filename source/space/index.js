@@ -1,2 +1,3 @@
 export * from './bounds';
-export * from './3DNode';
+export * from './grids';
+export * from './surfaces';

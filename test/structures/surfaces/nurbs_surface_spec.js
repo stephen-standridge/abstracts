@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-import { NurbsSurface } from '../../../source/structures/surfaces'
+import { NurbsSurface } from '../../../source/space/surfaces'
 
 describe('NurbsSurface', ()=>{
 	describe("#generateUniformKnotVector", ()=>{

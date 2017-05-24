@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-import { CubeMap } from '../../../../source/structures/maps';
+import { CubeMap } from '../../../source/structures/maps';
 
 describe('CubeMap', ()=>{
 	let cube, value;

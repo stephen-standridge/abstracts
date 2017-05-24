@@ -1,6 +1,6 @@
 // returns a new array that is a shuffled version of the given array;
 
-function FYShuffle(array) {
+function fisherYatesShuffle(array) {
   let n = (array.length - 1), t, i;
   let arr = array.slice()
   while (n) {
@@ -14,4 +14,4 @@ function FYShuffle(array) {
   return arr;
 }
 
-export { FYShuffle };
+export { fisherYatesShuffle };

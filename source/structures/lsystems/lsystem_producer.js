@@ -1,7 +1,7 @@
 import { RandomProbabilitySet, DiscreetProbabilitySet } from '../probability'
 import { matchAll, PARAMETRIC_GRAMMAR_REGEX, IN_PARAMS_REGEX } from '../../utils/regex';
 
-class lSystem {
+class lSystemProducer {
 	constructor(axiom, maxSteps = false) {
 		this._production = [];
 		this._rules = {};
@@ -83,7 +83,7 @@ class lSystem {
 	addRuleArray(key, rule) {
 		if(this.addRandomProbabilityRuleMaybe(key, rule)) return true;
 		if(this.addDiscreetProbabilityRuleMaybe(key, rule)) return true;
-		console.warn(`lSystem: could not add rule ${key} is the rule formatted properly?`);
+		console.warn(`lSystemProducer: could not add rule ${key} is the rule formatted properly?`);
 		return false;
 	}
 	addRule(key, rule) {
@@ -97,7 +97,7 @@ class lSystem {
 				break;
 			case 'function':
 				if (!this.isStringable(rule(key))) {
-					console.warn(`lSystem: could not add rule ${key} is the rule formatted properly?`);
+					console.warn(`lSystemProducer: could not add rule ${key} is the rule formatted properly?`);
 					return false;
 				}
 				this.removeRule(key);
@@ -111,7 +111,7 @@ class lSystem {
 				}
 			case 'boolean':
 			case 'undefined':
-				console.warn(`lSystem: could not add rule ${key} is the rule formatted properly?`);
+				console.warn(`lSystemProducer: could not add rule ${key} is the rule formatted properly?`);
 				return false;
 				break;
 		}
@@ -172,7 +172,7 @@ class lSystem {
 		while (!this._production[startingStep]) startingStep--;
 		this.currentStep = startingStep;
 		this.step(end - startingStep);
-		//writes out the whole lSystem
+		//writes out the whole lSystemProducer
 	}
 	step(count=1) {
 		let thisStep, thisProduction, prevStep, currentStep = this.currentStep, newProduction = '', args=[];
@@ -198,4 +198,4 @@ class lSystem {
 	}
 }
 
-export { lSystem }
+export { lSystemProducer }

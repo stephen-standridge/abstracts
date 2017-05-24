@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { lSystemSkeleton } from '../../../source/structures/lsystems';
+import { lSystemExecutor } from '../../../source/structures/lsystems';
 import { RandomProbabilitySet, DiscreetProbabilitySet } from '../../../source/structures/probability';
 
-describe('lSystemSkeleton', () => {
+describe('lSystemExecutor', () => {
 	let lsystem,
 		function1 = function(){ return 'function1' },
 		function2 = function(){ return 'function2' },
@@ -20,7 +20,7 @@ describe('lSystemSkeleton', () => {
 		function6
 	}
 	beforeEach(() => {
-		lsystem = new lSystemSkeleton();
+		lsystem = new lSystemExecutor();
 		lsystem.axiom = 'A';
 		lsystem.addRules({
 			'A': 'ABA',

@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-import { CubeGrid } from '../../../source/structures/grids';
+import { CubeGrid } from '../../../source/space/grids';
 
 describe('CubeGrid', ()=>{
 	let grid, test, edge;

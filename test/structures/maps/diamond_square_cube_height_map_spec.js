@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-import { DiamondSquareHeightCubeMap } from '../../../../source/structures/maps';
+import { DiamondSquareHeightCubeMap } from '../../../source/structures/maps';
 
 describe('DiamondSquareHeightCubeMap', ()=>{
 	let cubeMap, value;

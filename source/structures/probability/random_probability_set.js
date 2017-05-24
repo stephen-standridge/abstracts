@@ -1,4 +1,4 @@
-import { FYShuffle } from '../../utils/shuffle';
+import { fisherYatesShuffle } from '../../utils/shuffle';
 
 class RandomProbabilitySet {
 	constructor(set, choices=1){
@@ -9,7 +9,7 @@ class RandomProbabilitySet {
 	}
 	redistribute(){
 		this._chosen = [];
-		this._shuffled = FYShuffle(this._set);
+		this._shuffled = fisherYatesShuffle(this._set);
 	}
 	choose(seed){
     //if this set has exhausted its choices, reshuffle

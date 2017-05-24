@@ -1,7 +1,7 @@
 import { RandomProbabilitySet, DiscreetProbabilitySet } from '../probability'
-import { lSystem } from './lsystem';
+import { lSystemProducer } from './lsystem_producer';
 
-class lSystemSkeleton extends lSystem {
+class lSystemExecutor extends lSystemProducer {
 	constructor(...args){
 		super(...args)
 		this._instructions = {};
@@ -25,7 +25,7 @@ class lSystemSkeleton extends lSystem {
 			case 'string':
 			case 'boolean':
 			case 'undefined':
-				console.warn(`lSystem: could not add instruction ${key}; instructions can only be functions or array of functions.`);
+				console.warn(`lSystemExecutor: could not add instruction ${key}; instructions can only be functions or array of functions.`);
 				return false;
 				break;
 		}
@@ -73,7 +73,7 @@ class lSystemSkeleton extends lSystem {
 	addInstructionArray(key, instruction) {
 		if(this.addRandomProbabilityInstructionMaybe(key, instruction)) return true;
 		if(this.addDiscreetProbabilityInstructionMaybe(key, instruction)) return true;
-		console.warn(`lSystem: could not add instruction ${key} is the instruction formatted properly?`);
+		console.warn(`lSystemExecutor: could not add instruction ${key} is the instruction formatted properly?`);
 		return false;
 	}
 
@@ -106,4 +106,4 @@ class lSystemSkeleton extends lSystem {
 	}
 }
 
-export { lSystemSkeleton }
+export { lSystemExecutor }

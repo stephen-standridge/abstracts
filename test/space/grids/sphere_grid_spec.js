@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
-import { SphereGrid } from '../../../source/structures/grids';
+import { SphereGrid } from '../../../source/space/grids';
 import * as vector from '../../../source/math/vector';
 
 describe('SphereGrid', ()=>{

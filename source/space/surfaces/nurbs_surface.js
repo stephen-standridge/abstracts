@@ -1,4 +1,4 @@
-import {GridTree} from '../trees/grid_tree';
+import {GridTree} from '../../structures/trees/grid_tree';
 import * as vector from '../../math/vector';
 
 class NurbsSurface extends GridTree {
