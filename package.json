@@ -1,13 +1,15 @@
 {
   "name": "abstracts",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Abstract data structures, algorithms, math",
-  "main": "index.js",
+  "main": "dist/bundle.commonjs.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/stephen-standridge/abstracts"
   },
   "scripts": {
+    "start": "webpack-dev-server --open --compress",
+    "prod": "DESTINATION=prod webpack",
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js  --recursive",
     "test:watch": "npm run test -- --watch"
   },

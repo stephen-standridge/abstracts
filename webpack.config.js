@@ -1,4 +1,23 @@
 var HtmlWebpackPlugin = require('html-webpack-plugin');
+
+var prodOutput = {
+  path: __dirname + '/dist',
+  filename: 'bundle.commonjs.js',
+  // export itself to a global var
+  libraryTarget: "commonjs",
+  // name of the global var: "Foo"
+  library: "abstracts"
+}
+
+var devOutput = {
+  path: __dirname + '/dist',
+  filename: 'bundle.var.js',
+  // export itself to a global var
+  libraryTarget: "var",
+  // name of the global var: "Foo"
+  library: "abstracts"
+}
+
 module.exports = {
   watch: false,
   entry: [
@@ -23,13 +42,6 @@ module.exports = {
       inject: true
     })
   ],
-  watch: true,
-  output: {
-    path: __dirname + '/dist',
-    filename: 'bundle.js',
-    // export itself to a global var
-    libraryTarget: "var",
-    // name of the global var: "Foo"
-    library: "abstracts"
-  }
+  watch: process.env.DESTINATION != 'prod',
+  output: process.env.DESTINATION == 'prod' ? prodOutput : devOutput
 };
