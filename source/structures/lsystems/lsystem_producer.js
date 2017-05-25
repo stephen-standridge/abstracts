@@ -75,6 +75,7 @@ class lSystemProducer {
 		return false;
 	}
 	addRule(key, rule) {
+		if (key == '-') { console.warn('lSystemProducer: no support for hyphen rules'); return false; }
 		if (typeof key !== 'string' && typeof key !== 'number') return false;
 		switch (typeof rule) {
 			case 'number':

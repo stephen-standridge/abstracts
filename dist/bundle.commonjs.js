@@ -18251,6 +18251,9 @@ var lSystemProducer = function () {
 	}, {
 		key: 'addRule',
 		value: function addRule(key, rule) {
+			if (key == '-') {
+				console.warn('lSystemProducer: no support for hyphen rules');return false;
+			}
 			if (typeof key !== 'string' && typeof key !== 'number') return false;
 			switch (typeof rule === 'undefined' ? 'undefined' : _typeof(rule)) {
 				case 'number':
@@ -20304,6 +20307,9 @@ var lSystemExecutor = function (_lSystemProducer) {
 	_createClass(lSystemExecutor, [{
 		key: 'addInstruction',
 		value: function addInstruction(key, instruction) {
+			if (key == '-') {
+				console.warn('lSystemProducer: no support for hyphen rules');return false;
+			}
 			if (typeof key !== 'string' && typeof key !== 'number') return false;
 			switch (typeof instruction === 'undefined' ? 'undefined' : _typeof(instruction)) {
 				case 'function':

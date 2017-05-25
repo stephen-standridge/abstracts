@@ -23,6 +23,7 @@ describe('PARAMETRIC_GRAMMAR_REGEX', () => {
 		let str = '[a]B?0|B(2.1)0&+-1c-C/=_\\';
 		expect(matchAll(str, PARAMETRIC_GRAMMAR_REGEX)).to.deep.equal(['[', 'a', ']', 'B', '?', '|', 'B(2.1)', '&', '+', '-', 'c', '-', 'C', '/', '=', '_', '\\' ])
 	})
+	it('should identify dashes before letters')
 })
 
 describe('IN_PARAMS_REGEX', () => {

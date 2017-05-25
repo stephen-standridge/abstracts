@@ -9,6 +9,7 @@ class lSystemExecutor extends lSystemProducer {
 	}
 
 	addInstruction(key, instruction) {
+		if (key == '-') { console.warn('lSystemProducer: no support for hyphen rules'); return false; }
 		if (typeof key !== 'string' && typeof key !== 'number') return false;
 		switch (typeof instruction) {
 			case 'function':

@@ -442,47 +442,23 @@ describe('lSystemProducer', ()=>{
 			let testFunction = function(key, step, index){ return 'yes'}
 			let testObject = { testFunction };
 			let testSpy = sinon.spy(testObject, 'testFunction');
-			lsystem._production[1] = '_-[|+]-?-/=';
+			lsystem._production[1] = '_=[|+]=?=/=';
 			lsystem._production[2] = 'DDD';
 			lsystem.currentLevel = 1;
 
 			lsystem.iterateLevel(testObject.testFunction);
 			expect(testSpy).not.to.have.been.calledWith('A', false, { level: 0, index: 0, left: undefined, right: undefined })
-			expect(testSpy).to.have.been.calledWith('_', false, { level: 1, index: 0, left: undefined, right: '-' })
-			expect(testSpy).to.have.been.calledWith('-', false, { level: 1, index: 1, left: '_', right: '[' })
-			expect(testSpy).to.have.been.calledWith('[', false, { level: 1, index: 2, left: '-', right: '|' })
+			expect(testSpy).to.have.been.calledWith('_', false, { level: 1, index: 0, left: undefined, right: '=' })
+			expect(testSpy).to.have.been.calledWith('=', false, { level: 1, index: 1, left: '_', right: '[' })
+			expect(testSpy).to.have.been.calledWith('[', false, { level: 1, index: 2, left: '=', right: '|' })
 			expect(testSpy).to.have.been.calledWith('|', false, { level: 1, index: 3, left: '[', right: '+' })
 			expect(testSpy).to.have.been.calledWith('+', false, { level: 1, index: 4, left: '|', right: ']' })
-			expect(testSpy).to.have.been.calledWith(']', false, { level: 1, index: 5, left: '+', right: '-' })
-			expect(testSpy).to.have.been.calledWith('-', false, { level: 1, index: 6, left: ']', right: '?' })
-			expect(testSpy).to.have.been.calledWith('?', false, { level: 1, index: 7, left: '-', right: '-' })
-			expect(testSpy).to.have.been.calledWith('-', false, { level: 1, index: 8, left: '?', right: '/' })
-			expect(testSpy).to.have.been.calledWith('/', false, { level: 1, index: 9, left: '-', right: '=' })
+			expect(testSpy).to.have.been.calledWith(']', false, { level: 1, index: 5, left: '+', right: '=' })
+			expect(testSpy).to.have.been.calledWith('=', false, { level: 1, index: 6, left: ']', right: '?' })
+			expect(testSpy).to.have.been.calledWith('?', false, { level: 1, index: 7, left: '=', right: '=' })
+			expect(testSpy).to.have.been.calledWith('=', false, { level: 1, index: 8, left: '?', right: '/' })
+			expect(testSpy).to.have.been.calledWith('/', false, { level: 1, index: 9, left: '=', right: '=' })
 			expect(testSpy).to.have.been.calledWith('=', false, { level: 1, index: 10, left: '/', right: undefined })
-			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 0, left: undefined, right: undefined })
-		})
-		it('should iterate over mixed punctuation letters in the current production', () => {
-			let testFunction = function(key, step, index){ return 'yes'}
-			let testObject = { testFunction };
-			let testSpy = sinon.spy(testObject, 'testFunction');
-			lsystem._production[1] = 'B-C+C+-+B--';
-			lsystem._production[2] = 'DDD';
-			lsystem.currentLevel = 1;
-
-			lsystem.iterateLevel(testObject.testFunction);
-
-			expect(testSpy).not.to.have.been.calledWith('A', false, { level: 0, index: 0, left: undefined, right: undefined })
-			expect(testSpy).to.have.been.calledWith("B", false, { index: 0, left: undefined, level: 1, right: "-" })
-			expect(testSpy).to.have.been.calledWith("-", false, { index: 1, left: "B", level: 1, right: "C" })
-			expect(testSpy).to.have.been.calledWith("C", false, { index: 2, left: "-", level: 1, right: "+" })
-			expect(testSpy).to.have.been.calledWith("+", false, { index: 3, left: "C", level: 1, right: "C" })
-			expect(testSpy).to.have.been.calledWith("C", false, { index: 4, left: "+", level: 1, right: "+" })
-			expect(testSpy).to.have.been.calledWith("+", false, { index: 5, left: "C", level: 1, right: "-" })
-			expect(testSpy).to.have.been.calledWith("-", false, { index: 6, left: "+", level: 1, right: "+" })
-			expect(testSpy).to.have.been.calledWith("+", false, { index: 7, left: "-", level: 1, right: "B" })
-			expect(testSpy).to.have.been.calledWith("B", false, { index: 8, left: "+", level: 1, right: "-" })
-			expect(testSpy).to.have.been.calledWith("-", false, { index: 9, left: "B", level: 1, right: '-' })
-			expect(testSpy).to.have.been.calledWith("-", false, { index: 10, left: "-", level: 1, right: undefined })
 			expect(testSpy).not.to.have.been.calledWith('D', false, { level: 2, index: 0, left: undefined, right: undefined })
 		})
 		it('should iterate over each item in the given production', () => {

@@ -220,14 +220,14 @@ describe('lSystemExecutor', () => {
 		})
 		it('should work with punctuation', () => {
 			lsystem.addInstructions({
-				'-': function1,
+				'=': function1,
 				'+': function2,
 				'|': function3,
 				'[': function4,
 				']': function5,
 				'.': function6
 			})
-			expect(lsystem.getInstruction('-', [false], { left: 'A', right: 'A' })).to.equal('function1')
+			expect(lsystem.getInstruction('=', [false], { left: 'A', right: 'A' })).to.equal('function1')
 			expect(lsystem.getInstruction('+', [false], { left: 'A', right: 'A' })).to.equal('function2')
 			expect(lsystem.getInstruction('|', [false], { left: 'A', right: 'A' })).to.equal('function3')
 			expect(lsystem.getInstruction('[', [false], { left: 'A', right: 'A' })).to.equal('function4')
