@@ -20298,7 +20298,6 @@ var lSystemExecutor = function (_lSystemProducer) {
 
 		_this._instructions = {};
 		_this._instructionSets = {};
-		_this.getInstruction = _this.getInstruction.bind(_this);
 		return _this;
 	}
 
@@ -20424,7 +20423,7 @@ var lSystemExecutor = function (_lSystemProducer) {
 				console.warn('lSystemExecutor: could not execute from ' + start + ' to ' + end + '; Out of range.');
 				return false;
 			}
-			this.iterateLevels(this.getInstruction, start, end);
+			this.iterateLevels(this.getInstruction.bind(this), start, end);
 		}
 	}]);
 
@@ -21110,7 +21109,7 @@ Object.keys(_regex).forEach(function (key) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var PARAMETRIC_GRAMMAR_REGEX = "([a-zA-Z\\^&\\+\\-\\?\\|/\\]\\[\\\\](\\([0-9\\.,]+\\))*)";
+var PARAMETRIC_GRAMMAR_REGEX = "([a-zA-Z\\^&\\+\\_\\-\\=\\?\\|\\/\\]\\[\\\\](\\([0-9\\.,]+\\))*)";
 var IN_PARAMS_REGEX = "\(([^()]+)\)";
 
 exports.PARAMETRIC_GRAMMAR_REGEX = PARAMETRIC_GRAMMAR_REGEX;
