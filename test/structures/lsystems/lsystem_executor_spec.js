@@ -218,6 +218,22 @@ describe('lSystemExecutor', () => {
 				expect(lsystem.getInstruction('B', [false], { left: undefined,  right: 'H' })).to.equal('function5')
 			})
 		})
+		it('should work with punctuation', () => {
+			lsystem.addInstructions({
+				'-': function1,
+				'+': function2,
+				'|': function3,
+				'[': function4,
+				']': function5,
+				'.': function6
+			})
+			expect(lsystem.getInstruction('-', [false], { left: 'A', right: 'A' })).to.equal('function1')
+			expect(lsystem.getInstruction('+', [false], { left: 'A', right: 'A' })).to.equal('function2')
+			expect(lsystem.getInstruction('|', [false], { left: 'A', right: 'A' })).to.equal('function3')
+			expect(lsystem.getInstruction('[', [false], { left: 'A', right: 'A' })).to.equal('function4')
+			expect(lsystem.getInstruction(']', [false], { left: 'A', right: 'A' })).to.equal('function5')
+			expect(lsystem.getInstruction('.', [false], { left: 'A', right: 'A' })).to.equal('function6')
+		})
 	})
 
 	describe('#execute', () => {
@@ -225,7 +241,7 @@ describe('lSystemExecutor', () => {
 			let iterateLevelSpy = sinon.spy(lsystem, 'iterateLevel')
 			lsystem.execute();
 			expect(iterateLevelSpy.callCount).to.equal(1)
-			expect(iterateLevelSpy).to.have.been.calledWith(lsystem.getInstruction, lsystem._production.length - 1)
+			expect(iterateLevelSpy).to.have.been.calledWith(sinon.match((func) => func.name == 'bound getInstruction'), lsystem._production.length - 1)
 			iterateLevelSpy.restore();
 		})
 		it('should call the instruction once per item in the production', () => {

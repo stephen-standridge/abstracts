@@ -20,8 +20,8 @@ describe('PARAMETRIC_GRAMMAR_REGEX', () => {
 		expect(matchAll(str, PARAMETRIC_GRAMMAR_REGEX)).to.deep.equal(['A(1.0,3.3)', 'a', 'B', 'B(2.1)', 'c', 'C'])
 	})
 	it('should identify punctuation', () => {
-		let str = '[a]B?0|B(2.1)0&+-1cC/2';
-		expect(matchAll(str, PARAMETRIC_GRAMMAR_REGEX)).to.deep.equal(['[', 'a', ']', 'B', '?', '|', 'B(2.1)', '&', '+', '-', 'c', 'C', '/'])
+		let str = '[a]B?0|B(2.1)0&+-1c-C/=_\\';
+		expect(matchAll(str, PARAMETRIC_GRAMMAR_REGEX)).to.deep.equal(['[', 'a', ']', 'B', '?', '|', 'B(2.1)', '&', '+', '-', 'c', '-', 'C', '/', '=', '_', '\\' ])
 	})
 })
 

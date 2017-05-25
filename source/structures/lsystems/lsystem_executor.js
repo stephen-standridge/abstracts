@@ -6,7 +6,6 @@ class lSystemExecutor extends lSystemProducer {
 		super(...args)
 		this._instructions = {};
 		this._instructionSets = {};
-		this.getInstruction = this.getInstruction.bind(this)
 	}
 
 	addInstruction(key, instruction) {
@@ -111,7 +110,7 @@ class lSystemExecutor extends lSystemProducer {
 			console.warn(`lSystemExecutor: could not execute from ${start} to ${end}; Out of range.`);
 			return false;
 		}
-		this.iterateLevels(this.getInstruction, start, end);
+		this.iterateLevels(this.getInstruction.bind(this), start, end);
 	}
 }
 
