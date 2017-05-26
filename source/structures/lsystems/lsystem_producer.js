@@ -138,7 +138,11 @@ class lSystemProducer {
 	}
 
 	iterateLevels(callback, start=0, end=this._productionArray.length) {
-		return range(start,end).map((pIndex) => this.iterateLevel(callback, pIndex))
+		let val;
+		return range(start,end).reduce((sum, pIndex) => {
+			val = this.iterateLevel(callback, pIndex);
+			return val !== undefined && sum.concat(val) || sum;
+		}, [])
 	}
 
 	iterateLevel(callback, level=this.currentLevel) {
@@ -147,7 +151,8 @@ class lSystemProducer {
 			console.warn(`lSystemProducer: production at level ${level} is not defined, cannot iterate.`);
 			return false;
 		}
- 		return production.map((item, index) => {
+		let val;
+ 		return production.reduce((sum, item, index) => {
  			if(index !== 0) left = production[index - 1];
  			right = production[index+1];
 			let key = String(item).slice(), params = false;
@@ -159,8 +164,9 @@ class lSystemProducer {
 				params = params.split(',')
 				key = key.slice(0,1);
 			}
- 			return callback(key, params, { level, index, left, right })
- 		})
+ 			val = callback(key, params, { level, index, left, right })
+			return val !== undefined && sum.concat(val) || sum;
+ 		}, [])
 	}
 
 	write(start=0, end=this.maxLevels) {

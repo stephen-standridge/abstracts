@@ -163,8 +163,8 @@ describe('lSystemExecutor', () => {
 		it('should get basic instructions', () => {
 			expect(lsystem.getInstruction('B')).to.equal('function1')
 		})
-		it('should return false if not found', () => {
-			expect(lsystem.getInstruction('A')).to.equal(false)
+		it('should return undefined if not found', () => {
+			expect(lsystem.getInstruction('A')).to.equal(undefined)
 		})
 		it('should call the instruction with the given arguments', () => {
 			let testObject = { function1 };
@@ -179,7 +179,7 @@ describe('lSystemExecutor', () => {
 					expect(lsystem.getInstruction('B', [false], { left: 'A', right: undefined })).to.equal('function2')
 				})
 				it('should return false for inverse matching', () => {
-					expect(lsystem.getInstruction('A', [false], { left: undefined, right: 'B' })).to.equal(false)
+					expect(lsystem.getInstruction('A', [false], { left: undefined, right: 'B' })).to.equal(undefined)
 				})
 				it('should return the default instruction if not found', () => {
 					expect(lsystem.getInstruction('B', [false], { left: 'C', right: undefined })).to.equal('function1')
@@ -190,7 +190,7 @@ describe('lSystemExecutor', () => {
 					expect(lsystem.getInstruction('B', [false], { left: undefined, right: 'A' })).to.equal('function3')
 				})
 				it('should return false for inverse matching', () => {
-					expect(lsystem.getInstruction('A', [false], { left: 'B', right: undefined })).to.equal(false)
+					expect(lsystem.getInstruction('A', [false], { left: 'B', right: undefined })).to.equal(undefined)
 				})
 				it('should return the default instruction if not found', () => {
 					expect(lsystem.getInstruction('B', [false], { left: false, right: 'C' })).to.equal('function1')
@@ -334,9 +334,7 @@ describe('lSystemExecutor', () => {
 			let lastLevelArray = ["function1", "function2", "function1", "function3", "function1", "function2", "function1", "function4", "function1", "function2", "function1", "function3", "function1", "function2", "function1"];
 			//executes from the last to the second to last
 			lsystem.execute(testObject.function5);
-			expect(testSpy5).to.have.been.calledWith([
-				lastLevelArray
-			])
+			expect(testSpy5).to.have.been.calledWith(lastLevelArray)
 			testSpy5.restore();
 		})
 
@@ -349,7 +347,7 @@ describe('lSystemExecutor', () => {
 			})
 			let lastLevelArray = ["function1", "function2", "function1", "function3", "function1", "function2", "function1", "function4", "function1", "function2", "function1", "function3", "function1", "function2", "function1"];
 
-			expect(lsystem.execute()).to.deep.equal([lastLevelArray]);
+			expect(lsystem.execute()).to.deep.equal(lastLevelArray);
 		})
 
 		it('should warn about out of range execution', () => {

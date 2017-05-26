@@ -104,7 +104,7 @@ class lSystemExecutor extends lSystemProducer {
 							 this._instructions[key]; //default instruction
 		//call a instruction if it's a function, try returning it if not, else return false
 		params = args && params.concat(args) || params;
-		return (instruction && instruction.call && instruction(...params)) || false;
+		return (instruction && instruction.call && instruction(...params)) || undefined;
 	}
 
 	execute(callback, start=this._production.length - 1, end=this._production.length) {

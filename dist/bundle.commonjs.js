@@ -18330,9 +18330,11 @@ var lSystemProducer = function () {
 			var start = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 			var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._productionArray.length;
 
-			return (0, _lodash.range)(start, end).map(function (pIndex) {
-				return _this4.iterateLevel(callback, pIndex);
-			});
+			var val = void 0;
+			return (0, _lodash.range)(start, end).reduce(function (sum, pIndex) {
+				val = _this4.iterateLevel(callback, pIndex);
+				return val !== undefined && sum.concat(val) || sum;
+			}, []);
 		}
 	}, {
 		key: 'iterateLevel',
@@ -18346,7 +18348,8 @@ var lSystemProducer = function () {
 				console.warn('lSystemProducer: production at level ' + level + ' is not defined, cannot iterate.');
 				return false;
 			}
-			return production.map(function (item, index) {
+			var val = void 0;
+			return production.reduce(function (sum, item, index) {
 				if (index !== 0) left = production[index - 1];
 				right = production[index + 1];
 				var key = String(item).slice(),
@@ -18359,8 +18362,9 @@ var lSystemProducer = function () {
 					params = params.split(',');
 					key = key.slice(0, 1);
 				}
-				return callback(key, params, { level: level, index: index, left: left, right: right });
-			});
+				val = callback(key, params, { level: level, index: index, left: left, right: right });
+				return val !== undefined && sum.concat(val) || sum;
+			}, []);
 		}
 	}, {
 		key: 'write',
@@ -20425,7 +20429,7 @@ var lSystemExecutor = function (_lSystemProducer) {
 			this._instructions[key]; //default instruction
 			//call a instruction if it's a function, try returning it if not, else return false
 			params = args && params.concat(args) || params;
-			return instruction && instruction.call && instruction.apply(undefined, _toConsumableArray(params)) || false;
+			return instruction && instruction.call && instruction.apply(undefined, _toConsumableArray(params)) || undefined;
 		}
 	}, {
 		key: 'execute',
