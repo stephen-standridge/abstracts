@@ -241,7 +241,7 @@ describe('lSystemExecutor', () => {
 			let iterateLevelSpy = sinon.spy(lsystem, 'iterateLevel')
 			lsystem.execute();
 			expect(iterateLevelSpy.callCount).to.equal(1)
-			expect(iterateLevelSpy).to.have.been.calledWith(sinon.match((func) => func.name == 'bound getInstruction'), lsystem._production.length - 1)
+			expect(iterateLevelSpy).to.have.been.calledWith(sinon.match((func) => func.name == 'bound getInstruction'), lsystem._productionArray.length - 1)
 			iterateLevelSpy.restore();
 		})
 		it('should call the instruction once per item in the production', () => {

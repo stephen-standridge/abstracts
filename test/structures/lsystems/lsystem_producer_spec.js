@@ -21,7 +21,6 @@ describe('lSystemProducer', ()=>{
 		})
 		it('should set the axiom as the first production', () => {
 			lsystem.axiom = 'B'
-			expect(lsystem._production[0]).to.equal('B')
 			expect(lsystem._productionArray[0]).to.deep.equal(['B'])
 		})
 	})
@@ -322,35 +321,27 @@ describe('lSystemProducer', ()=>{
 		})
 		it('should write the next production', () => {
 			lsystem.produce();
-			expect(lsystem._production[1]).to.equal(str1)
 			expect(lsystem._productionArray[1]).to.deep.equal(str1.split(''))
 			lsystem.produce();
-			expect(lsystem._production[2]).to.equal(str2)
 			expect(lsystem._productionArray[2]).to.deep.equal(str2.split(''))
 			lsystem.produce();
-			expect(lsystem._production[3]).to.equal(str3)
 			expect(lsystem._productionArray[3]).to.deep.equal(str3.split(''))
 		})
 		it('should transfer non-found rules to the string', () => {
 			lsystem._productionArray[1] = ['B','C','+','C'];
 			lsystem.currentLevel = 1;
 			lsystem.produce();
-			expect(lsystem._production[2]).to.equal(str4)
 			expect(lsystem._productionArray[2]).to.deep.equal(str4.split(''))
 		})
 		it('should not allow stepping past the maxLevels', () => {
 			lsystem.maxLevels = 3;
 			lsystem.produce();
-			expect(lsystem._production[1]).to.equal(str1)
 			expect(lsystem._productionArray[1]).to.deep.equal(str1.split(''))
 			lsystem.produce();
-			expect(lsystem._production[2]).to.equal(str2)
 			expect(lsystem._productionArray[2]).to.deep.equal(str2.split(''))
 			lsystem.produce();
-			expect(lsystem._production[3]).to.equal(str3)
 			expect(lsystem._productionArray[3]).to.deep.equal(str3.split(''))
 			lsystem.produce();
-			expect(lsystem._production[4]).to.equal(undefined)
 			expect(lsystem._productionArray[4]).to.deep.equal(undefined)
 		})
 		it('should destroy all future steps', () => {
@@ -359,8 +350,6 @@ describe('lSystemProducer', ()=>{
 			lsystem._productionArray[3] = 'DDDDD';
 			lsystem.currentLevel = 1;
 			lsystem.produce();
-			expect(lsystem._production.length).to.equal(3);
-			expect(lsystem._production[3]).to.equal(undefined);
 			expect(lsystem._productionArray.length).to.equal(3);
 			expect(lsystem._productionArray[3]).to.equal(undefined);
 		})
@@ -490,35 +479,29 @@ describe('lSystemProducer', ()=>{
 			})
 			it('should write from the start to the maxLevels', () => {
 				lsystem.write(1,3)
-				expect(lsystem._production.length).to.equal(4)
-				expect(lsystem._production[2]).to.equal(str1)
 				expect(lsystem._productionArray[2]).to.deep.equal(str1.split(''))
-				expect(lsystem._production[3]).to.equal(str2)
 				expect(lsystem._productionArray[3]).to.deep.equal(str2.split(''))
 			})
 			it('should rewrite if the production at index is not built', () => {
 				lsystem._productionArray[2] = undefined;
 				lsystem.write(2)
-				expect(lsystem._production.length).to.equal(4)
-				expect(lsystem._production[2]).to.equal(str1)
 				expect(lsystem._productionArray[2]).to.deep.equal(str1.split(''))
-				expect(lsystem._production[3]).to.equal(str2)
 				expect(lsystem._productionArray[3]).to.deep.equal(str2.split(''))
 			})
 		})
 		it('should iterate from 0 to maxLevels by default', () => {
 			lsystem.write();
-			expect(lsystem._production.length).to.equal(4);
+			expect(lsystem._productionArray.length).to.equal(4);
 		})
 		it('should return false if an axiom is not defined', () => {
 			lsystem.axiom = undefined;
 			expect(lsystem.write()).to.equal(false);
 		})
 		it('should clear anything past end', () => {
-			lsystem._production[1] = 'BC+C';
-			lsystem._production[2] = 'DDD';
+			lsystem._productionArray[1] = 'BC+C'.split('');
+			lsystem._productionArray[2] = 'DDD'.split('');
 			lsystem.write(0, 1);
-			expect(lsystem._production[2]).to.equal(undefined)
+			expect(lsystem._productionArray[2]).to.equal(undefined)
 		})
 	})
 })

@@ -107,8 +107,8 @@ class lSystemExecutor extends lSystemProducer {
 		return (instruction && instruction.call && instruction(...params)) || undefined;
 	}
 
-	execute(callback, start=this._production.length - 1, end=this._production.length) {
-		if (end > this._production.length || end < 0 || start > this._production.length || start < 0){
+	execute(callback, start=this._productionArray.length - 1, end=this._productionArray.length) {
+		if (end > this._productionArray.length || end < 0 || start > this._productionArray.length || start < 0){
 			console.warn(`lSystemExecutor: could not execute from ${start} to ${end}; Out of range.`);
 			return false;
 		}

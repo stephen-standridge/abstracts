@@ -4,12 +4,10 @@ import { matchAll, PARAMETRIC_GRAMMAR_REGEX, IN_PARAMS_REGEX } from '../../utils
 
 class lSystemProducer {
 	constructor(axiom, maxLevels = false) {
-		this._production = [];
 		this._productionArray = [];
 		this._rules = {};
 		this._ruleSets = {};
 		if (axiom) {
-			this._production[0] = axiom;
 			this._productionArray[0] = [axiom];
 		}
 		this.maxLevels = maxLevels;
@@ -17,13 +15,12 @@ class lSystemProducer {
 	}
 	// getters/setters
 	set axiom(newAxiom) {
-		this._production[0] = newAxiom;
 		this._productionArray[0] = [newAxiom];
 		this.write();
 		this.currentLevel = 0;
 	}
 	get axiom() {
-		return this._production[0]
+		return this._productionArray[0][0]
 	}
 	isStringable(item) {
 		return typeof item !== undefined && (typeof item == 'string' || typeof item == 'string' || typeof item == 'boolean')
@@ -141,7 +138,10 @@ class lSystemProducer {
 		let val;
 		return range(start,end).reduce((sum, pIndex) => {
 			val = this.iterateLevel(callback, pIndex);
-			return val !== undefined && sum.concat(val) || sum;
+			if (val == undefined) return sum;
+			val.forEach((item) => sum.push(item));
+			val.length = 0;
+			return sum;
 		}, [])
 	}
 
@@ -164,8 +164,10 @@ class lSystemProducer {
 				params = params.split(',')
 				key = key.slice(0,1);
 			}
- 			val = callback(key, params, { level, index, left, right })
-			return val !== undefined && sum.concat(val) || sum;
+ 			val = callback(key, params, { level, index, left, right });
+ 			if (val == undefined) return sum;
+ 			sum.push(val)
+ 			return sum;
  		}, [])
 	}
 
@@ -181,8 +183,8 @@ class lSystemProducer {
 	}
 
 	produce(count=1) {
-		let thisLevel, thisProduction, prevLevel, currentLevel = this.currentLevel, produced = '', newProduction = '', args=[];
-		if (!this._productionArray[this.currentLevel] && typeof this._production[this.currentLevel] !== 'string') {
+		let thisLevel, thisProduction, prevLevel, currentLevel = this.currentLevel, produced = '', newProduction = '', matched = [], args=[];
+		if (!this._productionArray[this.currentLevel]) {
 			console.warn(`lSystemProducer: production at level ${thisLevel} is not defined, cannot create a new production.`);
 			return false;
 		}
@@ -195,16 +197,16 @@ class lSystemProducer {
 				console.warn(`lSystemProducer: a max level was defined, cannot level past level ${this.maxLevels}`);
 				return false;
 			}
-			thisProduction = this._productionArray[prevLevel] || matchAll(this._production[prevLevel], PARAMETRIC_GRAMMAR_REGEX);
+			thisProduction = this._productionArray[prevLevel];
 			for (let j = 0; j< thisProduction.length; j++) {
 				produced = this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
-				newProduction = newProduction.concat(matchAll(produced, PARAMETRIC_GRAMMAR_REGEX));
+				matched = matchAll(produced, PARAMETRIC_GRAMMAR_REGEX);
+				matched.forEach((item) => newProduction.push(item))
+				matched.length = 0;
 			}
 			this._productionArray[thisLevel] = newProduction
-			this._production[thisLevel] = newProduction.join('');
 		}
 		this.currentLevel += count;
-		this._production.length = this.currentLevel + 1;
 		this._productionArray.length = this.currentLevel + 1;
 	}
 }
