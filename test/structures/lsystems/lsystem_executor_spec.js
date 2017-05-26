@@ -289,7 +289,7 @@ describe('lSystemExecutor', () => {
 				'K': testObject.function3,
 				'I': testObject.function4
 			})
-			lsystem.execute(2);
+			lsystem.execute(undefined, 2);
 			expect(testSpy1.callCount).to.equal(12)
 			expect(testSpy2.callCount).to.equal(6)
 			expect(testSpy3.callCount).to.equal(3)
@@ -312,7 +312,7 @@ describe('lSystemExecutor', () => {
 				'I': testObject.function4
 			})
 			//executes from the last to the second to last
-			lsystem.execute(3, 1);
+			lsystem.execute(undefined, 3, 1);
 			expect(testSpy1.callCount).to.equal(12)
 			expect(testSpy2.callCount).to.equal(6)
 			expect(testSpy3.callCount).to.equal(3)
@@ -323,11 +323,40 @@ describe('lSystemExecutor', () => {
 			testSpy4.restore()
 		})
 
+		it('should take a callback', () => {
+			let testSpy5 = sinon.spy(testObject, 'function5');
+			lsystem.addInstructions({
+				'A': function1,
+				'B': function2,
+				'K': function3,
+				'I': function4
+			})
+			let lastLevelArray = ["function1", "function2", "function1", "function3", "function1", "function2", "function1", "function4", "function1", "function2", "function1", "function3", "function1", "function2", "function1"];
+			//executes from the last to the second to last
+			lsystem.execute(testObject.function5);
+			expect(testSpy5).to.have.been.calledWith([
+				lastLevelArray
+			])
+			testSpy5.restore();
+		})
+
+		it('should return the array of results if no callback is given', () => {
+			lsystem.addInstructions({
+				'A': function1,
+				'B': function2,
+				'K': function3,
+				'I': function4
+			})
+			let lastLevelArray = ["function1", "function2", "function1", "function3", "function1", "function2", "function1", "function4", "function1", "function2", "function1", "function3", "function1", "function2", "function1"];
+
+			expect(lsystem.execute()).to.deep.equal([lastLevelArray]);
+		})
+
 		it('should warn about out of range execution', () => {
-			expect(lsystem.execute(-1, 1)).to.equal(false)
-			expect(lsystem.execute(0, 5)).to.equal(false)
-			expect(lsystem.execute(5, 2)).to.equal(false)
-			expect(lsystem.execute(1, -1)).to.equal(false)
+			expect(lsystem.execute(undefined, -1, 1)).to.equal(false)
+			expect(lsystem.execute(undefined, 0, 5)).to.equal(false)
+			expect(lsystem.execute(undefined, 5, 2)).to.equal(false)
+			expect(lsystem.execute(undefined, 1, -1)).to.equal(false)
 		})
 	})
 })

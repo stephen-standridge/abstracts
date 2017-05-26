@@ -18168,9 +18168,13 @@ var lSystemProducer = function () {
 		_classCallCheck(this, lSystemProducer);
 
 		this._production = [];
+		this._productionArray = [];
 		this._rules = {};
 		this._ruleSets = {};
-		if (axiom) this._production[0] = axiom;
+		if (axiom) {
+			this._production[0] = axiom;
+			this._productionArray[0] = [axiom];
+		}
 		this.maxLevels = maxLevels;
 		this.currentLevel = 0;
 	}
@@ -18324,7 +18328,7 @@ var lSystemProducer = function () {
 			var _this4 = this;
 
 			var start = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-			var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._production.length;
+			var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._productionArray.length;
 
 			return (0, _lodash.range)(start, end).map(function (pIndex) {
 				return _this4.iterateLevel(callback, pIndex);
@@ -18337,15 +18341,14 @@ var lSystemProducer = function () {
 
 			var left = void 0,
 			    right = void 0,
-			    production = this._production[level];
+			    production = this._productionArray[level];
 			if (!production) {
 				console.warn('lSystemProducer: production at level ' + level + ' is not defined, cannot iterate.');
 				return false;
 			}
-			var productionArray = (0, _regex.matchAll)(production, _regex.PARAMETRIC_GRAMMAR_REGEX);
-			return productionArray.map(function (item, index) {
-				if (index !== 0) left = productionArray[index - 1];
-				right = productionArray[index + 1];
+			return production.map(function (item, index) {
+				if (index !== 0) left = production[index - 1];
+				right = production[index + 1];
 				var key = String(item).slice(),
 				    params = false;
 				if (left && left.length > 1) left = left.slice(0, 1);
@@ -18370,7 +18373,7 @@ var lSystemProducer = function () {
 				console.warn('lSystemProducer: no axiom defined, cannot write without an axiom');
 				return false;
 			}
-			while (!this._production[startingLevel]) {
+			while (!this._productionArray[startingLevel]) {
 				startingLevel--;
 			}this.currentLevel = startingLevel;
 			this.produce(end - startingLevel);
@@ -18384,35 +18387,39 @@ var lSystemProducer = function () {
 			    thisProduction = void 0,
 			    prevLevel = void 0,
 			    currentLevel = this.currentLevel,
+			    produced = '',
 			    newProduction = '',
 			    args = [];
-			if (typeof this._production[this.currentLevel] !== 'string') {
+			if (!this._productionArray[this.currentLevel] && typeof this._production[this.currentLevel] !== 'string') {
 				console.warn('lSystemProducer: production at level ' + thisLevel + ' is not defined, cannot create a new production.');
 				return false;
 			}
 
 			for (var i = 1; i <= count; i++) {
-				newProduction = '';
+				newProduction = [];
 				thisLevel = currentLevel + i;
 				prevLevel = currentLevel + (i - 1);
 				if (this.maxLevels && thisLevel > this.maxLevels) {
 					console.warn('lSystemProducer: a max level was defined, cannot level past level ' + this.maxLevels);
 					return false;
 				}
-				thisProduction = (0, _regex.matchAll)(this._production[prevLevel], _regex.PARAMETRIC_GRAMMAR_REGEX);
+				thisProduction = this._productionArray[prevLevel] || (0, _regex.matchAll)(this._production[prevLevel], _regex.PARAMETRIC_GRAMMAR_REGEX);
 				for (var j = 0; j < thisProduction.length; j++) {
-					newProduction += this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
+					produced = this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
+					newProduction = newProduction.concat((0, _regex.matchAll)(produced, _regex.PARAMETRIC_GRAMMAR_REGEX));
 				}
-
-				this._production[thisLevel] = newProduction;
+				this._productionArray[thisLevel] = newProduction;
+				this._production[thisLevel] = newProduction.join('');
 			}
 			this.currentLevel += count;
 			this._production.length = this.currentLevel + 1;
+			this._productionArray.length = this.currentLevel + 1;
 		}
 	}, {
 		key: 'axiom',
 		set: function set(newAxiom) {
 			this._production[0] = newAxiom;
+			this._productionArray[0] = [newAxiom];
 			this.write();
 			this.currentLevel = 0;
 		},
@@ -20301,6 +20308,7 @@ var lSystemExecutor = function (_lSystemProducer) {
 
 		_this._instructions = {};
 		_this._instructionSets = {};
+		_this.getInstruction = _this.getInstruction.bind(_this);
 		return _this;
 	}
 
@@ -20421,15 +20429,16 @@ var lSystemExecutor = function (_lSystemProducer) {
 		}
 	}, {
 		key: 'execute',
-		value: function execute() {
-			var start = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._production.length - 1;
-			var end = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._production.length;
+		value: function execute(callback) {
+			var start = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._production.length - 1;
+			var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._production.length;
 
 			if (end > this._production.length || end < 0 || start > this._production.length || start < 0) {
 				console.warn('lSystemExecutor: could not execute from ' + start + ' to ' + end + '; Out of range.');
 				return false;
 			}
-			this.iterateLevels(this.getInstruction.bind(this), start, end);
+			var result = this.iterateLevels(this.getInstruction, start, end);
+			return callback && callback.call && callback(result) || result;
 		}
 	}]);
 

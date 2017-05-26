@@ -5,15 +5,20 @@ import { matchAll, PARAMETRIC_GRAMMAR_REGEX, IN_PARAMS_REGEX } from '../../utils
 class lSystemProducer {
 	constructor(axiom, maxLevels = false) {
 		this._production = [];
+		this._productionArray = [];
 		this._rules = {};
 		this._ruleSets = {};
-		if (axiom) this._production[0] = axiom;
+		if (axiom) {
+			this._production[0] = axiom;
+			this._productionArray[0] = [axiom];
+		}
 		this.maxLevels = maxLevels;
 		this.currentLevel = 0;
 	}
 	// getters/setters
 	set axiom(newAxiom) {
 		this._production[0] = newAxiom;
+		this._productionArray[0] = [newAxiom];
 		this.write();
 		this.currentLevel = 0;
 	}
@@ -132,20 +137,19 @@ class lSystemProducer {
 		return (rule && rule.call && rule(...params)) || rule || false;
 	}
 
-	iterateLevels(callback, start=0, end=this._production.length) {
+	iterateLevels(callback, start=0, end=this._productionArray.length) {
 		return range(start,end).map((pIndex) => this.iterateLevel(callback, pIndex))
 	}
 
 	iterateLevel(callback, level=this.currentLevel) {
-		let left, right, production = this._production[level];
+		let left, right, production = this._productionArray[level];
 		if (!production) {
 			console.warn(`lSystemProducer: production at level ${level} is not defined, cannot iterate.`);
 			return false;
 		}
-		let productionArray = matchAll(production, PARAMETRIC_GRAMMAR_REGEX);
- 		return productionArray.map((item, index) => {
- 			if(index !== 0) left = productionArray[index - 1];
- 			right = productionArray[index+1];
+ 		return production.map((item, index) => {
+ 			if(index !== 0) left = production[index - 1];
+ 			right = production[index+1];
 			let key = String(item).slice(), params = false;
 			if (left && left.length > 1) left = left.slice(0,1);
 			if (right && right.length > 1) right = right.slice(0,1);
@@ -165,35 +169,37 @@ class lSystemProducer {
 			console.warn('lSystemProducer: no axiom defined, cannot write without an axiom');
 			return false;
 		}
-		while (!this._production[startingLevel]) startingLevel--;
+		while (!this._productionArray[startingLevel]) startingLevel--;
 		this.currentLevel = startingLevel;
 		this.produce(end - startingLevel);
 	}
 
 	produce(count=1) {
-		let thisLevel, thisProduction, prevLevel, currentLevel = this.currentLevel, newProduction = '', args=[];
-		if (typeof this._production[this.currentLevel] !== 'string') {
+		let thisLevel, thisProduction, prevLevel, currentLevel = this.currentLevel, produced = '', newProduction = '', args=[];
+		if (!this._productionArray[this.currentLevel] && typeof this._production[this.currentLevel] !== 'string') {
 			console.warn(`lSystemProducer: production at level ${thisLevel} is not defined, cannot create a new production.`);
 			return false;
 		}
 
 		for (let i = 1; i <= count; i++) {
-			newProduction = '';
+			newProduction = [];
 			thisLevel = currentLevel + i;
 			prevLevel = currentLevel + (i - 1);
 			if (this.maxLevels && (thisLevel > this.maxLevels)) {
 				console.warn(`lSystemProducer: a max level was defined, cannot level past level ${this.maxLevels}`);
 				return false;
 			}
-			thisProduction = matchAll(this._production[prevLevel], PARAMETRIC_GRAMMAR_REGEX);
+			thisProduction = this._productionArray[prevLevel] || matchAll(this._production[prevLevel], PARAMETRIC_GRAMMAR_REGEX);
 			for (let j = 0; j< thisProduction.length; j++) {
-				newProduction += this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
+				produced = this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
+				newProduction = newProduction.concat(matchAll(produced, PARAMETRIC_GRAMMAR_REGEX));
 			}
-
-			this._production[thisLevel] = newProduction;
+			this._productionArray[thisLevel] = newProduction
+			this._production[thisLevel] = newProduction.join('');
 		}
 		this.currentLevel += count;
 		this._production.length = this.currentLevel + 1;
+		this._productionArray.length = this.currentLevel + 1;
 	}
 }
 
