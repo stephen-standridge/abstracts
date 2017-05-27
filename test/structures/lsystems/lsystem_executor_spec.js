@@ -176,46 +176,46 @@ describe('lSystemExecutor', () => {
 		describe('context-specific instructions', () => {
 			describe('left context match', () => {
 				it('should get the context-specific instruction', () => {
-					expect(lsystem.getInstruction('B', [false], { left: 'A', right: undefined })).to.equal('function2')
+					expect(lsystem.getInstruction('B', false, { left: 'A', right: undefined })).to.equal('function2')
 				})
 				it('should return false for inverse matching', () => {
-					expect(lsystem.getInstruction('A', [false], { left: undefined, right: 'B' })).to.equal(undefined)
+					expect(lsystem.getInstruction('A', false, { left: undefined, right: 'B' })).to.equal(undefined)
 				})
 				it('should return the default instruction if not found', () => {
-					expect(lsystem.getInstruction('B', [false], { left: 'C', right: undefined })).to.equal('function1')
+					expect(lsystem.getInstruction('B', false, { left: 'C', right: undefined })).to.equal('function1')
 				})
 			})
 			describe('right context match', () => {
 				it('should get the context-specific instruction', () => {
-					expect(lsystem.getInstruction('B', [false], { left: undefined, right: 'A' })).to.equal('function3')
+					expect(lsystem.getInstruction('B', false, { left: undefined, right: 'A' })).to.equal('function3')
 				})
 				it('should return false for inverse matching', () => {
-					expect(lsystem.getInstruction('A', [false], { left: 'B', right: undefined })).to.equal(undefined)
+					expect(lsystem.getInstruction('A', false, { left: 'B', right: undefined })).to.equal(undefined)
 				})
 				it('should return the default instruction if not found', () => {
-					expect(lsystem.getInstruction('B', [false], { left: false, right: 'C' })).to.equal('function1')
+					expect(lsystem.getInstruction('B', false, { left: false, right: 'C' })).to.equal('function1')
 				})
 			})
 			describe('between context match', () => {
 				it('should get the context-specific instruction with a matching between', () => {
-					expect(lsystem.getInstruction('B', [false], { left: 'A', right: 'A' })).to.equal('function4')
+					expect(lsystem.getInstruction('B', false, { left: 'A', right: 'A' })).to.equal('function4')
 				})
 				it('should partially match left', () => {
-					expect(lsystem.getInstruction('B', [false], { left: 'C', right: 'A' })).to.equal('function3')
+					expect(lsystem.getInstruction('B', false, { left: 'C', right: 'A' })).to.equal('function3')
 				})
 				it('should partially match right', () => {
-					expect(lsystem.getInstruction('B', [false], { left: 'A', right: 'C' })).to.equal('function2')
+					expect(lsystem.getInstruction('B', false, { left: 'A', right: 'C' })).to.equal('function2')
 				})
 				it('should return default instruction if not found', () => {
-					expect(lsystem.getInstruction('B', [false], { left: 'C', right: 'C' })).to.equal('function1')
+					expect(lsystem.getInstruction('B', false, { left: 'C', right: 'C' })).to.equal('function1')
 				})
 			})
 			it('should prioritize between, left, then right', () => {
-				expect(lsystem.getInstruction('B', [false], { left: 'A', right: 'A' })).to.equal('function4')
-				expect(lsystem.getInstruction('B', [false], { left: 'H', right: 'A' })).to.equal('function6')
-				expect(lsystem.getInstruction('B', [false], { left: undefined, right: 'A' })).to.equal('function3')
-				expect(lsystem.getInstruction('B', [false], { left: 'A', right: 'H' })).to.equal('function2')
-				expect(lsystem.getInstruction('B', [false], { left: undefined,  right: 'H' })).to.equal('function5')
+				expect(lsystem.getInstruction('B', false, { left: 'A', right: 'A' })).to.equal('function4')
+				expect(lsystem.getInstruction('B', false, { left: 'H', right: 'A' })).to.equal('function6')
+				expect(lsystem.getInstruction('B', false, { left: undefined, right: 'A' })).to.equal('function3')
+				expect(lsystem.getInstruction('B', false, { left: 'A', right: 'H' })).to.equal('function2')
+				expect(lsystem.getInstruction('B', false, { left: undefined,  right: 'H' })).to.equal('function5')
 			})
 		})
 		it('should work with punctuation', () => {
@@ -227,12 +227,12 @@ describe('lSystemExecutor', () => {
 				']': function5,
 				'.': function6
 			})
-			expect(lsystem.getInstruction('=', [false], { left: 'A', right: 'A' })).to.equal('function1')
-			expect(lsystem.getInstruction('+', [false], { left: 'A', right: 'A' })).to.equal('function2')
-			expect(lsystem.getInstruction('|', [false], { left: 'A', right: 'A' })).to.equal('function3')
-			expect(lsystem.getInstruction('[', [false], { left: 'A', right: 'A' })).to.equal('function4')
-			expect(lsystem.getInstruction(']', [false], { left: 'A', right: 'A' })).to.equal('function5')
-			expect(lsystem.getInstruction('.', [false], { left: 'A', right: 'A' })).to.equal('function6')
+			expect(lsystem.getInstruction('=', false, { left: 'A', right: 'A' })).to.equal('function1')
+			expect(lsystem.getInstruction('+', false, { left: 'A', right: 'A' })).to.equal('function2')
+			expect(lsystem.getInstruction('|', false, { left: 'A', right: 'A' })).to.equal('function3')
+			expect(lsystem.getInstruction('[', false, { left: 'A', right: 'A' })).to.equal('function4')
+			expect(lsystem.getInstruction(']', false, { left: 'A', right: 'A' })).to.equal('function5')
+			expect(lsystem.getInstruction('.', false, { left: 'A', right: 'A' })).to.equal('function6')
 		})
 	})
 

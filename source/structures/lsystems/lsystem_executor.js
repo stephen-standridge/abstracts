@@ -85,25 +85,22 @@ class lSystemExecutor extends lSystemProducer {
 	}
 
 	getInstruction(lookup, args=false, ctx={}) {
-		let { left, right } = ctx;
-		let key = String(lookup).slice(), params = [];
-		if (key.length > 1) {
-			//remove the first letter and get the
-			params = key.slice(1,key.length).match(IN_PARAMS_REGEX)[0];
-			params = params.split(',')
-			key = key.slice(0,1);
+		let { left, right } = ctx, params = [];
+		if (lookup.length > 1) {
+			//remove the first letter and get the new params
+			let otherParams = lookup.slice(1,lookup.length).match(IN_PARAMS_REGEX)[0];
+			otherParams && otherParams.split(',').forEach((otherParam) => params.push(otherParam));
+			lookup = lookup.charAt(0);
 		}
-		params.unshift(key)
+		params.unshift(lookup);
 
-		let betweenContext = left && right && `${left}<${key}>${right}` || false;
-		let leftContext = left && `${left}<${key}` || false;
-		let rightContext = right && `${key}>${right}` || false;
-		let instruction = betweenContext && this._instructions[betweenContext] || //get between
-							 leftContext && this._instructions[leftContext] || //get left
-							 rightContext && this._instructions[rightContext] || //get right
-							 this._instructions[key]; //default instruction
+		let instruction = (left && right && this._instructions[`${left}<${lookup}>${right}`]) || //get between
+							 				(left && this._instructions[`${left}<${lookup}`]) || //get left
+											(right && this._instructions[`${lookup}>${right}`]) || //get right
+							 				this._instructions[lookup]; //default instruction
+
 		//call a instruction if it's a function, try returning it if not, else return false
-		params = args && params.concat(args) || params;
+		args && args.forEach((arg) => params.push(arg))
 		return (instruction && instruction.call && instruction(...params)) || undefined;
 	}
 

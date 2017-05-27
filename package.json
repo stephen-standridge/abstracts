@@ -1,6 +1,6 @@
 {
   "name": "abstracts",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Abstract data structures, algorithms, math",
   "main": "dist/bundle.commonjs.js",
   "repository": {

@@ -112,37 +112,34 @@ class lSystemProducer {
 		this._ruleSets[key] && delete this._ruleSets[key];
 	}
 	getRule(lookup, args=false, ctx={}) {
-		let { left, right } = ctx;
-		let key = String(lookup).slice(), params = [];
-		if (key.length > 1) {
+		let { left, right } = ctx, params = [];
+		if (lookup.length > 1) {
 			//remove the first letter and get the
-			params = key.slice(1,key.length).match(IN_PARAMS_REGEX)[0];
-			params = params.split(',')
-			key = key.slice(0,1);
+			let otherParams = lookup.slice(1,lookup.length).match(IN_PARAMS_REGEX)[0];
+			otherParams && otherParams.split(',').forEach((otherParam) => params.push(otherParam));
+			lookup = lookup.charAt(0)
 		}
-		params.unshift(key)
 
-		let betweenContext = left && right && `${left}<${key}>${right}` || false;
-		let leftContext = left && `${left}<${key}` || false;
-		let rightContext = right && `${key}>${right}` || false;
-		let rule = betweenContext && this._rules[betweenContext] || //get between
-							 leftContext && this._rules[leftContext] || //get left
-							 rightContext && this._rules[rightContext] || //get right
-							 this._rules[key]; //default rule
+		params.unshift(lookup);
+
+		let rule = (left && right && this._rules[`${left}<${lookup}>${right}`]) || //get between
+							 (left && this._rules[`${left}<${lookup}`]) || //get left
+							 (right && this._rules[`${lookup}>${right}`]) || //get right
+							 this._rules[lookup]; //default rule
 		//call a rule if it's a function, try returning it if not, else return false
-		params = args && params.concat(args) || params;
+		args && args.forEach((arg) => params.push(arg))
 		return (rule && rule.call && rule(...params)) || rule || false;
 	}
 
 	iterateLevels(callback, start=0, end=this._productionArray.length) {
-		let val;
-		return range(start,end).reduce((sum, pIndex) => {
+		let val, sum = [];
+		range(start,end).forEach((pIndex) => {
 			val = this.iterateLevel(callback, pIndex);
-			if (val == undefined) return sum;
+			if (val == undefined) return;
 			val.forEach((item) => sum.push(item));
 			val.length = 0;
-			return sum;
-		}, [])
+		})
+		return sum;
 	}
 
 	iterateLevel(callback, level=this.currentLevel) {
@@ -151,24 +148,24 @@ class lSystemProducer {
 			console.warn(`lSystemProducer: production at level ${level} is not defined, cannot iterate.`);
 			return false;
 		}
-		let val;
- 		return production.reduce((sum, item, index) => {
+		let val, params = false, sum = [];
+ 		production.forEach((item, index) => {
  			if(index !== 0) left = production[index - 1];
  			right = production[index+1];
-			let key = String(item).slice(), params = false;
-			if (left && left.length > 1) left = left.slice(0,1);
-			if (right && right.length > 1) right = right.slice(0,1);
-			if (key.length > 1) {
+			if (left && left.length > 1) left = left.charAt(0);
+			if (right && right.length > 1) right = right.charAt(0);
+			if (item.length > 1) {
 				//remove the first letter and get the
-				params = key.slice(1,key.length).match(IN_PARAMS_REGEX)[0];
+				params = item.slice(1,item.length).match(IN_PARAMS_REGEX)[0];
 				params = params.split(',')
-				key = key.slice(0,1);
 			}
- 			val = callback(key, params, { level, index, left, right });
- 			if (val == undefined) return sum;
+ 			val = callback(item.charAt(0), params, { level, index, left, right });
+ 			params = false;
+
+ 			if (val == undefined) return;
  			sum.push(val)
- 			return sum;
- 		}, [])
+ 		})
+ 		return sum;
 	}
 
 	write(start=0, end=this.maxLevels) {

@@ -18157,8 +18157,6 @@ var _probability = __webpack_require__(5);
 
 var _regex = __webpack_require__(20);
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var lSystemProducer = function () {
@@ -18297,28 +18295,29 @@ var lSystemProducer = function () {
 			var args = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 			var ctx = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 			var left = ctx.left,
-			    right = ctx.right;
-
-			var key = String(lookup).slice(),
+			    right = ctx.right,
 			    params = [];
-			if (key.length > 1) {
-				//remove the first letter and get the
-				params = key.slice(1, key.length).match(_regex.IN_PARAMS_REGEX)[0];
-				params = params.split(',');
-				key = key.slice(0, 1);
-			}
-			params.unshift(key);
 
-			var betweenContext = left && right && left + '<' + key + '>' + right || false;
-			var leftContext = left && left + '<' + key || false;
-			var rightContext = right && key + '>' + right || false;
-			var rule = betweenContext && this._rules[betweenContext] || //get between
-			leftContext && this._rules[leftContext] || //get left
-			rightContext && this._rules[rightContext] || //get right
-			this._rules[key]; //default rule
+			if (lookup.length > 1) {
+				//remove the first letter and get the
+				var otherParams = lookup.slice(1, lookup.length).match(_regex.IN_PARAMS_REGEX)[0];
+				otherParams && otherParams.split(',').forEach(function (otherParam) {
+					return params.push(otherParam);
+				});
+				lookup = lookup.charAt(0);
+			}
+
+			params.unshift(lookup);
+
+			var rule = left && right && this._rules[left + '<' + lookup + '>' + right] || //get between
+			left && this._rules[left + '<' + lookup] || //get left
+			right && this._rules[lookup + '>' + right] || //get right
+			this._rules[lookup]; //default rule
 			//call a rule if it's a function, try returning it if not, else return false
-			params = args && params.concat(args) || params;
-			return rule && rule.call && rule.apply(undefined, _toConsumableArray(params)) || rule || false;
+			args && args.forEach(function (arg) {
+				return params.push(arg);
+			});
+			return rule && rule.call && rule.apply(undefined, params) || rule || false;
 		}
 	}, {
 		key: 'iterateLevels',
@@ -18328,16 +18327,17 @@ var lSystemProducer = function () {
 			var start = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 			var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._productionArray.length;
 
-			var val = void 0;
-			return (0, _lodash.range)(start, end).reduce(function (sum, pIndex) {
+			var val = void 0,
+			    sum = [];
+			(0, _lodash.range)(start, end).forEach(function (pIndex) {
 				val = _this4.iterateLevel(callback, pIndex);
-				if (val == undefined) return sum;
+				if (val == undefined) return;
 				val.forEach(function (item) {
 					return sum.push(item);
 				});
 				val.length = 0;
-				return sum;
-			}, []);
+			});
+			return sum;
 		}
 	}, {
 		key: 'iterateLevel',
@@ -18351,25 +18351,26 @@ var lSystemProducer = function () {
 				console.warn('lSystemProducer: production at level ' + level + ' is not defined, cannot iterate.');
 				return false;
 			}
-			var val = void 0;
-			return production.reduce(function (sum, item, index) {
+			var val = void 0,
+			    params = false,
+			    sum = [];
+			production.forEach(function (item, index) {
 				if (index !== 0) left = production[index - 1];
 				right = production[index + 1];
-				var key = String(item).slice(),
-				    params = false;
-				if (left && left.length > 1) left = left.slice(0, 1);
-				if (right && right.length > 1) right = right.slice(0, 1);
-				if (key.length > 1) {
+				if (left && left.length > 1) left = left.charAt(0);
+				if (right && right.length > 1) right = right.charAt(0);
+				if (item.length > 1) {
 					//remove the first letter and get the
-					params = key.slice(1, key.length).match(_regex.IN_PARAMS_REGEX)[0];
+					params = item.slice(1, item.length).match(_regex.IN_PARAMS_REGEX)[0];
 					params = params.split(',');
-					key = key.slice(0, 1);
 				}
-				val = callback(key, params, { level: level, index: index, left: left, right: right });
-				if (val == undefined) return sum;
+				val = callback(item.charAt(0), params, { level: level, index: index, left: left, right: right });
+				params = false;
+
+				if (val == undefined) return;
 				sum.push(val);
-				return sum;
-			}, []);
+			});
+			return sum;
 		}
 	}, {
 		key: 'write',
@@ -20299,8 +20300,6 @@ var _probability = __webpack_require__(5);
 
 var _lsystem_producer = __webpack_require__(12);
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -20419,28 +20418,29 @@ var lSystemExecutor = function (_lSystemProducer) {
 			var args = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 			var ctx = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 			var left = ctx.left,
-			    right = ctx.right;
-
-			var key = String(lookup).slice(),
+			    right = ctx.right,
 			    params = [];
-			if (key.length > 1) {
-				//remove the first letter and get the
-				params = key.slice(1, key.length).match(IN_PARAMS_REGEX)[0];
-				params = params.split(',');
-				key = key.slice(0, 1);
-			}
-			params.unshift(key);
 
-			var betweenContext = left && right && left + '<' + key + '>' + right || false;
-			var leftContext = left && left + '<' + key || false;
-			var rightContext = right && key + '>' + right || false;
-			var instruction = betweenContext && this._instructions[betweenContext] || //get between
-			leftContext && this._instructions[leftContext] || //get left
-			rightContext && this._instructions[rightContext] || //get right
-			this._instructions[key]; //default instruction
+			if (lookup.length > 1) {
+				//remove the first letter and get the new params
+				var otherParams = lookup.slice(1, lookup.length).match(IN_PARAMS_REGEX)[0];
+				otherParams && otherParams.split(',').forEach(function (otherParam) {
+					return params.push(otherParam);
+				});
+				lookup = lookup.charAt(0);
+			}
+			params.unshift(lookup);
+
+			var instruction = left && right && this._instructions[left + '<' + lookup + '>' + right] || //get between
+			left && this._instructions[left + '<' + lookup] || //get left
+			right && this._instructions[lookup + '>' + right] || //get right
+			this._instructions[lookup]; //default instruction
+
 			//call a instruction if it's a function, try returning it if not, else return false
-			params = args && params.concat(args) || params;
-			return instruction && instruction.call && instruction.apply(undefined, _toConsumableArray(params)) || undefined;
+			args && args.forEach(function (arg) {
+				return params.push(arg);
+			});
+			return instruction && instruction.call && instruction.apply(undefined, params) || undefined;
 		}
 	}, {
 		key: 'execute',
