@@ -314,57 +314,74 @@ describe('lSystemProducer', ()=>{
 				'C': 'AB'
 			})
 		})
-		it('should change the current level to the next level', () => {
+		it('should return a promise', (done) => {
 			expect(lsystem.currentLevel).to.equal(0)
-			lsystem.produce();
-			expect(lsystem.currentLevel).to.equal(1)
+			lsystem.produce().then(function(){ done() })
 		})
-		it('should write the next production', () => {
-			lsystem.produce();
-			expect(lsystem._productionArray[1]).to.deep.equal(str1.split(''))
-			lsystem.produce();
-			expect(lsystem._productionArray[2]).to.deep.equal(str2.split(''))
-			lsystem.produce();
-			expect(lsystem._productionArray[3]).to.deep.equal(str3.split(''))
+		it('should change the current level to the next level', (done) => {
+			expect(lsystem.currentLevel).to.equal(0)
+			lsystem.produce().then(function(){
+				expect(lsystem.currentLevel).to.equal(1)
+				done();
+			})
 		})
-		it('should transfer non-found rules to the string', () => {
+		it('should write the next production', (done) => {
+			lsystem.produce().then(function(){
+				expect(lsystem._productionArray[1]).to.deep.equal(str1.split(''))
+				lsystem.produce().then(function(){
+					expect(lsystem._productionArray[2]).to.deep.equal(str2.split(''))
+					done();
+				})
+			})
+		})
+		it('should transfer non-found rules to the string', (done) => {
 			lsystem._productionArray[1] = ['B','C','+','C'];
 			lsystem.currentLevel = 1;
-			lsystem.produce();
-			expect(lsystem._productionArray[2]).to.deep.equal(str4.split(''))
+			lsystem.produce().then(function(){
+				expect(lsystem._productionArray[2]).to.deep.equal(str4.split(''))
+				done();
+			})
 		})
-		it('should not allow stepping past the maxLevels', () => {
-			lsystem.maxLevels = 3;
-			lsystem.produce();
-			expect(lsystem._productionArray[1]).to.deep.equal(str1.split(''))
-			lsystem.produce();
-			expect(lsystem._productionArray[2]).to.deep.equal(str2.split(''))
-			lsystem.produce();
-			expect(lsystem._productionArray[3]).to.deep.equal(str3.split(''))
-			lsystem.produce();
-			expect(lsystem._productionArray[4]).to.deep.equal(undefined)
+		it('should not allow stepping past the maxLevels', (done) => {
+			lsystem.maxLevels = 2;
+			lsystem.produce().then(function(){
+				expect(lsystem._productionArray[1]).to.deep.equal(str1.split(''))
+				lsystem.produce().then(function(){
+					expect(lsystem._productionArray[2]).to.deep.equal(str2.split(''))
+					lsystem.produce().catch(function(err){
+						expect(err).to.equal('lSystemProducer: a max level was defined, cannot level past level 2')
+						expect(lsystem._productionArray[3]).to.deep.equal(undefined)
+						done();
+					})
+				})
+			})
 		})
-		it('should destroy all future steps', () => {
+		it('should destroy all future steps', (done) => {
 			lsystem._productionArray[1] = 'BC+C';
 			lsystem._productionArray[2] = 'ABCDEFGH';
 			lsystem._productionArray[3] = 'DDDDD';
 			lsystem.currentLevel = 1;
-			lsystem.produce();
-			expect(lsystem._productionArray.length).to.equal(3);
-			expect(lsystem._productionArray[3]).to.equal(undefined);
+			lsystem.produce().then(function(){
+				expect(lsystem._productionArray.length).to.equal(3);
+				expect(lsystem._productionArray[3]).to.equal(undefined);
+				done()
+			})
 		})
-		it('should pass the current key and index into function rules', () => {
+		it('should pass the current key and index into function rules', (done) => {
 			let testFunction = function(key, arg1, arg2, arg3){ return 'yes'}
 			let testObject = { testFunction };
 			let testSpy = sinon.spy(testObject, 'testFunction');
 			lsystem.addRule('B', testObject.testFunction)
-			lsystem.produce();
-			lsystem.produce();
-			expect(testSpy).to.have.been.calledWith('B', 0)
-			testSpy.restore();
+			lsystem.produce().then(function(){
+				lsystem.produce().then(function(){
+					expect(testSpy).to.have.been.calledWith('B', 0)
+					testSpy.restore();
+					done();
+				})
+			})
 		})
 		describe('parametric rules', () => {
-			it('should attempt to call the method with the arguments if it encounters a parametric rule', () => {
+			it('should attempt to call the method with the arguments if it encounters a parametric rule', (done) => {
 				let testFunction = function(...args){ return 'yes'}
 				let testObject = { testFunction };
 				let testSpy = sinon.spy(testObject, 'testFunction');
@@ -372,9 +389,11 @@ describe('lSystemProducer', ()=>{
 				lsystem.addRule('K', testObject.testFunction)
 				lsystem._productionArray[1] = ['K(1,2)','K(2,3,4,5)'];
 				lsystem.currentLevel = 1;
-				lsystem.produce();
-				expect(testSpy).to.have.been.calledWith('K','1','2',0);
-				expect(testSpy).to.have.been.calledWith('K','2','3','4','5',1);
+				lsystem.produce().then(function(){
+					expect(testSpy).to.have.been.calledWith('K','1','2',0);
+					expect(testSpy).to.have.been.calledWith('K','2','3','4','5',1);
+					done();
+				})
 			})
 		})
 	})
@@ -477,31 +496,42 @@ describe('lSystemProducer', ()=>{
 				lsystem._productionArray[1] = 'BC+C'.split('');
 				lsystem._productionArray[2] = 'DDD'.split('');
 			})
-			it('should write from the start to the maxLevels', () => {
-				lsystem.write(1,3)
-				expect(lsystem._productionArray[2]).to.deep.equal(str1.split(''))
-				expect(lsystem._productionArray[3]).to.deep.equal(str2.split(''))
+			it('should write from the start to the maxLevels', (done) => {
+				lsystem.write(1,3).then(function(){
+					expect(lsystem._productionArray[2]).to.deep.equal(str1.split(''))
+					expect(lsystem._productionArray[3]).to.deep.equal(str2.split(''))
+					done();
+				})
 			})
-			it('should rewrite if the production at index is not built', () => {
+			it('should rewrite if the production at index is not built', (done) => {
 				lsystem._productionArray[2] = undefined;
-				lsystem.write(2)
-				expect(lsystem._productionArray[2]).to.deep.equal(str1.split(''))
-				expect(lsystem._productionArray[3]).to.deep.equal(str2.split(''))
+				lsystem.write(2).then(function(){
+					expect(lsystem._productionArray[2]).to.deep.equal(str1.split(''))
+					expect(lsystem._productionArray[3]).to.deep.equal(str2.split(''))
+					done()
+				})
 			})
 		})
-		it('should iterate from 0 to maxLevels by default', () => {
-			lsystem.write();
-			expect(lsystem._productionArray.length).to.equal(4);
+		it('should iterate from 0 to maxLevels by default', (done) => {
+			lsystem.write().then(function(){
+				expect(lsystem._productionArray.length).to.equal(4);
+				done();
+			})
 		})
-		it('should return false if an axiom is not defined', () => {
-			lsystem.axiom = undefined;
-			expect(lsystem.write()).to.equal(false);
+		it('should return a rejected promise if an axiom is not defined', (done) => {
+			lsystem._productionArray[0][0] = undefined;
+			lsystem.write().catch(function(err){
+				expect(err).to.equal('lSystemProducer: no axiom defined, cannot write without an axiom');
+				done();
+			})
 		})
-		it('should clear anything past end', () => {
+		it('should clear anything past end', (done) => {
 			lsystem._productionArray[1] = 'BC+C'.split('');
 			lsystem._productionArray[2] = 'DDD'.split('');
-			lsystem.write(0, 1);
-			expect(lsystem._productionArray[2]).to.equal(undefined)
+			lsystem.write(0, 1).then(function(){
+				expect(lsystem._productionArray[2]).to.equal(undefined)
+				done();
+			})
 		})
 	})
 })

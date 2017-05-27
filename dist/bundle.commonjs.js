@@ -18379,60 +18379,64 @@ var lSystemProducer = function () {
 
 			var startingLevel = start;
 			if (!this.axiom) {
-				console.warn('lSystemProducer: no axiom defined, cannot write without an axiom');
-				return false;
+				return new Promise(function (resolve, reject) {
+					reject('lSystemProducer: no axiom defined, cannot write without an axiom');
+				});
 			}
 			while (!this._productionArray[startingLevel]) {
 				startingLevel--;
 			}this.currentLevel = startingLevel;
-			this.produce(end - startingLevel);
+			return this.produce(end - startingLevel);
 		}
 	}, {
 		key: 'produce',
 		value: function produce() {
 			var count = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
 
-			var thisLevel = void 0,
-			    thisProduction = void 0,
-			    prevLevel = void 0,
-			    currentLevel = this.currentLevel,
-			    produced = '',
-			    newProduction = '',
-			    matched = [],
-			    args = [];
-			if (!this._productionArray[this.currentLevel]) {
-				console.warn('lSystemProducer: production at level ' + thisLevel + ' is not defined, cannot create a new production.');
-				return false;
-			}
-
-			for (var i = 1; i <= count; i++) {
-				newProduction = [];
-				thisLevel = currentLevel + i;
-				prevLevel = currentLevel + (i - 1);
-				if (this.maxLevels && thisLevel > this.maxLevels) {
-					console.warn('lSystemProducer: a max level was defined, cannot level past level ' + this.maxLevels);
-					return false;
+			return new Promise(function (resolve, reject) {
+				var thisLevel = void 0,
+				    thisProduction = void 0,
+				    prevLevel = void 0,
+				    currentLevel = this.currentLevel,
+				    produced = '',
+				    newProduction = '',
+				    matched = [],
+				    args = [];
+				if (!this._productionArray[this.currentLevel]) {
+					reject('lSystemProducer: production at level ' + thisLevel + ' is not defined, cannot create a new production.');
 				}
-				thisProduction = this._productionArray[prevLevel];
-				for (var j = 0; j < thisProduction.length; j++) {
-					produced = this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
-					matched = (0, _regex.matchAll)(produced, _regex.PARAMETRIC_GRAMMAR_REGEX);
-					matched.forEach(function (item) {
-						return newProduction.push(item);
-					});
-					matched.length = 0;
-				}
-				this._productionArray[thisLevel] = newProduction;
-			}
-			this.currentLevel += count;
-			this._productionArray.length = this.currentLevel + 1;
+				setTimeout(function () {
+					for (var i = 1; i <= count; i++) {
+						newProduction = [];
+						thisLevel = currentLevel + i;
+						prevLevel = currentLevel + (i - 1);
+						if (this.maxLevels && thisLevel > this.maxLevels) {
+							reject('lSystemProducer: a max level was defined, cannot level past level ' + this.maxLevels);
+							return false;
+						}
+						thisProduction = this._productionArray[prevLevel];
+						for (var j = 0; j < thisProduction.length; j++) {
+							produced = this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
+							matched = (0, _regex.matchAll)(produced, _regex.PARAMETRIC_GRAMMAR_REGEX);
+							matched.forEach(function (item) {
+								return newProduction.push(item);
+							});
+							matched.length = 0;
+						}
+						this._productionArray[thisLevel] = newProduction;
+					}
+					this.currentLevel += count;
+					this._productionArray.length = this.currentLevel + 1;
+					resolve(this._productionArray);
+				}.bind(this), 0);
+			}.bind(this));
 		}
 	}, {
 		key: 'axiom',
 		set: function set(newAxiom) {
 			this._productionArray[0] = [newAxiom];
-			this.write();
 			this.currentLevel = 0;
+			return this.write();
 		},
 		get: function get() {
 			return this._productionArray[0][0];
@@ -20440,16 +20444,19 @@ var lSystemExecutor = function (_lSystemProducer) {
 		}
 	}, {
 		key: 'execute',
-		value: function execute(callback) {
-			var start = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._productionArray.length - 1;
-			var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._productionArray.length;
+		value: function execute() {
+			var start = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._productionArray.length - 1;
+			var end = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._productionArray.length;
 
-			if (end > this._productionArray.length || end < 0 || start > this._productionArray.length || start < 0) {
-				console.warn('lSystemExecutor: could not execute from ' + start + ' to ' + end + '; Out of range.');
-				return false;
-			}
-			var result = this.iterateLevels(this.getInstruction, start, end);
-			return callback && callback.call && callback(result) || result;
+			return new Promise(function (resolve, reject) {
+				if (end > this._productionArray.length || end < 0 || start > this._productionArray.length || start < 0) {
+					reject('lSystemExecutor: could not execute from ' + start + ' to ' + end + '; Out of range.');
+					return;
+				}
+				setTimeout(function () {
+					resolve(this.iterateLevels(this.getInstruction, start, end));
+				}.bind(this), 0);
+			}.bind(this));
 		}
 	}]);
 

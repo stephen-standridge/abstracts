@@ -107,13 +107,17 @@ class lSystemExecutor extends lSystemProducer {
 		return (instruction && instruction.call && instruction(...params)) || undefined;
 	}
 
-	execute(callback, start=this._productionArray.length - 1, end=this._productionArray.length) {
-		if (end > this._productionArray.length || end < 0 || start > this._productionArray.length || start < 0){
-			console.warn(`lSystemExecutor: could not execute from ${start} to ${end}; Out of range.`);
-			return false;
-		}
-		let result = this.iterateLevels(this.getInstruction, start, end);
-		return callback && callback.call && callback(result) || result;
+	execute(start=this._productionArray.length - 1, end=this._productionArray.length) {
+		return new Promise(function(resolve, reject){
+			if (end > this._productionArray.length || end < 0 || start > this._productionArray.length || start < 0){
+				reject(`lSystemExecutor: could not execute from ${start} to ${end}; Out of range.`);
+				return;
+			}
+			setTimeout(function(){
+				resolve(this.iterateLevels(this.getInstruction, start, end));
+			}.bind(this),0)
+		}.bind(this))
+
 	}
 }
 

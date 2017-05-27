@@ -19,7 +19,7 @@ describe('lSystemExecutor', () => {
 		function5,
 		function6
 	}
-	beforeEach(() => {
+	beforeEach((ready) => {
 		lsystem = new lSystemExecutor();
 		lsystem.axiom = 'A';
 		lsystem.addRules({
@@ -28,9 +28,9 @@ describe('lSystemExecutor', () => {
 			'A<B>A': 'B',
 			'K': function(key, arg1, arg2) { return 'I' }
 		})
-		lsystem.produce();
-		lsystem.produce();
-		lsystem.produce();
+		lsystem.produce(3).then(function(){
+			ready()
+		})
 	})
 	describe('#addInstruction', () => {
 		it('should not take anything other than a function or array')
@@ -237,14 +237,16 @@ describe('lSystemExecutor', () => {
 	})
 
 	describe('#execute', () => {
-		it('should execute the last production by default', () => {
+		it('should execute the last production by default', (done) => {
 			let iterateLevelSpy = sinon.spy(lsystem, 'iterateLevel')
-			lsystem.execute();
-			expect(iterateLevelSpy.callCount).to.equal(1)
-			expect(iterateLevelSpy).to.have.been.calledWith(sinon.match((func) => func.name == 'bound getInstruction'), lsystem._productionArray.length - 1)
-			iterateLevelSpy.restore();
+			lsystem.execute().then(function(){
+				expect(iterateLevelSpy.callCount).to.equal(1)
+				expect(iterateLevelSpy).to.have.been.calledWith(sinon.match((func) => func.name == 'bound getInstruction'), lsystem._productionArray.length - 1)
+				iterateLevelSpy.restore();
+				done();
+			})
 		})
-		it('should call the instruction once per item in the production', () => {
+		it('should call the instruction once per item in the production', (done) => {
 			let testSpy1 = sinon.spy(testObject, 'function1');
 			let testSpy2 = sinon.spy(testObject, 'function2');
 			let testSpy3 = sinon.spy(testObject, 'function3');
@@ -255,30 +257,34 @@ describe('lSystemExecutor', () => {
 				'K': testObject.function3,
 				'I': testObject.function4
 			})
-			lsystem.execute();
-			expect(testSpy1.callCount).to.equal(8)
-			expect(testSpy2.callCount).to.equal(4)
-			expect(testSpy3.callCount).to.equal(2)
-			expect(testSpy4.callCount).to.equal(1)
-			testSpy1.restore()
-			testSpy2.restore()
-			testSpy3.restore()
-			testSpy4.restore()
+			lsystem.execute().then(function(){
+				expect(testSpy1.callCount).to.equal(8)
+				expect(testSpy2.callCount).to.equal(4)
+				expect(testSpy3.callCount).to.equal(2)
+				expect(testSpy4.callCount).to.equal(1)
+				testSpy1.restore()
+				testSpy2.restore()
+				testSpy3.restore()
+				testSpy4.restore()
+				done();
+			})
 		})
 
-		it('should attempt to call the method with the arguments if it encounters a parametric instruction', () => {
+		it('should attempt to call the method with the arguments if it encounters a parametric instruction', (done) => {
 			let testSpy1 = sinon.spy(testObject, 'function1');
 			lsystem.addInstructions({
 				'K': testObject.function1
 			})
-			lsystem.execute();
-			expect(testSpy1).to.have.been.calledWith('K','2','3');
-			expect(testSpy1).to.have.been.calledWith('K','2','3');
-			expect(testSpy1.callCount).to.equal(2)
-			testSpy1.restore();
+			lsystem.execute().then(function(){
+				expect(testSpy1).to.have.been.calledWith('K','2','3');
+				expect(testSpy1).to.have.been.calledWith('K','2','3');
+				expect(testSpy1.callCount).to.equal(2)
+				testSpy1.restore();
+				done();
+			})
 		})
 
-		it('should take a start', () => {
+		it('should take a start', (done) => {
 			let testSpy1 = sinon.spy(testObject, 'function1');
 			let testSpy2 = sinon.spy(testObject, 'function2');
 			let testSpy3 = sinon.spy(testObject, 'function3');
@@ -289,18 +295,20 @@ describe('lSystemExecutor', () => {
 				'K': testObject.function3,
 				'I': testObject.function4
 			})
-			lsystem.execute(undefined, 2);
-			expect(testSpy1.callCount).to.equal(12)
-			expect(testSpy2.callCount).to.equal(6)
-			expect(testSpy3.callCount).to.equal(3)
-			expect(testSpy4.callCount).to.equal(1)
-			testSpy1.restore()
-			testSpy2.restore()
-			testSpy3.restore()
-			testSpy4.restore()
+			lsystem.execute(2).then(function(){
+				expect(testSpy1.callCount).to.equal(12)
+				expect(testSpy2.callCount).to.equal(6)
+				expect(testSpy3.callCount).to.equal(3)
+				expect(testSpy4.callCount).to.equal(1)
+				testSpy1.restore()
+				testSpy2.restore()
+				testSpy3.restore()
+				testSpy4.restore()
+				done();
+			})
 		})
 
-		it('should take an end', () => {
+		it('should take an end', (done) => {
 			let testSpy1 = sinon.spy(testObject, 'function1');
 			let testSpy2 = sinon.spy(testObject, 'function2');
 			let testSpy3 = sinon.spy(testObject, 'function3');
@@ -312,49 +320,33 @@ describe('lSystemExecutor', () => {
 				'I': testObject.function4
 			})
 			//executes from the last to the second to last
-			lsystem.execute(undefined, 3, 1);
-			expect(testSpy1.callCount).to.equal(12)
-			expect(testSpy2.callCount).to.equal(6)
-			expect(testSpy3.callCount).to.equal(3)
-			expect(testSpy4.callCount).to.equal(1)
-			testSpy1.restore()
-			testSpy2.restore()
-			testSpy3.restore()
-			testSpy4.restore()
-		})
-
-		it('should take a callback', () => {
-			let testSpy5 = sinon.spy(testObject, 'function5');
-			lsystem.addInstructions({
-				'A': function1,
-				'B': function2,
-				'K': function3,
-				'I': function4
+			lsystem.execute(3, 1).then(function(){
+				expect(testSpy1.callCount).to.equal(12)
+				expect(testSpy2.callCount).to.equal(6)
+				expect(testSpy3.callCount).to.equal(3)
+				expect(testSpy4.callCount).to.equal(1)
+				testSpy1.restore()
+				testSpy2.restore()
+				testSpy3.restore()
+				testSpy4.restore()
+				done();
 			})
-			let lastLevelArray = ["function1", "function2", "function1", "function3", "function1", "function2", "function1", "function4", "function1", "function2", "function1", "function3", "function1", "function2", "function1"];
-			//executes from the last to the second to last
-			lsystem.execute(testObject.function5);
-			expect(testSpy5).to.have.been.calledWith(lastLevelArray)
-			testSpy5.restore();
 		})
-
-		it('should return the array of results if no callback is given', () => {
-			lsystem.addInstructions({
-				'A': function1,
-				'B': function2,
-				'K': function3,
-				'I': function4
+		it('should warn about out of range execution', (done) => {
+			lsystem.execute(-1, 1).catch(function(err){
+				expect(err).to.equal('lSystemExecutor: could not execute from -1 to 1; Out of range.')
+				lsystem.execute(0, 5).catch(function(err){
+					expect(err).to.equal('lSystemExecutor: could not execute from 0 to 5; Out of range.')
+					lsystem.execute(5, 2).catch(function(err){
+						expect(err).to.equal('lSystemExecutor: could not execute from 5 to 2; Out of range.')
+						lsystem.execute(1, -1).catch(function(err){
+							expect(err).to.equal('lSystemExecutor: could not execute from 1 to -1; Out of range.')
+							done();
+						})
+					})
+				})
 			})
-			let lastLevelArray = ["function1", "function2", "function1", "function3", "function1", "function2", "function1", "function4", "function1", "function2", "function1", "function3", "function1", "function2", "function1"];
 
-			expect(lsystem.execute()).to.deep.equal(lastLevelArray);
-		})
-
-		it('should warn about out of range execution', () => {
-			expect(lsystem.execute(undefined, -1, 1)).to.equal(false)
-			expect(lsystem.execute(undefined, 0, 5)).to.equal(false)
-			expect(lsystem.execute(undefined, 5, 2)).to.equal(false)
-			expect(lsystem.execute(undefined, 1, -1)).to.equal(false)
 		})
 	})
 })
