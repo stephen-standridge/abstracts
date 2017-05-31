@@ -1,4 +1,4 @@
-import {GridNode} from './nodes/grid_node';
+import { GridNode } from './grid_node';
 
 class GridTree extends GridNode {
 	constructor(dimensions){

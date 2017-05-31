@@ -1,5 +1,5 @@
-import {FaceNode} from '../trees/nodes/face_node'
-import {scale, add, descale} from '../../math/vector'
+import { FaceNode } from '../trees/grid_tree/face_node'
+import { scale, add, descale } from '../../math/vector'
 
 class SquareMap extends FaceNode {
   getUV([u,v]) {

@@ -1,6 +1,6 @@
 import guid from '../../../generators/guid';
 
-class TreeNode {
+class NAryTreeNode {
 	constructor({value, level, node}){
 		this.value = value
 		this.__l = level
@@ -9,4 +9,4 @@ class TreeNode {
 	}
 }
 
-export default TreeNode
+export { NAryTreeNode }

@@ -1,11 +1,11 @@
-import {filter} from 'lodash';
-import {Tree} from './tree';
-import SpaceTreeNode from './nodes/space_tree_node';
-import guid from '../../generators/guid';
-import {BoundingBox} from '../../space/bounds/bounding_box';
-import {BoundingSphere} from '../../space/bounds/bounding_sphere';
+import { filter } from 'lodash';
+import { NAryTree } from '../n_ary_tree';
+import { SpaceTreeNode } from './space_tree_node';
+import guid from '../../../generators/guid';
+import { BoundingBox } from '../../../space/bounds/bounding_box';
+import { BoundingSphere } from '../../../space/bounds/bounding_sphere';
 
-class SpaceTree extends Tree {
+class SpaceTree extends NAryTree {
 	constructor(args={}){
 		args.config = { branches: 8 }
 		super(args)

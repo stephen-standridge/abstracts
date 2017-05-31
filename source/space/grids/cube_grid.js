@@ -1,7 +1,6 @@
-import {GridTree} from '../../structures/trees/grid_tree'
-import {FaceNode} from '../../structures/trees/nodes/face_node'
-import {normalize, subtract, scale, distance} from '../../math/vector'
-import {findIndex, reduce, reduceRight, forEach, forEachRight, isMatch} from 'lodash'
+import { GridTree, FaceNode } from '../../structures/trees/grid_tree'
+import { normalize, subtract, scale, distance } from '../../math/vector'
+import { findIndex, reduce, reduceRight, forEach, forEachRight, isMatch } from 'lodash'
 
 
 const EDGE_INDICES = {

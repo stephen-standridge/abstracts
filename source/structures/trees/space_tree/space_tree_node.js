@@ -1,7 +1,7 @@
 import guid from '../../../generators/guid';
-import TreeNode from './tree_node';
+import { NAryTreeNode } from '../n_ary_tree';
 
-class SpaceTreeNode extends TreeNode {
+class SpaceTreeNode extends NAryTreeNode {
 	constructor(args){
 		super(args)
 		this.leaf = true;
@@ -21,4 +21,4 @@ class SpaceTreeNode extends TreeNode {
 	}
 }
 
-export default SpaceTreeNode
+export { SpaceTreeNode }

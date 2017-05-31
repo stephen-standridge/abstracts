@@ -1,5 +1,5 @@
 import guid from '../../../generators/guid';
-import {forEachRight} from 'lodash';
+import { forEachRight } from 'lodash';
 
 class GridNode {
 	constructor({__l, __n, __first, __last}){

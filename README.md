@@ -6,9 +6,10 @@ Contained in the structures collection are the following classes:
 
 - Structures
   - Trees
-    - Tree (n-array tree)
+    - Tree (n-ary tree)
     - SpaceTree (octree)
-    - GridTree (a tree with an arbitrary number of nodes at arbitrary depths)
+    - GridTree (n-ary tree with branching defined per level)
+    - RoseTree (a rose tree)
   - Maps
     - CubeMap
     - SquareMap
