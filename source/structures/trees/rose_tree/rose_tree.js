@@ -1,31 +1,41 @@
 import guid from '../../../generators/guid';
-import { RoseTreeNode } from './n_ary_tree_node';
+import { RoseTreeNode } from './rose_tree_node';
 
 class RoseTree {
 	constructor(args={}) {
 		this.state = this.initialState();
-		this.set(args);
+		this.setState(args);
 		this.__id = guid();
 	}
 	initialState() {
 		return {
 			data: [],
-			maxBranches: 2,
-			maxDepth: false
+			maxBranches: false,
+			maxDepth: false,
 			level: 0,
 			node: 0,
 			maxLevel: 0,
 			maxNode: 0
 		};
 	}
-	set(state){
+	setNav({ level, node }) {
+		if(!isNaN(Number(node))) this.state.node = node;
+		if(!isNaN(Number(level))) this.state.level = level;
+	}
+	setState(state){
+		let toSet;
 		Object.keys(this.state).forEach((key) => {
-			if (state[key] == undefined) return;
-			if (key == 'data') this.state[key] = state[key].slice();
-			else this.state[key] = state[key];
+			toSet = state[key];
+			if (toSet == undefined) return;
+			if (key == 'data') this.setData(toSet);
+			else this.state[key] = toSet;
 		})
+	}
+	setData(newData=[]){
+		this.state.data = newData.slice();
 		this.root
-		this.index();
+		this.index()
+		return this.state.data
 	}
 	flatten(){
 		let thing = this.state.data.map((item, index)=> item.value )
@@ -38,7 +48,7 @@ class RoseTree {
 		return this.getIndex( this.state.level, this.state.maxBranches ) < this.length;
 	}
 	get length(){
-		return this.maxNodeIndex( this.state.depth ) + 1
+		return this.maxNodeIndex( this.state.maxDepth ) + 1
 	}
 	traversed(){
 		return this.maxNodeIndex( this.state.maxLevel ) + 1
@@ -55,11 +65,12 @@ class RoseTree {
 	lastChildIndex(){
 		return this.getIndex( this.state.level + 1, this.lastChildNode() )
 	}
-	set node( value ){
+	set node(value){
+
 		this.set({level:this.state.level, node:this.state.node}, value)
 
 		if(this.state.level > this.state.maxLevel){
-			this.setNav({maxLevel: this.state.level})
+			this.setState({maxLevel: this.state.level})
 		}
 		this.trim()
 		return
@@ -97,7 +108,7 @@ class RoseTree {
 	}
 	get parentAddress(){
 		return {
-			level: this.state.nav.level - 1,
+			level: this.state.level - 1,
 			node: Math.floor( this.state.node / this.state.maxBranches )
 		}
 	}
@@ -180,17 +191,17 @@ class RoseTree {
 		return this.state.data[index]
 	}
 	toFirst(){
-		let l = this.state.nav.level + 1
+		let l = this.state.level + 1
 		let n = this.firstChildNode()
 		this.setNav({level: l, node: n })
 	}
 	toLast(){
-		let l = this.state.nav.level + 1
+		let l = this.state.level + 1
 		let n = this.lastChildNode()
 		this.setNav({level: l, node: n })
 	}
 	toNth( index ){
-		let l = this.state.nav.level + 1
+		let l = this.state.level + 1
 		let n = this.firstChildNode() + index
 		this.setNav({level: l, node: n })
 	}
@@ -203,8 +214,8 @@ class RoseTree {
 		}
 	}
 	goTo( node, level ){
-		let l = level !== undefined ? level : this.state.nav.level;
-		let n = node !== undefined ? node : this.state.nav.node;
+		let l = level !== undefined ? level : this.state.level;
+		let n = node !== undefined ? node : this.state.node;
 		this.setNav({level: l, node: n })
 	}
 	goToNode( node ){
@@ -279,7 +290,7 @@ class RoseTree {
 		}
 	}
 	trim(){
-		if(this.state.depth && this.state.level > this.state.depth){
+		if(this.state.maxDepth && this.state.level > this.state.maxDepth){
 			this.reRoot();
 		}
 	}
@@ -296,8 +307,8 @@ class RoseTree {
 				returnToIndex = returned.length -1;
 			}
 		})
-		this.setData( returned )
-		this.goToNode( this.state.data[returnToIndex] )
+		this.setData(returned)
+		this.goToNode(this.state.data[returnToIndex])
 		return
 	}
 	toJS(retrieved = false ){

@@ -12,7 +12,7 @@ describe('RoseTree', () => {
 			expect(test.state.maxNode).to.equal(0)
 
 			expect(test.state.data.length).to.equal(0)
-			expect(test.state.maxBranches).to.equal(2)
+			expect(test.state.maxBranches).to.equal(false)
 			expect(test.state.maxDepth).to.equal(false)
 		})
 		it('should allow overriding its defaults', ()=>{
@@ -24,32 +24,37 @@ describe('RoseTree', () => {
 				maxLevel: 5,
 				maxNode: 3,
 			})
-			expect(test.state.level ).to.equal(1)
-			expect(test.state.node ).to.equal(1)
-			expect(test.state.maxLevel ).to.equal(5)
-			expect(test.state.maxNode ).to.equal(5)
+			expect(test.state.level).to.equal(1)
+			expect(test.state.node).to.equal(1)
+			expect(test.state.maxLevel).to.equal(5)
+			expect(test.state.maxNode).to.equal(3)
 			expect(test.state.maxBranches).to.equal(3)
 			expect(test.state.maxDepth).to.equal(2)
 		})
 	})
-	describe('#set', ()=>{
+	describe('#setNav', () => {
 		beforeEach(() => {
 			test = new RoseTree()
 		})
 		it('should set the nav state', ()=>{
-			test.set({ level: 2, node: 1 })
-			expect(test.state.level ).to.equal(2)
-			expect(test.state.node ).to.equal(1)
+			test.setNav({ level: 2, node: 1 })
+			expect(test.state.level).to.equal(2)
+			expect(test.state.node).to.equal(1)
+		})
+	})
+	describe('#setState', ()=>{
+		beforeEach(() => {
+			test = new RoseTree({ maxBranches: 2 })
 		})
 		it('should set the ranges', () => {
-			test.set({ maxDepth: 3, maxBranches: 1, maxLevel: 3, maxNode: 4 })
+			test.setState({ maxDepth: 3, maxBranches: 1, maxLevel: 3, maxNode: 4 })
 			expect(test.state.maxLevel ).to.equal(3)
 			expect(test.state.maxDepth ).to.equal(3)
 			expect(test.state.maxBranches ).to.equal(1)
 			expect(test.state.maxNode ).to.equal(4)
 		})
 		it('should set the data state', ()=>{
-			test.set({ data: [ {value: true}, {value: true}, {value: true}] })
+			test.setData([{value: true}, {value: true}, {value: true}])
 			control = [{value: true, __l: 0, __n: 0},
 								{value: true, __l: 1, __n: 0},
 								{value: true, __l: 1, __n: 1}];
@@ -89,7 +94,7 @@ describe('RoseTree', () => {
 			expect(control).to.have.members(['si', 'si', 'si'])
 		})
 		it('should have the appropriate children', ()=>{
-			test.set({ data: [ {value:true}, {value: true}, {value: true}, {value: true}] })
+			test.setState({ data: [ {value:true}, {value: true}, {value: true}, {value: true}] })
 			control = [];
 			control = test.eachChild(function(item, index){
 				return item
@@ -104,100 +109,103 @@ describe('RoseTree', () => {
 	})
 
 	describe('Contextual Navigation', () => {
-		it('should allow a node to be set', ()=>{
-			const tree = new NAryTree()
-			tree.node = 'test'
-			expect(tree.node).to.equal('test')
-			expect(tree.length).to.equal(1)
-		})
-		it('should mark the node with an internal node and level value', ()=>{
-			const tree = new NAryTree(2);
-			tree.node = 'test';
-			expect(tree.nodeItem.__l).to.equal(0)
-			expect(tree.nodeItem.__n).to.equal(0)
-			expect(tree.nodeItem.value).to.equal('test')
-			expect(tree.length).to.equal(1)
-		})
-		it('should allow a root to be set', ()=>{
-			const tree = new NAryTree(2);
-			tree.root = 'test'
-			expect(tree.root).to.equal('test')
-			expect(tree.rootItem.__l).to.equal(0)
-			expect(tree.rootItem.__n).to.equal(0)
-			expect(tree.length).to.equal(1)
-		})
-		it('should allow traversal to the first child', ()=>{
-			const tree = new NAryTree();
-			tree.toFirst()
-			expect(tree.state.node).to.equal(0)
-			expect(tree.state.level).to.equal(1)
-		})
-		it('should allow traversal to the last child', ()=>{
-			const tree = new NAryTree({config:{branches: 3}});
-			tree.toLast()
-			expect(tree.state.node).to.equal(2)
-			expect(tree.state.level).to.equal(1)
-		})
-		it('should allow traversal to an nth child', ()=>{
-			const tree = new NAryTree({config:{branches: 3}});
-			tree.toNth(1)
-			expect(tree.state.node).to.equal(1)
-			expect(tree.state.level).to.equal(1)
-
-			tree.toParent()
-			tree.toNth(2)
-			expect(tree.state.node).to.equal(2)
-			expect(tree.state.level).to.equal(1)
+		let tree;
+		describe('with two children', () => {
+			beforeEach(() => {
+				tree = new RoseTree({ maxBranches: 2 });
+			})
+			it('should allow a node to be set', ()=>{
+				tree.node = 'test'
+				expect(tree.node).to.equal('test')
+				expect(tree.length).to.equal(1)
+			})
+			it('should mark the node with an internal node and level value', ()=>{
+				tree.node = 'test';
+				expect(tree.nodeItem.__l).to.equal(0)
+				expect(tree.nodeItem.__n).to.equal(0)
+				expect(tree.nodeItem.value).to.equal('test')
+				expect(tree.length).to.equal(1)
+			})
+			it('should allow a root to be set', ()=>{
+				tree.root = 'test'
+				expect(tree.root).to.equal('test')
+				expect(tree.rootItem.__l).to.equal(0)
+				expect(tree.rootItem.__n).to.equal(0)
+				expect(tree.length).to.equal(1)
+			})
+			it('should allow traversal to the first child', ()=>{
+				tree.toFirst()
+				expect(tree.state.node).to.equal(0)
+				expect(tree.state.level).to.equal(1)
+			})
 		})
 
-		it('should allow traversal to the parent', ()=>{
-			const tree = new NAryTree({config:{branches: 3}});
-			tree.root = 'test'
-			control = {value: 'test', __n: 0, __l: 0};
-			tree.toLast();
-			expect(tree.state.node).to.equal(2)
-			expect(tree.state.level).to.equal(1)
+		describe('with more than 2 branches', () => {
+			beforeEach(()=>{
+				tree = new RoseTree({ maxBranches: 3 });
+			})
+			it('should allow traversal to the last child', ()=>{
+				tree.toLast()
+				expect(tree.state.node).to.equal(2)
+				expect(tree.state.level).to.equal(1)
+			})
+			it('should allow traversal to an nth child', ()=>{
+				tree.toNth(1)
+				expect(tree.state.node).to.equal(1)
+				expect(tree.state.level).to.equal(1)
 
-			tree.toParent()
-			expect(tree.node).to.equal('test')
-			expect(tree.state.node).to.equal(0)
-			expect(tree.state.level).to.equal(0)
+				tree.toParent()
+				tree.toNth(2)
+				expect(tree.state.node).to.equal(2)
+				expect(tree.state.level).to.equal(1)
+			})
 
-			tree.toLast();
-			let parent = tree.parentItem;
-			expect(parent.__l).to.equal(0)
-			expect(parent.__n).to.equal(0)
-			expect(parent.value).to.equal('test')
-			expect(tree.parent).to.equal('test')
+			it('should allow traversal to the parent', ()=>{
+				tree.root = 'test'
+				control = {value: 'test', __n: 0, __l: 0};
+				tree.toLast();
+				expect(tree.state.node).to.equal(2)
+				expect(tree.state.level).to.equal(1)
+
+				tree.toParent()
+				expect(tree.node).to.equal('test')
+				expect(tree.state.node).to.equal(0)
+				expect(tree.state.level).to.equal(0)
+
+				tree.toLast();
+				let parent = tree.parentItem;
+				expect(parent.__l).to.equal(0)
+				expect(parent.__n).to.equal(0)
+				expect(parent.value).to.equal('test')
+				expect(tree.parent).to.equal('test')
+			})
+			it('should get and set multiple children', ()=>{
+				tree.children = ['testvalue1', 'testvalue2', 'testvalue3'];
+				expect(tree.children[2]).to.equal('testvalue3')
+				expect(tree.children[1]).to.equal('testvalue2')
+				expect(tree.children[0]).to.equal('testvalue1')
+			})
+			it('should be able to handle undefined values', ()=>{
+				expect(String(tree.children) ).to.equal(String([undefined, undefined, undefined]))
+			})
+			it('should allow getting the address', ()=>{
+				expect(tree.nodeAddress.__l).to.equal(0)
+				expect(tree.nodeAddress.__n).to.equal(0)
+				expect(tree.getChildren('nodeAddress')[0].__l).to.equal(1)
+				expect(tree.getChildren('nodeAddress')[0].__n).to.equal(0)
+				expect(tree.getChildren('nodeAddress')[1].__l).to.equal(1)
+				expect(tree.getChildren('nodeAddress')[1].__n).to.equal(1)
+				expect(tree.getChildren('nodeAddress')[2].__l).to.equal(1)
+				expect(tree.getChildren('nodeAddress')[2].__n).to.equal(2)
+			})
 		})
-		it('should get and set multiple children', ()=>{
-			const tree = new NAryTree({config:{branches: 3}});
-			tree.children = ['testvalue1', 'testvalue2', 'testvalue3'];
-			expect(tree.children[2]).to.equal('testvalue3')
-			expect(tree.children[1]).to.equal('testvalue2')
-			expect(tree.children[0]).to.equal('testvalue1')
-		})
-		it('should be able to handle undefined values', ()=>{
-			const tree = new NAryTree({config:{branches: 3}});
-			expect(String(tree.children) ).to.equal(String([undefined, undefined, undefined]))
-		})
-		it('should allow getting the address', ()=>{
-			const tree = new NAryTree({config:{branches: 3}})
-			expect(tree.nodeAddress.__l).to.equal(0)
-			expect(tree.nodeAddress.__n).to.equal(0)
-			expect(tree.getChildren('nodeAddress')[0].__l).to.equal(1)
-			expect(tree.getChildren('nodeAddress')[0].__n).to.equal(0)
-			expect(tree.getChildren('nodeAddress')[1].__l).to.equal(1)
-			expect(tree.getChildren('nodeAddress')[1].__n).to.equal(1)
-			expect(tree.getChildren('nodeAddress')[2].__l).to.equal(1)
-			expect(tree.getChildren('nodeAddress')[2].__n).to.equal(2)
-		})
+
 	})
 
 	describe('a structured tree', ()=>{
 		let tree;
 		beforeEach(()=>{
-			tree = new NAryTree({config: {branches: 3,depth: 3}});
+			tree = new RoseTree({ maxBranches: 3, maxDepth: 3 });
 			tree.root = 1
 			tree.children = [2, 3, 4]
 			tree.toNth(0)
