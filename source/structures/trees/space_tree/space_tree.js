@@ -7,8 +7,8 @@ import { BoundingSphere } from '../../../space/bounds/bounding_sphere';
 
 class SpaceTree extends NAryTree {
 	constructor(args={}){
-		args.config = { branches: 8 }
-		super(args)
+
+		super(Object.assign(args, { branches: 8 }));
 		this.objects = args.objects || [];
 		this.root = new BoundingBox(...args.region);
 		this.minSize = args.minSize || 10;
@@ -131,7 +131,7 @@ class SpaceTree extends NAryTree {
 	}
 	makeNode(value) {
 		let val = value == undefined? false : value;
-		return new SpaceTreeNode({ value: value, node: this.attribute('node'), level: this.attribute('level') })
+		return new SpaceTreeNode({ value: value, node: this.state.node, level: this.state.level })
 	}
 }
 export { SpaceTree }

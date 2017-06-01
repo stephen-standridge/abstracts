@@ -12,12 +12,12 @@ describe('NAryTree', () => {
 			expect(test.state.maxNode).to.equal(0)
 
 			expect(test.state.data.length).to.equal(0)
-			expect(test.state.maxBranches).to.equal(false)
+			expect(test.state.branches).to.equal(2)
 			expect(test.state.maxDepth).to.equal(false)
 		})
 		it('should allow overriding its defaults', ()=>{
 			test = new NAryTree({
-				maxBranches: 3,
+				branches: 3,
 				maxDepth: 2,
 				level: 1,
 				node: 1,
@@ -28,7 +28,7 @@ describe('NAryTree', () => {
 			expect(test.state.node).to.equal(1)
 			expect(test.state.maxLevel).to.equal(5)
 			expect(test.state.maxNode).to.equal(3)
-			expect(test.state.maxBranches).to.equal(3)
+			expect(test.state.branches).to.equal(3)
 			expect(test.state.maxDepth).to.equal(2)
 		})
 	})
@@ -44,13 +44,13 @@ describe('NAryTree', () => {
 	})
 	describe('#setState', ()=>{
 		beforeEach(() => {
-			test = new NAryTree({ maxBranches: 2 })
+			test = new NAryTree({ branches: 2 })
 		})
 		it('should set the ranges', () => {
-			test.setState({ maxDepth: 3, maxBranches: 1, maxLevel: 3, maxNode: 4 })
+			test.setState({ maxDepth: 3, branches: 1, maxLevel: 3, maxNode: 4 })
 			expect(test.state.maxLevel ).to.equal(3)
 			expect(test.state.maxDepth ).to.equal(3)
-			expect(test.state.maxBranches ).to.equal(1)
+			expect(test.state.branches ).to.equal(1)
 			expect(test.state.maxNode ).to.equal(4)
 		})
 		it('should set the data state', ()=>{
@@ -69,7 +69,7 @@ describe('NAryTree', () => {
 
 	describe('#eachChild', ()=>{
 		before(()=>{
-			test = new NAryTree({ maxBranches: 3, maxDepth: 2 })
+			test = new NAryTree({ branches: 3, maxDepth: 2 })
 		})
 		it('should call function for each child', ()=>{
 			control = [];
@@ -112,7 +112,7 @@ describe('NAryTree', () => {
 		let tree;
 		describe('with two children', () => {
 			beforeEach(() => {
-				tree = new NAryTree({ maxBranches: 2 });
+				tree = new NAryTree({ branches: 2 });
 			})
 			it('should allow a node to be set', ()=>{
 				tree.node = 'test'
@@ -142,7 +142,7 @@ describe('NAryTree', () => {
 
 		describe('with more than 2 branches', () => {
 			beforeEach(()=>{
-				tree = new NAryTree({ maxBranches: 3 });
+				tree = new NAryTree({ branches: 3 });
 			})
 			it('should allow traversal to the last child', ()=>{
 				tree.toLast()
@@ -205,7 +205,7 @@ describe('NAryTree', () => {
 	describe('a structured tree', ()=>{
 		let tree;
 		beforeEach(()=>{
-			tree = new NAryTree({ maxBranches: 3, maxDepth: 3 });
+			tree = new NAryTree({ branches: 3, maxDepth: 3 });
 			tree.root = 1
 			tree.children = [2, 3, 4]
 			tree.toNth(0)

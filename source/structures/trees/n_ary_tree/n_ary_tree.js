@@ -10,7 +10,7 @@ class NAryTree {
 	initialState() {
 		return {
 			data: [],
-			maxBranches: false,
+			branches: 2,
 			maxDepth: false,
 			level: 0,
 			node: 0,
@@ -42,10 +42,10 @@ class NAryTree {
 		return thing;
 	}
 	shouldIndexDeeper(){
-		return this.getIndex( this.state.level, this.state.maxBranches ) < this.traversed();
+		return this.getIndex( this.state.level, this.state.branches ) < this.traversed();
 	}
 	shouldTraverseDeeper(){
-		return this.getIndex( this.state.level, this.state.maxBranches ) < this.length;
+		return this.getIndex( this.state.level, this.state.branches ) < this.length;
 	}
 	get length(){
 		return this.maxNodeIndex( this.state.maxDepth ) + 1
@@ -54,13 +54,13 @@ class NAryTree {
 		return this.maxNodeIndex( this.state.maxLevel ) + 1
 	}
 	firstChildNode(){
-		return this.state.node * this.state.maxBranches
+		return this.state.node * this.state.branches
 	}
 	firstChildIndex(){
 		return this.getIndex( this.state.level + 1, this.firstChildNode() )
 	}
 	lastChildNode(){
-		return this.state.node * this.state.maxBranches + (this.state.maxBranches - 1);
+		return this.state.node * this.state.branches + (this.state.branches - 1);
 	}
 	lastChildIndex(){
 		return this.getIndex( this.state.level + 1, this.lastChildNode() )
@@ -109,7 +109,7 @@ class NAryTree {
 	get parentAddress(){
 		return {
 			level: this.state.level - 1,
-			node: Math.floor( this.state.node / this.state.maxBranches )
+			node: Math.floor( this.state.node / this.state.branches )
 		}
 	}
 	get parentItem(){
@@ -123,7 +123,7 @@ class NAryTree {
 		return this.getChildren('node')
 	}
 	set children( vals ){
-		vals.length = this.state.maxBranches;
+		vals.length = this.state.branches;
 
 		vals.map( ( value, index ) =>{
 			this.toNth( index )
@@ -133,7 +133,7 @@ class NAryTree {
 	}
 	getChildren(prop){
 		let children = [];
-		for(let i = 0; i< this.state.maxBranches; i++){
+		for(let i = 0; i< this.state.branches; i++){
 			this.toNth( i )
 			children.push(this[prop])
 			this.toParent()
@@ -142,7 +142,7 @@ class NAryTree {
 	}
 	eachChild(block){
 		let children = [];
-		for(let i = 0; i< this.state.maxBranches; i++){
+		for(let i = 0; i< this.state.branches; i++){
 			this.toNth( i )
 			children.push(block.call(this, this.nodeItem, i))
 			this.toParent()
@@ -150,7 +150,7 @@ class NAryTree {
 		return children;
 	}
 	maxNodeIndex( max ){
-		return ( this.nodesAtIndexed( max + 1 ) / (this.state.maxBranches - 1) ) - 1;
+		return ( this.nodesAtIndexed( max + 1 ) / (this.state.branches - 1) ) - 1;
 	}
 	makeNode( value ){
 		let val = value == undefined? false : value;
@@ -158,7 +158,7 @@ class NAryTree {
 	}
 	nodesAt( level ){
 		level = level || this.state.level
-		return Math.pow( this.state.maxBranches, level )
+		return Math.pow( this.state.branches, level )
 	}
 	nodesAtIndexed( level ){
 		level = level || this.state.level;
@@ -166,27 +166,27 @@ class NAryTree {
 	}
 	rootNodeAt( level ){
 		level = level || this.state.level
-		return this.nodesAtIndexed( level ) / (this.state.maxBranches - 1)
+		return this.nodesAtIndexed( level ) / (this.state.branches - 1)
 	}
 	getIndex(level, node){
-		let index = node + this.nodesAtIndexed( level ) / (this.state.maxBranches - 1)
+		let index = node + this.nodesAtIndexed( level ) / (this.state.branches - 1)
 		index = level == 0 && node == 0 ? 0 : index;
 		return index
 	}
 	get({level, node}){
-		let index = node + this.nodesAtIndexed( level ) / (this.state.maxBranches - 1)
+		let index = node + this.nodesAtIndexed( level ) / (this.state.branches - 1)
 		index = level == 0 && node == 0 ? 0 : index;
 		return this.state.data[index] ? this.state.data[index].value : undefined
 	}
 	set({level, node}, value){
-		let index = node + this.nodesAtIndexed( level ) / (this.state.maxBranches - 1)
+		let index = node + this.nodesAtIndexed( level ) / (this.state.branches - 1)
 		index = level == 0 && node == 0 ? 0 : index;
 		let created = this.makeNode(value)
 		this.state.data[index] = created
 		return created
 	}
 	getNodeItem({level, node}){
-		let index = node + this.nodesAtIndexed( level ) / (this.state.maxBranches - 1)
+		let index = node + this.nodesAtIndexed( level ) / (this.state.branches - 1)
 		index = level == 0 && node == 0 ? 0 : index;
 		return this.state.data[index]
 	}
@@ -226,7 +226,7 @@ class NAryTree {
 	}
 	preOrderDepth( callback, ctx=this ){
 		callback.call(ctx, this.node, this.state.node, this.state.level)
-		for( let i = 0; i< this.state.maxBranches; i++ ){
+		for( let i = 0; i< this.state.branches; i++ ){
 			this.toNth(i)
 			if( this.shouldTraverseDeeper() ){
 				this.preOrderDepth( callback, ctx )
@@ -235,7 +235,7 @@ class NAryTree {
 		}
 	}
 	postOrderDepth( callback, ctx=this ){
-		for( let i = 0; i< this.state.maxBranches; i++ ){
+		for( let i = 0; i< this.state.branches; i++ ){
 			this.toNth(i)
 			if( this.shouldTraverseDeeper() ){
 				this.postOrderDepth( callback, ctx )
@@ -272,7 +272,7 @@ class NAryTree {
 			this.node = this.node;
 		}
 		if( this.shouldIndexDeeper() ){
-			for( let i = 0; i< this.state.maxBranches; i++ ){
+			for( let i = 0; i< this.state.branches; i++ ){
 				this.toNth(i)
 				this.reIndex()
 				this.toParent()
@@ -282,7 +282,7 @@ class NAryTree {
 	index(){
 		if(this.node !== undefined){
 			this.node = this.node;
-			for( let i = 0; i< this.state.maxBranches; i++ ){
+			for( let i = 0; i< this.state.branches; i++ ){
 				this.toNth(i)
 				this.index()
 				this.toParent()
