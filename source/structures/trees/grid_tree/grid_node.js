@@ -40,7 +40,7 @@ class GridNode {
 		let a = address;
 		this.__children.forEach((child, index)=>{
 			a.push(index);
-			child.traverse( callback, a )
+			child.traverse(callback, a)
 			a.pop()
 		})
 	}
