@@ -1,21 +1,22 @@
 import guid from '../../../generators/guid';
 
 class RoseTreeNode {
-	constructor(tree, { value, index, parent= null }){
+	constructor(tree, args){
 		this.state = {
-			value,
-			prevIndex: parent,
-			currentIndex: index,
-			rootIndex: index,
-			parentIndex: parent,
+			value: null,
+			prevIndex: null,
+			currentIndex: null,
+			rootIndex: null,
+			parentIndex: null,
 			children: [],
 			id: guid()
 		}
+		this.setState(args);
 		this.__tree = tree;
 	}
-	setNav(newIndex, prev=true) {
+	setNav(newIndex, prevIndex=null) {
 		if(!isNaN(Number(newIndex))) {
-			this.state.prevIndex = prev && this.state.currentIndex || null;
+			this.state.prevIndex = !isNaN(Number(prevIndex)) ? prevIndex : null;
 			this.state.currentIndex = newIndex;
 		}
 	}
@@ -27,8 +28,13 @@ class RoseTreeNode {
 			else this.state[key] = toSet;
 		})
 	}
+	get length(){
+		let length = 1;
+		this.state.children.forEach((childIndex) => length += (this.get(childIndex).length) || 0 )
+		return length;
+	}
 	get root(){
-		this.setNav(this.node.state.rootIndex)
+		this.setNav(this.state.rootIndex, this.state.currentIndex)
 		return this.node
 	}
 	set root(value){
@@ -36,19 +42,36 @@ class RoseTreeNode {
 		this.node = value;
 		return this.node
 	}
-	get rootItem(){
+	get rootObject(){
 		this.root
-		return this.nodeItem
+		return this.nodeObject
 	}
+	get rootState(){
+		this.root;
+		return this.nodeState;
+	}
+	get rootValue(){
+		this.root;
+		return this.nodeValue;
+	}
+
 	set node(value){
 		this.set(this.state.currentIndex, value)
 		return this.node
 	}
 
-	get node(){
-		return this.get(this.state.currentIndex)
+	get node() {
+		return this.nodeValue
 	}
-	get nodeItem(){
+	get nodeValue(){
+		let returned = this.get(this.state.currentIndex);
+		return returned && returned.value;
+	}
+	get nodeState(){
+		let returned = this.get(this.state.currentIndex);
+		return returned && returned;
+	}
+	get nodeObject(){
 		return this.__tree.data[this.state.currentIndex] || undefined
 	}
 	getNodeItem(index){
@@ -56,7 +79,8 @@ class RoseTreeNode {
 	}
 
 	get parent(){
-		return this.get(this.state.parentIndex)
+		let returned = this.get(this.state.parentIndex);
+		return returned && returned.value;
 	}
 	get parentItem(){
 		return this.__tree.data[this.state.parentIndex] || undefined
@@ -73,19 +97,19 @@ class RoseTreeNode {
 	get(index){
 		return this.__tree.data[index] ? this.__tree.data[index].state : undefined
 	}
-	set(index, value){
-		let parent = null;
-		let node = this._tree.data[index];
-		if (node.state.parentIndex) {
+	set(index, value, parentIndex=null){
+		let parent = parentIndex;
+		let node = this.__tree.data[index];
+
+		if (isNaN(parent) && node && node.state.parentIndex) {
 			//if the node has a parent, keep it
 			parent = node.state.parentIndex;
-		} else {
+		} else if(isNaN(parent)) {
 			//if the node was navigated to from a parent
-			index == this.state.currentIndex;
-			parent = this.state.prevIndex;
+			parent = this.state.prevIndex != this.state.currentIndex ? this.state.prevIndex : null;
 		}
-		this._tree.data[index] = new RoseTreeNode(this._tree, { value, index, parent })
-		return this._tree.data[index].state
+		this.__tree.data[index] = new RoseTreeNode(this.__tree, { value, currentIndex: index, rootIndex: index, parentIndex: parent })
+		return this.__tree.data[index].state
 	}
 
 
@@ -93,21 +117,21 @@ class RoseTreeNode {
 		this.toNth(0)
 	}
 	toLast(){
-		this.toNth(this.node.state.children.length - 1);
+		this.toNth(this.nodeState.children.length - 1);
 	}
 	toNth(childIndex){
-		if (!this.node.state.children[childIndex]) {
+		if (!this.nodeState.children[childIndex]) {
 			console.warn('cannot go to a child that doesnt exist')
 			return;
 		}
-		this.setNav(this.node.state.children[childIndex])
+		this.setNav(this.nodeState.children[childIndex], this.nodeState.currentIndex)
 	}
 	toParent(){
-		this.setNav(this.state.parentIndex)
+		this.setNav(this.nodeState.parentIndex, this.nodeState.currentIndex)
 	}
 
 	goTo(index){
-		this.setNav(index, false)
+		this.setNav(index)
 	}
 	goToNode(node){
 		if(node == undefined){ return }
@@ -118,20 +142,20 @@ class RoseTreeNode {
 		return this.getChildren('node')
 	}
 	set children(value=[]){
-		let node = this.node;
-		if (node.state.children.length !== value.length) {
+		let node = this.nodeState;
+		if (node.children.length !== value.length) {
 			console.warn('RoseTreeNode: attempting to set children with a differing number of nodes')
 		}
-		node.state.children.forEach((childIndex, index)=> this.set(childIndex, value[index]))
+		node.children.forEach((childIndex, index)=> this.set(childIndex, value[index], this.state.currentIndex))
 	}
 	getChildren(prop='state'){
-		return this.node.state.children.map((childIndex) => this.__tree.data[childIndex][prop])
+		return this.nodeState.children.map((childIndex) => this.__tree.data[childIndex][prop])
 	}
 
 	addChild(value){
-		let newIndex = this.__tree.data.push() - 1;
-		this.node.state.children.push(newIndex);
-		this.set(newIndex, value);
+		let newIndex = this.__tree.data.push(undefined) - 1;
+		this.nodeObject.state.children.push(newIndex);
+		this.set(newIndex, value, this.state.currentIndex);
 	}
 
 	addChildren(values=[]){
@@ -159,3 +183,5 @@ class RoseTreeNode {
 	// 	}
 	// }
 }
+
+export { RoseTreeNode }
