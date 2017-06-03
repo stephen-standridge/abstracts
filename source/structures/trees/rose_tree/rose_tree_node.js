@@ -14,12 +14,14 @@ class RoseTreeNode {
 		this.setState(args);
 		this.__tree = tree;
 	}
+
 	setNav(newIndex, prevIndex=null) {
 		if(!isNaN(Number(newIndex))) {
 			this.state.prevIndex = !isNaN(Number(prevIndex)) ? prevIndex : null;
 			this.state.currentIndex = newIndex;
 		}
 	}
+
 	setState(state){
 		let toSet;
 		Object.keys(this.state).forEach((key) => {
@@ -28,28 +30,38 @@ class RoseTreeNode {
 			else this.state[key] = toSet;
 		})
 	}
+
+	get index() {
+		return this.state.rootIndex;
+	}
+
 	get length(){
 		let length = 1;
-		this.state.children.forEach((childIndex) => length += (this.get(childIndex).length) || 0 )
+		this.getChildren().forEach((child) => length += (child.length) || 0 )
 		return length;
 	}
+
 	get root(){
 		this.setNav(this.state.rootIndex, this.state.currentIndex)
 		return this.node
 	}
+
 	set root(value){
 		this.root
 		this.node = value;
 		return this.node
 	}
+
 	get rootObject(){
 		this.root
 		return this.nodeObject
 	}
+
 	get rootState(){
 		this.root;
 		return this.nodeState;
 	}
+
 	get rootValue(){
 		this.root;
 		return this.nodeValue;
@@ -63,25 +75,30 @@ class RoseTreeNode {
 	get node() {
 		return this.nodeValue
 	}
+
 	get nodeValue(){
-		let returned = this.get(this.state.currentIndex);
+		let returned = this.getState(this.state.currentIndex);
 		return returned && returned.value;
 	}
+
 	get nodeState(){
-		let returned = this.get(this.state.currentIndex);
+		let returned = this.getState(this.state.currentIndex);
 		return returned && returned;
 	}
+
 	get nodeObject(){
 		return this.__tree.data[this.state.currentIndex] || undefined
 	}
+
 	getNodeItem(index){
 		return this.__tree.data[index] || undefined
 	}
 
 	get parent(){
-		let returned = this.get(this.state.parentIndex);
+		let returned = this.getState(this.state.parentIndex);
 		return returned && returned.value;
 	}
+
 	get parentItem(){
 		return this.__tree.data[this.state.parentIndex] || undefined
 	}
@@ -93,10 +110,18 @@ class RoseTreeNode {
 	// 	return this.parent
 	// }
 
+	getObject(index) {
+		return this.__tree.data[index];
+	}
 
-	get(index){
+	getState(index){
 		return this.__tree.data[index] ? this.__tree.data[index].state : undefined
 	}
+
+	get(index){
+		return this.__tree.data[index] ? this.__tree.data[index].state.value : undefined
+	}
+
 	set(index, value, parentIndex=null){
 		let parent = parentIndex;
 		let node = this.__tree.data[index];
@@ -116,9 +141,11 @@ class RoseTreeNode {
 	toFirst(){
 		this.toNth(0)
 	}
+
 	toLast(){
 		this.toNth(this.nodeState.children.length - 1);
 	}
+
 	toNth(childIndex){
 		if (!this.nodeState.children[childIndex]) {
 			console.warn('cannot go to a child that doesnt exist')
@@ -126,6 +153,7 @@ class RoseTreeNode {
 		}
 		this.setNav(this.nodeState.children[childIndex], this.nodeState.currentIndex)
 	}
+
 	toParent(){
 		this.setNav(this.nodeState.parentIndex, this.nodeState.currentIndex)
 	}
@@ -133,6 +161,7 @@ class RoseTreeNode {
 	goTo(index){
 		this.setNav(index)
 	}
+
 	goToNode(node){
 		if(node == undefined){ return }
 		this.goTo(node.rootIndex)
@@ -141,6 +170,7 @@ class RoseTreeNode {
 	get children(){
 		return this.getChildren('node')
 	}
+
 	set children(value=[]){
 		let node = this.nodeState;
 		if (node.children.length !== value.length) {
@@ -148,8 +178,9 @@ class RoseTreeNode {
 		}
 		node.children.forEach((childIndex, index)=> this.set(childIndex, value[index], this.state.currentIndex))
 	}
-	getChildren(prop='state'){
-		return this.nodeState.children.map((childIndex) => this.__tree.data[childIndex][prop])
+
+	getChildren(prop){
+		return this.nodeState.children.map((childIndex) => prop && this.__tree.data[childIndex][prop] || this.__tree.data[childIndex])
 	}
 
 	addChild(value){
@@ -160,6 +191,36 @@ class RoseTreeNode {
 
 	addChildren(values=[]){
 		values.forEach((val) => this.addChild(val));
+	}
+
+	remove(index=this.state.currentIndex) {
+		let node = this.getObject(index);
+		node.removeChildren();
+		let parentIndex = node.state.parentIndex;
+		delete this.__tree.data[node.index]
+
+		if (parentIndex !== null) {
+			//remove from parent
+			this.__tree.data[parentIndex].state.children = this.__tree.data[parentIndex].state.children.filter((childIndex) => childIndex != index)
+		}
+
+		if(index == this.state.currentIndex) {
+			//go to parent node if currentIndex no longer exists
+			this.goTo(parentIndex)
+		}
+	}
+
+	removeChild(index) {
+		if(index == undefined) return;
+		//get the index relative to the parent
+		this.remove(this.getChildren('index')[index])
+	}
+
+	removeChildren(){
+		this.getChildren().forEach((child) => {
+			child.removeChildren();
+			delete this.__tree.data[child.index]
+		})
 	}
 
 	// traverse(callback, address=[]){

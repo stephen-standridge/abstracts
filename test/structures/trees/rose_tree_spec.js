@@ -2,66 +2,66 @@ import { expect, assert } from 'chai';
 import { RoseTree } from '../../../source/structures/trees'
 
 describe('RoseTree', () => {
-	var test, control;
+	var control, tree;
 	describe('#new RoseTree', ()=>{
 		it('should default to its initial state', ()=>{
-			test = new RoseTree()
-			expect(test.state.currentIndex).to.equal(0)
-			expect(test.state.rootIndex).to.equal(0)
-			expect(test.state.parentIndex).to.equal(null)
-			expect(test.state.prevIndex).to.equal(null)
-			expect(test.data.length).to.equal(0)
-			expect(test.__tree).to.equal(test)
+			tree = new RoseTree()
+			expect(tree.state.currentIndex).to.equal(0)
+			expect(tree.state.rootIndex).to.equal(0)
+			expect(tree.state.parentIndex).to.equal(null)
+			expect(tree.state.prevIndex).to.equal(null)
+			expect(tree.data.length).to.equal(0)
+			expect(tree.__tree).to.equal(tree)
 		})
 		it('should allow overriding its defaults', ()=>{
-			test = new RoseTree({
+			tree = new RoseTree({
 				currentIndex: 3,
 				rootIndex: 2,
 				prevIndex: 1,
 				parentIndex: 1,
 				value: 'yes!'
 			})
-			expect(test.state.currentIndex).to.equal(3)
-			expect(test.state.rootIndex).to.equal(2)
-			expect(test.state.prevIndex).to.equal(1)
-			expect(test.state.parentIndex).to.equal(1)
+			expect(tree.state.currentIndex).to.equal(3)
+			expect(tree.state.rootIndex).to.equal(2)
+			expect(tree.state.prevIndex).to.equal(1)
+			expect(tree.state.parentIndex).to.equal(1)
 		})
 	})
 	describe('#setNav', () => {
 		beforeEach(() => {
-			test = new RoseTree()
+			tree = new RoseTree()
 		})
 		it('should set the currentIndex', ()=>{
-			test.setNav(2)
-			expect(test.state.currentIndex).to.equal(2)
+			tree.setNav(2)
+			expect(tree.state.currentIndex).to.equal(2)
 		})
 		it('should set the prevIndex', () => {
-			test.setNav(2, 0)
-			expect(test.state.prevIndex).to.equal(0)
-			test.setNav(0, 2)
-			expect(test.state.prevIndex).to.equal(2)
+			tree.setNav(2, 0)
+			expect(tree.state.prevIndex).to.equal(0)
+			tree.setNav(0, 2)
+			expect(tree.state.prevIndex).to.equal(2)
 		})
 		it('should default to null when no previous index is given', () => {
-			test.setNav(0)
-			expect(test.state.prevIndex).to.equal(null)
+			tree.setNav(0)
+			expect(tree.state.prevIndex).to.equal(null)
 		})
 	})
 	describe('#setState', ()=>{
 		beforeEach(() => {
-			test = new RoseTree()
+			tree = new RoseTree()
 		})
 		it('should allow re-setting of the state', () => {
-			test.setState({
+			tree.setState({
 				currentIndex: 3,
 				rootIndex: 2,
 				prevIndex: 1,
 				parentIndex: 1,
 				value: 'yes!'
 			})
-			expect(test.state.currentIndex).to.equal(3)
-			expect(test.state.rootIndex).to.equal(2)
-			expect(test.state.prevIndex).to.equal(1)
-			expect(test.state.parentIndex).to.equal(1)
+			expect(tree.state.currentIndex).to.equal(3)
+			expect(tree.state.rootIndex).to.equal(2)
+			expect(tree.state.prevIndex).to.equal(1)
+			expect(tree.state.parentIndex).to.equal(1)
 		})
 	})
 	describe('#setData', () => {
@@ -109,9 +109,128 @@ describe('RoseTree', () => {
 	// 		expect(control[2]['__n']).to.eq(2)
 	// 	})
 	// })
+	describe('#remove', () => {
+		beforeEach(() => {
+			tree = new RoseTree();
+			tree.root = 'root node'
+			tree.addChild('first child')
+			tree.addChild('second child')
+			tree.toLast()
+			tree.addChild('second child first')
+			tree.addChild('second child second')
+			tree.toParent()
+			tree.toFirst()
+			tree.addChild('first child first')
+			tree.addChild('first child second')
+			tree.toParent();
+			expect(tree.length).to.equal(7)
+		})
+		it('should remove the node at the current index by default', () => {
+			tree.toFirst();
+			tree.toFirst();
+			tree.remove();
+			tree.root
+			expect(tree.data.filter((d)=>d).length).to.equal(6)
+		})
+		it('should remove the node from the parents children', () => {
+			tree.remove(3)
+			expect(tree.data.filter((d)=>d).length).to.equal(6)
+			tree.toLast()
+			expect(tree.nodeState.children).to.deep.equal([4])
+		})
+		it('should remove the node at the given index', () => {
+			tree.remove(3)
+			expect(tree.data.filter((d)=>d).length).to.equal(6)
+			tree.toLast()
+			expect(tree.getChildren('index')).to.deep.equal([4])
+		})
+		it('should move to the parent if possible', () => {
+			tree.toFirst();
+			tree.toFirst();
+			tree.remove();
+			expect(tree.state.currentIndex).to.equal(1)
+		})
+		it('should remove all children of the node', () => {
+			tree.remove(2)
+			expect(tree.data.filter((d) => d).length).to.equal(4)
+		})
+	})
+	describe('#removeChild', () => {
+		beforeEach(() => {
+			tree = new RoseTree();
+			tree.root = 'root node'
+			tree.addChild('first child')
+			tree.addChild('second child')
+			tree.toLast()
+			tree.addChild('second child first')
+			tree.addChild('second child second')
+			tree.toParent()
+			tree.toFirst()
+			tree.addChild('first child first')
+			tree.addChild('first child second')
+			tree.toParent();
+			expect(tree.length).to.equal(7)
+		})
+		it('should remove the child at the given index', () => {
+			tree.toFirst();
+			tree.removeChild(1);
+			expect(tree.data.filter((d) => d).length).to.equal(6)
+			expect(tree.getChildren('index')).to.deep.equal([5])
+		})
+		it('should do nothing if no index is given', () => {
+			tree.toFirst();
+			tree.removeChild();
+			expect(tree.data.filter((d) => d).length).to.equal(7)
+			expect(tree.getChildren('index')).to.deep.equal([5,6])
+		})
+		it('should remove all children of the child', () => {
+			tree.removeChild(0);
+			expect(tree.data.filter((d) => d).length).to.equal(4)
+			expect(tree.getChildren('index')).to.deep.equal([2])
+		})
+	})
+	describe('#removeChildren', () => {
+		beforeEach(() => {
+			tree = new RoseTree();
+			tree.root = 'root node'
+			tree.addChild('first child')
+			tree.addChild('second child')
+			tree.toLast()
+			tree.addChild('second child first')
+			tree.addChild('second child second')
+			tree.toParent()
+			tree.toFirst()
+			tree.addChild('first child first')
+			tree.addChild('first child second')
+			tree.toFirst()
+			tree.addChild('first grandchild first')
+			tree.addChild('first grandchild second')
+			tree.toParent();
+			tree.toParent();
+			expect(tree.length).to.equal(9)
+		})
+		it('should remove all children of the node', () => {
+			tree.toFirst()
+			tree.toFirst()
+			tree.removeChildren()
+			expect(tree.data.filter((item) => item).length).to.equal(7);
+		})
+		it('should remove all children of children', () => {
+			tree.toFirst()
+			tree.removeChildren()
+			expect(tree.data.filter((item) => item).length).to.equal(5);
+		})
+		it('should not remove other children', () => {
+			tree.toFirst()
+			tree.removeChildren()
+			tree.toParent()
+			tree.toLast()
+			expect(tree.length).to.equal(3)
+			expect(tree.getChildren('index')).to.deep.equal([3, 4])
+		})
+	})
 	describe('#addChild', () => {
-		let tree;
-		beforeEach(()=>{
+		beforeEach(() => {
 			tree = new RoseTree();
 			tree.root = 'root node'
 			tree.addChild('test first child')
@@ -165,7 +284,6 @@ describe('RoseTree', () => {
 	})
 
 	describe('Contextual Navigation', () => {
-		let tree;
 		beforeEach(() => {
 			tree = new RoseTree();
 		})
@@ -202,7 +320,6 @@ describe('RoseTree', () => {
 	})
 
 	describe('a structured tree', ()=>{
-		let tree;
 		it('should allow a 1-dimensional view')
 		it('should allow for pre-order depth-first traversal')
 		it('should allow for post-order depth-first traversal')
