@@ -65,50 +65,75 @@ describe('RoseTree', () => {
 		})
 	})
 	describe('#setData', () => {
-		it('should set the data state')
-		it('should initialize the nodes as RoseTreeNodes')
+		it('should initialize the nodes as RoseTreeNodes', () => {
+			tree.setData([
+				{ parentIndex: null, value: 'root node', children: [1,2,3] },
+				{ value: 'first child node', children: [6] },
+				{ value: 'second child node', children: [4,7] },
+				{ value: 'third child node', children: [5] },
+				{ value: 'first grandchild node' },
+				{ value: 'second grandchild node' },
+				{ value: 'third grandchild node' },
+				{ value: 'fourth grandchild node' }
+			])
+			control = [];
+			tree.preOrderTraverse(function(value, { currentIndex }){
+				control.push(currentIndex)
+			})
+			expect(control).to.deep.equal([0,1,6,2,4,7,3,5])
+		})
+		it('should hande out of order nodes', () => {
+			tree.setData([
+				{ value: 'first child node', children: [3] },
+				{ value: 'first grandchild node' },
+				{ value: 'third child node', children: [1] },
+				{ value: 'second grandchild node' },
+				{ value: 'second child node', children: [5,7] },
+				{ value: 'third grandchild node' },
+				{ parentIndex: null, value: 'root node', children: [0,2,4] },
+				{ value: 'fourth grandchild node' }
+			])
+			control = [];
+			tree.preOrderTraverse(function(value, { currentIndex }){
+				control.push(currentIndex)
+			})
+			expect(control).to.deep.equal([6,0,3,2,1,4,5,7])
+		})
+		describe('with an existing tree', () => {
+			beforeEach(() => {
+				tree = new RoseTree();
+				tree.setRoot( 'root node');
+				tree.addChild('first child')
+				tree.addChild('second child')
+				tree.toLast()
+				tree.addChild('second child first')
+				tree.addChild('second child second')
+				tree.toParent()
+				tree.toFirst()
+				tree.addChild('first child first')
+				tree.addChild('first child second')
+				tree.toParent();
+				expect(tree.length).to.equal(7)
+			})
+			it('should replace the tree', () => {
+				tree.setData([
+					{ value: 'first child node', children: [3] },
+					{ value: 'first grandchild node' },
+					{ value: 'third child node', children: [1] },
+					{ value: 'second grandchild node' },
+					{ value: 'second child node', children: [5,7] },
+					{ value: 'third grandchild node' },
+					{ parentIndex: null, value: 'root node', children: [0,2,4] },
+					{ value: 'fourth grandchild node' }
+				])
+				control = [];
+				tree.preOrderTraverse(function(value, { currentIndex }){
+					control.push(currentIndex)
+				})
+				expect(control).to.deep.equal([6,0,3,2,1,4,5,7])
+			})
+		})
 	})
-
-	// describe('#eachChild', ()=>{
-	// 	before(()=>{
-	// 		test = new RoseTree({ maxBranches: 3, maxDepth: 2 })
-	// 	})
-	// 	it('should call function for each child', ()=>{
-	// 		control = [];
-	// 		test.eachChild((item, index)=>{
-	// 			control.push(index)
-	// 		})
-	// 		expect(control).to.have.members([0,1,2])
-	// 	})
-	// 	it('should return an array of returned items', ()=>{
-	// 		control = [];
-	// 		control = test.eachChild((item, index)=>{
-	// 			return index
-	// 		})
-	// 		expect(control).to.have.members([0,1,2])
-	// 	})
-	// 	it('should be bound to the tree', ()=>{
-	// 		test.test = 'si'
-	// 		control = [];
-	// 		control = test.eachChild(function(item, index){
-	// 			return this.test
-	// 		})
-	// 		expect(control).to.have.members(['si', 'si', 'si'])
-	// 	})
-	// 	it('should have the appropriate children', ()=>{
-	// 		test.setState({ data: [ {value:true}, {value: true}, {value: true}, {value: true}] })
-	// 		control = [];
-	// 		control = test.eachChild(function(item, index){
-	// 			return item
-	// 		})
-	// 		expect(control[0]['__l']).to.eq(1)
-	// 		expect(control[0]['__n']).to.eq(0)
-	// 		expect(control[1]['__l']).to.eq(1)
-	// 		expect(control[1]['__n']).to.eq(1)
-	// 		expect(control[2]['__l']).to.eq(1)
-	// 		expect(control[2]['__n']).to.eq(2)
-	// 	})
-	// })
 
 	describe('#remove', () => {
 		beforeEach(() => {
@@ -190,6 +215,7 @@ describe('RoseTree', () => {
 			expect(tree.getChildren('index')).to.deep.equal([2])
 		})
 	})
+
 	describe('#removeChildren', () => {
 		beforeEach(() => {
 			tree = new RoseTree();
@@ -383,6 +409,64 @@ describe('RoseTree', () => {
 					expect(tree.rootState.parentIndex).to.equal(null)
 					expect(tree.rootState.children).to.deep.equal([0])
 				})
+			})
+		})
+	})
+
+	describe('traversal', () => {
+		beforeEach(() => {
+			tree = new RoseTree();
+			tree.setRoot( 'root node');
+			tree.addChild('first child')
+			tree.addChild('second child')
+			tree.toLast()
+			tree.addChild('second child first')
+			tree.addChild('second child second')
+			tree.toParent()
+			tree.toFirst()
+			tree.addChild('first child first')
+			tree.addChild('first child second')
+			tree.toFirst()
+			tree.addChild('first grandchild first')
+			tree.addChild('first grandchild second')
+			tree.toRoot();
+			expect(tree.length).to.equal(9)
+		})
+
+		describe('#eachChild', () => {
+			it('should iterate over each child of the current node', () => {
+				tree.toFirst();
+				expect(tree.eachChild(function(value, { currentIndex }){ return currentIndex })).to.deep.equal([5,6])
+				tree.toParent();
+				expect(tree.eachChild(function(value, { currentIndex }){ return currentIndex })).to.deep.equal([1,2])
+			})
+		})
+
+		describe('#preOrderTraverse', () => {
+			it('should call the callback for every node in the tree', () => {
+				control = []
+				tree.preOrderTraverse(function(node, { currentIndex }){ control.push( currentIndex) })
+				expect(control).to.deep.equal([0,1,5,7,8,6,2,3,4])
+			})
+			it('should start the traversal at the current position', () => {
+				control = []
+				tree.toFirst()
+				tree.preOrderTraverse(function(node, { currentIndex }){ control.push( currentIndex) })
+				expect(control).to.deep.equal([1,5,7,8,6])
+			})
+		})
+
+		describe('#postOrderTraverse', () => {
+			it('should call the callback for every node in the tree', () => {
+				control = []
+				tree.postOrderTraverse(function(node, { currentIndex }){ control.push( currentIndex) })
+				expect(control).to.deep.equal([7,8,5,6,1,3,4,2,0])
+			})
+			it('should start the traversal at the current position', () => {
+				control = []
+				tree.toFirst()
+				tree.postOrderTraverse(function(node, { currentIndex }){ control.push( currentIndex) })
+				expect(control).to.deep.equal([7,8,5,6,1])
 			})
 		})
 	})

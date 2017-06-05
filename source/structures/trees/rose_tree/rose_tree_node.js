@@ -159,10 +159,6 @@ class RoseTreeNode {
 	}
 
 	toNth(childIndex){
-		if (!this.nodeState.children[childIndex]) {
-			console.warn('cannot go to a child that doesnt exist')
-			return;
-		}
 		this.setNav(this.nodeState.children[childIndex], this.nodeState.currentIndex)
 	}
 
@@ -227,26 +223,33 @@ class RoseTreeNode {
 		})
 	}
 
-	// traverse(callback, address=[]){
-	// 	if(this.leaf) return callback.call( this, this.__tree.grid.slice( this.__first, this.__last ), address )
-	// 	let a = address;
-	// 	this.__children.forEach((child, index)=>{
-	// 		a.push(index);
-	// 		child.traverse(callback, a)
-	// 		a.pop()
-	// 	})
-	// }
-	// makeChildren() {
-	// 	let childLength = this.dimensions(this.__l+1).reduce((sum, density)=>{return sum * density},1)
-	// 	for(let i =0; i< this.density; i++){
-	// 		this.__children[i] = new RoseTreeNode(this.__tree, {
-	// 			__l: this.__l + 1,
-	// 			__n: i,
-	// 			__first: this.__first + (childLength * i),
-	// 			__last: (this.__first + (childLength * i)) + childLength
-	// 		}, this)
-	// 	}
-	// }
+	eachChild(callback, ctx=this){
+		let children = [];
+		this.nodeState.children.forEach((childIndex, index) => {
+			this.toNth(index);
+			children.push(callback.call(this, this.node, this.nodeState))
+			this.toParent()
+		});
+		return children;
+	}
+
+	preOrderTraverse(callback, ctx=this){
+		callback.call(ctx, this.node, this.nodeState)
+		this.nodeState.children.forEach((childIndex, index) => {
+			this.toNth(index);
+			this.nodeObject.preOrderTraverse(callback, ctx);
+			this.toParent();
+		})
+	}
+
+	postOrderTraverse( callback, ctx=this ){
+		this.nodeState.children.forEach((childIndex, index) => {
+			this.toNth(index);
+			this.nodeObject.postOrderTraverse( callback, ctx );
+			this.toParent();
+		})
+		callback.call(ctx, this.node, this.nodeState)
+	}
 }
 
 export { RoseTreeNode }
