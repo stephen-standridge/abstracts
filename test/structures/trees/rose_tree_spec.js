@@ -109,10 +109,11 @@ describe('RoseTree', () => {
 	// 		expect(control[2]['__n']).to.eq(2)
 	// 	})
 	// })
+
 	describe('#remove', () => {
 		beforeEach(() => {
 			tree = new RoseTree();
-			tree.root = 'root node'
+			tree.setRoot( 'root node');
 			tree.addChild('first child')
 			tree.addChild('second child')
 			tree.toLast()
@@ -158,7 +159,7 @@ describe('RoseTree', () => {
 	describe('#removeChild', () => {
 		beforeEach(() => {
 			tree = new RoseTree();
-			tree.root = 'root node'
+			tree.setRoot( 'root node');
 			tree.addChild('first child')
 			tree.addChild('second child')
 			tree.toLast()
@@ -192,7 +193,7 @@ describe('RoseTree', () => {
 	describe('#removeChildren', () => {
 		beforeEach(() => {
 			tree = new RoseTree();
-			tree.root = 'root node'
+			tree.setRoot( 'root node');
 			tree.addChild('first child')
 			tree.addChild('second child')
 			tree.toLast()
@@ -229,10 +230,11 @@ describe('RoseTree', () => {
 			expect(tree.getChildren('index')).to.deep.equal([3, 4])
 		})
 	})
+
 	describe('#addChild', () => {
 		beforeEach(() => {
 			tree = new RoseTree();
-			tree.root = 'root node'
+			tree.setRoot( 'root node');
 			tree.addChild('test first child')
 		})
 		it('should add the child index to the children array', () => {
@@ -283,51 +285,203 @@ describe('RoseTree', () => {
 		})
 	})
 
-	describe('Contextual Navigation', () => {
+	describe('#setters', () => {
 		beforeEach(() => {
 			tree = new RoseTree();
+			tree.setRoot( 'root node');
+			tree.addChild('first child')
+			tree.addChild('second child')
+			tree.toLast()
+			tree.addChild('second child first')
+			tree.addChild('second child second')
+			tree.toParent()
+			tree.toFirst()
+			tree.addChild('first child first')
+			tree.addChild('first child second')
+			tree.toFirst()
+			tree.addChild('first grandchild first')
+			tree.addChild('first grandchild second')
+			tree.toRoot();
+			expect(tree.length).to.equal(9)
 		})
-		it('should allow a node to be set', ()=>{
-			tree.node = 'test'
-			expect(tree.nodeValue).to.equal('test')
-			expect(tree.length).to.equal(1)
+		describe('#setRoot', () => {
+			beforeEach(()=>{
+				tree.toFirst()
+				tree.setRoot('new root node')
+			})
+			it('should set the node value at the root index', () => {
+				expect(tree.root).to.equal('new root node')
+			})
+			it('should not change children', () => {
+				expect(tree.rootState.children).to.deep.equal([1,2])
+			})
 		})
-		it('should mark the node with an internal node and level value', ()=>{
-			tree.node = 'test';
-			expect(tree.nodeState.rootIndex).to.equal(0)
-			expect(tree.nodeState.parentIndex).to.equal(null)
-			expect(tree.nodeState.value).to.equal('test')
+
+		describe('#setNode', () => {
+			beforeEach(()=>{
+				tree.toFirst()
+				tree.setNode('new first node')
+			})
+			it('should set the node value at the current index', () => {
+				expect(tree.node).to.equal('new first node')
+			})
+			it('should not change children', () => {
+				expect(tree.nodeState.children).to.deep.equal([5,6])
+			})
 		})
-		it('should allow a root to be set', ()=>{
-			tree.root = 'test'
-			expect(tree.root).to.equal('test')
-			expect(tree.rootState.rootIndex).to.equal(0)
-			expect(tree.rootState.parentIndex).to.equal(null)
-			expect(tree.rootState.value).to.equal('test')
+
+		describe('#setChild', () => {
+			it('should set the child at the index to the value', () => {
+				tree.setChild(0, 'new first node')
+				tree.toNth(0);
+				expect(tree.node).to.equal('new first node')
+			})
+			it('should add nothing if the node does not exist', () => {
+				expect(tree.setChild(2, 'new third node')).to.equal(false)
+			})
+			it('should not change children', () => {
+				tree.setChild(0, 'new first node')
+				tree.toNth(0);
+				expect(tree.nodeState.children).to.deep.equal([5,6])
+			})
+			it('should not work if no index is given', () => {
+				expect(tree.setChild(null, 'new first node')).to.equal(false)
+			})
 		})
-		it('should set the currentIndex to 0', () => {
-			tree.root
-			expect(tree.state.currentIndex).to.equal(0)
-			expect(tree.node).to.equal(tree.root)
-		})
-		describe('with children', () => {
-			it('should allow traversal to the first child')
-			it('should allow traversal to the last child')
-			it('should allow traversal to an nth child')
-			it('should allow traversal to the parent')
-			it('should get and set multiple children')
+
+		describe('#setParent', () => {
+			describe('with a parent', () => {
+				beforeEach(()=>{
+					tree.toFirst()
+					tree.setParent('new root node')
+				})
+				it('should set the parent value', () => {
+					expect(tree.parent).to.equal('new root node')
+					expect(tree.root).to.equal('new root node')
+				})
+
+				it('should not change children', () => {
+					expect(tree.parentState.children).to.deep.equal([1,2])
+					expect(tree.rootState.children).to.deep.equal([1,2])
+				})
+			})
+			describe('without a parent', () => {
+				beforeEach(()=>{
+					tree.toRoot()
+					tree.setParent('new root node')
+				})
+				it('should add a new item', () => {
+					expect(tree.parent).to.equal('new root node')
+				})
+
+				it('should add the child to the parent', () => {
+					expect(tree.parentState.children).to.deep.equal([0])
+				})
+
+				it('should change the root if applicable', () => {
+					expect(tree.root).to.equal('new root node')
+					expect(tree.rootState.parentIndex).to.equal(null)
+					expect(tree.rootState.children).to.deep.equal([0])
+				})
+			})
 		})
 	})
 
-	describe('a structured tree', ()=>{
-		it('should allow a 1-dimensional view')
-		it('should allow for pre-order depth-first traversal')
-		it('should allow for post-order depth-first traversal')
-		it('should allow for pre-order breadth-first traversal')
-		it('should allow replacement of nodes')
-		it('should allow for automatic rerooting when assigning a deep node')
-		it('should allow for automatic rerooting when assigning deep children')
+	describe('Contextual Navigation', () => {
+		beforeEach(() => {
+			tree = new RoseTree();
+			tree.setRoot( 'root node');
+			tree.addChild('first child')
+			tree.addChild('second child')
+			tree.toLast()
+			tree.addChild('second child first')
+			tree.addChild('second child second')
+			tree.toParent()
+			tree.toFirst()
+			tree.addChild('first child first')
+			tree.addChild('first child second')
+			tree.toFirst()
+			tree.addChild('first grandchild first')
+			tree.addChild('first grandchild second')
+			tree.toRoot();
+			expect(tree.length).to.equal(9)
+		})
+		describe('#toNth', () => {
+			it('should allow traversal to an nth child', () => {
+				tree.toNth(0)
+				expect(tree.state.currentIndex).to.equal(1)
+				tree.toNth(1)
+				expect(tree.state.currentIndex).to.equal(6)
+			})
+		})
+		describe('#toFirst', () => {
+			it('should allow traversal to the first child', () => {
+				tree.toFirst()
+				expect(tree.state.currentIndex).to.equal(1)
+				tree.toFirst()
+				expect(tree.state.currentIndex).to.equal(5)
+			})
+		})
+		describe('#toLast', () => {
+			it('should allow traversal to the last child', () => {
+				tree.toLast()
+				expect(tree.state.currentIndex).to.equal(2)
+			})
+		})
 
-		it('should reindex properly')
+		describe('#toParent', () => {
+			it('should allow traversal to the parent', () => {
+				tree.toFirst()
+				tree.toLast()
+				tree.toParent()
+				expect(tree.state.currentIndex).to.equal(1)
+				tree.toParent()
+				expect(tree.state.currentIndex).to.equal(0)
+			})
+			it('should stay at the current node if no parent exists', () => {
+				tree.toParent()
+				expect(tree.state.currentIndex).to.equal(0)
+			})
+		})
+
+		describe('#toRoot', () => {
+			it('should return to the root index', () => {
+				tree.toFirst()
+				tree.toFirst();
+				tree.toRoot();
+				expect(tree.state.currentIndex).to.equal(0)
+			})
+		})
+	})
+
+	describe('Contextual Getters', () => {
+		describe('#root', () => {
+			beforeEach(() => {
+				tree = new RoseTree();
+			})
+			it('should allow a node to be set', ()=>{
+				tree.setNode('test');
+				expect(tree.nodeValue).to.equal('test')
+				expect(tree.length).to.equal(1)
+			})
+			it('should mark the node with an internal node and level value', ()=>{
+				tree.setNode('test');
+				expect(tree.nodeState.rootIndex).to.equal(0)
+				expect(tree.nodeState.parentIndex).to.equal(null)
+				expect(tree.nodeState.value).to.equal('test')
+			})
+			it('should allow a root to be set', ()=>{
+				tree.setRoot( 'test');
+				expect(tree.root).to.equal('test')
+				expect(tree.rootState.rootIndex).to.equal(0)
+				expect(tree.rootState.parentIndex).to.equal(null)
+				expect(tree.rootState.value).to.equal('test')
+			})
+			it('should set the currentIndex to 0', () => {
+				tree.root
+				expect(tree.state.currentIndex).to.equal(0)
+				expect(tree.node).to.equal(tree.root)
+			})
+		})
 	})
 })

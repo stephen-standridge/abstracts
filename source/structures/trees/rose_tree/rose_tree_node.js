@@ -41,35 +41,21 @@ class RoseTreeNode {
 		return length;
 	}
 
-	get root(){
-		this.setNav(this.state.rootIndex, this.state.currentIndex)
-		return this.node
-	}
-
-	set root(value){
-		this.root
-		this.node = value;
-		return this.node
+	get root() {
+		return this.get(this.state.rootIndex);
 	}
 
 	get rootObject(){
-		this.root
-		return this.nodeObject
+		return this.getObject(this.state.rootIndex);
 	}
 
 	get rootState(){
-		this.root;
-		return this.nodeState;
+		return this.getState(this.state.rootIndex);
 	}
 
 	get rootValue(){
 		this.root;
 		return this.nodeValue;
-	}
-
-	set node(value){
-		this.set(this.state.currentIndex, value)
-		return this.node
 	}
 
 	get node() {
@@ -90,25 +76,17 @@ class RoseTreeNode {
 		return this.__tree.data[this.state.currentIndex] || undefined
 	}
 
-	getNodeItem(index){
-		return this.__tree.data[index] || undefined
-	}
-
 	get parent(){
-		let returned = this.getState(this.state.parentIndex);
-		return returned && returned.value;
+		return this.get(this.nodeState.parentIndex)
 	}
 
-	get parentItem(){
-		return this.__tree.data[this.state.parentIndex] || undefined
+	get parentState(){
+		return this.getState(this.nodeState.parentIndex)
 	}
 
-	// must transfer children, relink parent
-	// set parent(arg){
-	// 	this.set(this.state.parentIndex, arg)
-
-	// 	return this.parent
-	// }
+	get parentObject(){
+		return this.getObject(this.nodeState.parentIndex)
+	}
 
 	getObject(index) {
 		return this.__tree.data[index];
@@ -133,10 +111,44 @@ class RoseTreeNode {
 			//if the node was navigated to from a parent
 			parent = this.state.prevIndex != this.state.currentIndex ? this.state.prevIndex : null;
 		}
-		this.__tree.data[index] = new RoseTreeNode(this.__tree, { value, currentIndex: index, rootIndex: index, parentIndex: parent })
+
+		if (node) {
+			node.nodeState.value = value;
+		} else {
+			this.__tree.data[index] = new RoseTreeNode(this.__tree, { value, currentIndex: index, rootIndex: index, parentIndex: parent })
+		}
 		return this.__tree.data[index].state
 	}
 
+	setNode(value) {
+		return this.set(this.state.currentIndex, value).value
+	}
+
+	setRoot(value) {
+		return this.set(this.state.rootIndex, value).value
+	}
+
+	setChild(index, value) {
+		if (index == undefined) return false
+		let childIndex = this.nodeState.children[index];
+		if (childIndex == undefined) return false
+		// let node = this.getObject(childIndex).removeChildren();
+		return this.set(childIndex, value).value
+	}
+
+	setParent(value) {
+		let parentIndex = this.nodeState.parentIndex;
+		if (parentIndex !== null) return this.set(parentIndex, value).value
+
+		parentIndex = this.__tree.data.push(undefined) - 1;
+		this.set(parentIndex, value)
+		this.__tree.data[parentIndex].state.children.push(this.nodeState.currentIndex)
+		this.__tree.data[this.nodeState.currentIndex].state.parentIndex = parentIndex;
+		if(this.nodeState.rootIndex == this.state.rootIndex) {
+			this.state.rootIndex = parentIndex;
+		}
+		return this.parent.value;
+	}
 
 	toFirst(){
 		this.toNth(0)
@@ -154,29 +166,21 @@ class RoseTreeNode {
 		this.setNav(this.nodeState.children[childIndex], this.nodeState.currentIndex)
 	}
 
+	toRoot(){
+		this.setNav(this.state.rootIndex, null)
+	}
+
 	toParent(){
+		if (this.nodeState.parentIndex == null) return;
 		this.setNav(this.nodeState.parentIndex, this.nodeState.currentIndex)
 	}
 
-	goTo(index){
+	toNode(index){
 		this.setNav(index)
-	}
-
-	goToNode(node){
-		if(node == undefined){ return }
-		this.goTo(node.rootIndex)
 	}
 
 	get children(){
 		return this.getChildren('node')
-	}
-
-	set children(value=[]){
-		let node = this.nodeState;
-		if (node.children.length !== value.length) {
-			console.warn('RoseTreeNode: attempting to set children with a differing number of nodes')
-		}
-		node.children.forEach((childIndex, index)=> this.set(childIndex, value[index], this.state.currentIndex))
 	}
 
 	getChildren(prop){
@@ -206,7 +210,7 @@ class RoseTreeNode {
 
 		if(index == this.state.currentIndex) {
 			//go to parent node if currentIndex no longer exists
-			this.goTo(parentIndex)
+			this.toNode(parentIndex)
 		}
 	}
 
