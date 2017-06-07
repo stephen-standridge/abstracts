@@ -258,55 +258,74 @@ describe('RoseTree', () => {
 	})
 
 	describe('#addChild', () => {
-		beforeEach(() => {
-			tree = new RoseTree();
-			tree.setRoot( 'root node');
-			tree.addChild('test first child')
+		describe('without a root', () => {
+			it('should add a root', () => {
+				tree = new RoseTree();
+				tree.addChild('test root')
+				expect(tree.root).to.equal('test root')
+				expect(tree.rootState.rootIndex).to.equal(0)
+				expect(tree.rootState.parentIndex).to.equal(null)
+				tree.toRoot();
+				tree.addChild('test first child')
+				expect(tree.rootState.children[0]).to.equal(1)
+				expect(tree.rootObject.state.children[0]).to.equal(1)
+				expect(tree.state.currentIndex).to.equal(0)
+				expect(tree.data[1].nodeState.parentIndex).to.equal(0)
+				expect(tree.data[1].nodeState.rootIndex).to.equal(1)
+				expect(tree.data[1].nodeState.currentIndex).to.equal(1)
+			})
 		})
-		it('should add the child index to the children array', () => {
-			expect(tree.rootState.children[0]).to.equal(1)
-			expect(tree.rootObject.state.children[0]).to.equal(1)
-		})
-		it('should not move the current index', () => {
-			expect(tree.state.currentIndex).to.equal(0)
-		})
-		it('should add the child to the end of the data array', () => {
-			expect(tree.data[1].nodeValue).to.equal('test first child')
-		})
-		it('should mark the child with the parent address', () => {
-			expect(tree.data[1].nodeState.parentIndex).to.equal(0)
-			expect(tree.data[1].nodeState.rootIndex).to.equal(1)
-			expect(tree.data[1].nodeState.currentIndex).to.equal(1)
-		})
-		it('should allow getting the child contextually', () => {
-			expect(tree.children).to.deep.equal(['test first child'])
-		})
-		describe('contextually', () => {
-			beforeEach(()=> {
-				tree.toNth(0)
-				tree.addChild('second child')
+		describe('with a root', () => {
+			beforeEach(() => {
+				tree = new RoseTree();
+				tree.setRoot( 'root node');
+				tree.addChild('test first child')
 			})
 			it('should add the child index to the children array', () => {
-				expect(tree.nodeState.children[0]).to.equal(2)
-				expect(tree.nodeObject.state.children[0]).to.equal(2)
-				expect(tree.data.length).to.equal(3)
-
 				expect(tree.rootState.children[0]).to.equal(1)
 				expect(tree.rootObject.state.children[0]).to.equal(1)
 			})
 			it('should not move the current index', () => {
-				expect(tree.state.currentIndex).to.equal(1)
+				expect(tree.state.currentIndex).to.equal(0)
 			})
 			it('should add the child to the end of the data array', () => {
-				expect(tree.data[2].nodeValue).to.equal('second child')
+				expect(tree.data[1].nodeValue).to.equal('test first child')
 			})
 			it('should mark the child with the parent address', () => {
-				expect(tree.data[2].nodeState.parentIndex).to.equal(1)
-				expect(tree.data[2].nodeState.rootIndex).to.equal(2)
-				expect(tree.data[2].nodeState.currentIndex).to.equal(2)
+				expect(tree.data[1].nodeState.parentIndex).to.equal(0)
+				expect(tree.data[1].nodeState.rootIndex).to.equal(1)
+				expect(tree.data[1].nodeState.currentIndex).to.equal(1)
 			})
 			it('should allow getting the child contextually', () => {
-				expect(tree.children).to.deep.equal(['second child'])
+				expect(tree.children).to.deep.equal(['test first child'])
+			})
+			describe('contextually', () => {
+				beforeEach(()=> {
+					tree.toNth(0)
+					tree.addChild('second child')
+				})
+				it('should add the child index to the children array', () => {
+					expect(tree.nodeState.children[0]).to.equal(2)
+					expect(tree.nodeObject.state.children[0]).to.equal(2)
+					expect(tree.data.length).to.equal(3)
+
+					expect(tree.rootState.children[0]).to.equal(1)
+					expect(tree.rootObject.state.children[0]).to.equal(1)
+				})
+				it('should not move the current index', () => {
+					expect(tree.state.currentIndex).to.equal(1)
+				})
+				it('should add the child to the end of the data array', () => {
+					expect(tree.data[2].nodeValue).to.equal('second child')
+				})
+				it('should mark the child with the parent address', () => {
+					expect(tree.data[2].nodeState.parentIndex).to.equal(1)
+					expect(tree.data[2].nodeState.rootIndex).to.equal(2)
+					expect(tree.data[2].nodeState.currentIndex).to.equal(2)
+				})
+				it('should allow getting the child contextually', () => {
+					expect(tree.children).to.deep.equal(['second child'])
+				})
 			})
 		})
 	})

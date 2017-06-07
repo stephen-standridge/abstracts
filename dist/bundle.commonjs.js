@@ -19325,8 +19325,10 @@ var RoseTreeNode = function () {
 		key: 'addChild',
 		value: function addChild(value) {
 			var newIndex = this.__tree.data.push(undefined) - 1;
-			this.nodeObject.state.children.push(newIndex);
-			this.set(newIndex, value, this.state.currentIndex);
+			if (this.nodeObject) {
+				this.nodeObject.state.children.push(newIndex);
+			}
+			this.set(newIndex, value, newIndex == this.state.currentIndex ? null : this.state.currentIndex);
 		}
 	}, {
 		key: 'addChildren',
