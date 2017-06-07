@@ -19178,6 +19178,7 @@ var RoseTreeNode = function () {
 		this.state = {
 			value: null,
 			prevIndex: null,
+			nextIndex: 0,
 			currentIndex: null,
 			rootIndex: null,
 			parentIndex: null,
@@ -19192,9 +19193,11 @@ var RoseTreeNode = function () {
 		key: 'setNav',
 		value: function setNav(newIndex) {
 			var prevIndex = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+			var nextIndex = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
 
 			if (!isNaN(Number(newIndex))) {
 				this.state.prevIndex = !isNaN(Number(prevIndex)) ? prevIndex : null;
+				this.state.nextIndex = nextIndex;
 				this.state.currentIndex = newIndex;
 			}
 		}
@@ -19282,30 +19285,68 @@ var RoseTreeNode = function () {
 			return this.parent.value;
 		}
 	}, {
+		key: 'toNext',
+		value: function toNext() {
+			var nextNodeState = this.__tree.data[this.state.nextIndex];
+			var currentState = nextNodeState.state;
+			var newNextIndex = null,
+			    prevIndex = -1;
+			while (newNextIndex == null) {
+				//attempt to find child
+				if (currentState.children.length) {
+					newNextIndex = currentState.children[prevIndex + 1] || null;
+					prevIndex = newNextIndex || 0;
+				}
+
+				if (newNextIndex == null) {
+					//traverse to parent
+					if (currentState.parentIndex !== null) {
+						prevIndex = this.__tree.data[currentState.parentIndex].state.children.findIndex(function (i) {
+							return i == currentState.rootIndex;
+						});
+						currentState = this.__tree.data[currentState.parentIndex].state;
+					} else {
+						newNextIndex = 0;
+					}
+				}
+			}
+			this.setNav(this.state.nextIndex, null, newNextIndex);
+		}
+	}, {
 		key: 'toFirst',
 		value: function toFirst() {
-			this.toNth(0);
+			var resetIterator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+			this.toNth(0, resetIterator);
 		}
 	}, {
 		key: 'toLast',
 		value: function toLast() {
-			this.toNth(this.nodeState.children.length - 1);
+			var resetIterator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+			this.toNth(this.nodeState.children.length - 1, resetIterator);
 		}
 	}, {
 		key: 'toNth',
 		value: function toNth(childIndex) {
-			this.setNav(this.nodeState.children[childIndex], this.nodeState.currentIndex);
+			var resetIterator = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+			this.setNav(this.nodeState.children[childIndex], this.nodeState.currentIndex, resetIterator ? 0 : this.state.nextIndex);
 		}
 	}, {
 		key: 'toRoot',
 		value: function toRoot() {
-			this.setNav(this.state.rootIndex, null);
+			var resetIterator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
+			this.setNav(this.state.rootIndex, null, resetIterator ? 0 : this.state.nextIndex);
 		}
 	}, {
 		key: 'toParent',
 		value: function toParent() {
+			var resetIterator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
 			if (this.nodeState.parentIndex == null) return;
-			this.setNav(this.nodeState.parentIndex, this.nodeState.currentIndex);
+			this.setNav(this.nodeState.parentIndex, this.nodeState.currentIndex, resetIterator ? 0 : this.state.nextIndex);
 		}
 	}, {
 		key: 'toNode',

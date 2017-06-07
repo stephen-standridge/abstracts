@@ -5,6 +5,7 @@ class RoseTreeNode {
 		this.state = {
 			value: null,
 			prevIndex: null,
+			nextIndex: 0,
 			currentIndex: null,
 			rootIndex: null,
 			parentIndex: null,
@@ -15,9 +16,10 @@ class RoseTreeNode {
 		this.__tree = tree;
 	}
 
-	setNav(newIndex, prevIndex=null) {
+	setNav(newIndex, prevIndex=null, nextIndex=0) {
 		if(!isNaN(Number(newIndex))) {
 			this.state.prevIndex = !isNaN(Number(prevIndex)) ? prevIndex : null;
+			this.state.nextIndex = nextIndex;
 			this.state.currentIndex = newIndex;
 		}
 	}
@@ -150,25 +152,55 @@ class RoseTreeNode {
 		return this.parent.value;
 	}
 
-	toFirst(){
-		this.toNth(0)
+	toNext() {
+		let nextNodeState = this.__tree.data[this.state.nextIndex];
+		let currentState = nextNodeState.state;
+		let newNextIndex = null, prevIndex = -1;
+		while (newNextIndex == null){
+			//attempt to find child
+			if (currentState.children.length) {
+				newNextIndex = currentState.children[prevIndex + 1] || null;
+				prevIndex = newNextIndex || 0;
+			}
+
+			if (newNextIndex==null) {
+				//traverse to parent
+				if (currentState.parentIndex !== null) {
+					prevIndex = this.__tree.data[currentState.parentIndex].state.children.findIndex((i) => i == currentState.rootIndex);
+					currentState = this.__tree.data[currentState.parentIndex].state;
+				} else {
+					newNextIndex = 0;
+				}
+			}
+		}
+		this.setNav(this.state.nextIndex, null, newNextIndex)
 	}
 
-	toLast(){
-		this.toNth(this.nodeState.children.length - 1);
+	toFirst(resetIterator=false){
+		this.toNth(0, resetIterator)
 	}
 
-	toNth(childIndex){
-		this.setNav(this.nodeState.children[childIndex], this.nodeState.currentIndex)
+	toLast(resetIterator=false){
+		this.toNth(this.nodeState.children.length - 1, resetIterator);
 	}
 
-	toRoot(){
-		this.setNav(this.state.rootIndex, null)
+	toNth(childIndex, resetIterator=false){
+		this.setNav(this.nodeState.children[childIndex],
+								this.nodeState.currentIndex,
+								resetIterator ? 0 : this.state.nextIndex)
 	}
 
-	toParent(){
+	toRoot(resetIterator=true){
+		this.setNav(this.state.rootIndex,
+								null,
+								resetIterator ? 0 : this.state.nextIndex)
+	}
+
+	toParent(resetIterator=false){
 		if (this.nodeState.parentIndex == null) return;
-		this.setNav(this.nodeState.parentIndex, this.nodeState.currentIndex)
+		this.setNav(this.nodeState.parentIndex,
+								this.nodeState.currentIndex,
+								resetIterator ? 0 : this.state.nextIndex)
 	}
 
 	toNode(index){
