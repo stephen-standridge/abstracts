@@ -15,6 +15,12 @@ class lSystemProducer {
 		this.maxLevels = maxLevels;
 		this.currentLevel = 0;
 	}
+	get constants() {
+		return Object.keys(this._constants).reduce((sum, key) => {
+			sum[key] = this.getConstant(key);
+			return sum;
+		}, {})
+	}
 	// getters/setters
 	set axiom(newAxiom) {
 		this._productionArray[0] = [newAxiom];
@@ -49,7 +55,9 @@ class lSystemProducer {
 				return true;
 				break;
 			case 'function':
-				if (!this.isStringable(rule())) {
+				let args = [];
+				args[rule.length - 1] = this.constants;
+				if (!this.isStringable(rule(...args))) {
 					console.warn(`lSystemProducer: could not add rule ${key} is the rule formatted properly?`);
 					return false;
 				}
@@ -83,7 +91,9 @@ class lSystemProducer {
 			})
 	}
 	addRandomProbabilityRuleMaybe(key, rule) {
-		let randomSettableItems = rule.filter((item) => this.isStringable(item) || (item && item.call && this.isStringable(item())) );
+		let args = [];
+		args[rule.length - 1] = this.constants;
+		let randomSettableItems = rule.filter((item) => this.isStringable(item) || (item && item.call && this.isStringable(item(...args))) );
 		if (randomSettableItems.length == rule.length) {
 			this.removeRule(key);
 			this._ruleSets[key] = new RandomProbabilitySet(rule);
@@ -93,16 +103,18 @@ class lSystemProducer {
 		return false;
 	}
 	addDiscreetProbabilityRuleMaybe(key, rule) {
+		let args = [];
+		args[rule.length - 1] = this.constants;
 		let discreetSettableItems = rule.filter((item) => {
 			if (!item) return false;
 			if (item.value) {
 				return item.probability &&
 								(this.isStringable(item.value) || //when value: 'string'
-								item.value.call && this.isStringable(item.value()) ) //when value: function
+								item.value.call && this.isStringable(item.value(...args)) ) //when value: function
 			} else if (item.set) {
 				return item.probability && item.set.reduce((bool, setItem) => {
 					return bool && (this.isStringable(setItem) || //when string
-						(setItem && setItem.call && this.isStringable(setItem.call())) ) //when function
+						(setItem && setItem.call && this.isStringable(setItem.call(...args))) ) //when function
 				}, true)
 			}
 		});
@@ -133,11 +145,8 @@ class lSystemProducer {
 
 		//call a rule if it's a function, try returning it if not, else return false
 		args && args.forEach((arg) => params.push(arg))
-		let consts = Object.keys(this._constants).reduce((sum, key) => {
-			sum[key] = this.getConstant(key);
-			return sum;
-		}, {})
-		params.push(consts);
+		if(rule && rule.call && rule.length > 0) params.length = rule.length - 1;
+		params.push(this.constants);
 		return (rule && rule.call && rule(...params)) || rule || false;
 	}
 

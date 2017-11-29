@@ -63,6 +63,12 @@ describe('lSystemProducer', ()=>{
 				expect(lsystem.addRule('B', () => 5)).to.equal(false)
 				expect(lsystem.getRule('B')).to.equal(false)
 			})
+			it('should handle arguments', () => {
+				expect(lsystem.addRule('B', (a,b,consts) => { return `C(${a/b},${consts.R})` })).to.equal(true)
+				expect(lsystem.getRule('B')).to.equal('C(NaN,undefined)')
+				lsystem.addConstant('R', 123)
+				expect(lsystem.getRule('B', [1,2])).to.equal('C(0.5,123)')
+			})
 		})
 		describe('with an array', () => {
 			it('should defer to addRuleArray', () => {

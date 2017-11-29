@@ -18405,8 +18405,6 @@ var lSystemProducer = function () {
 		this.maxLevels = maxLevels;
 		this.currentLevel = 0;
 	}
-	// getters/setters
-
 
 	_createClass(lSystemProducer, [{
 		key: 'isStringable',
@@ -18442,7 +18440,9 @@ var lSystemProducer = function () {
 					return true;
 					break;
 				case 'function':
-					if (!this.isStringable(rule())) {
+					var args = [];
+					args[rule.length - 1] = this.constants;
+					if (!this.isStringable(rule.apply(undefined, args))) {
 						console.warn('lSystemProducer: could not add rule ' + key + ' is the rule formatted properly?');
 						return false;
 					}
@@ -18485,8 +18485,10 @@ var lSystemProducer = function () {
 		value: function addRandomProbabilityRuleMaybe(key, rule) {
 			var _this2 = this;
 
+			var args = [];
+			args[rule.length - 1] = this.constants;
 			var randomSettableItems = rule.filter(function (item) {
-				return _this2.isStringable(item) || item && item.call && _this2.isStringable(item());
+				return _this2.isStringable(item) || item && item.call && _this2.isStringable(item.apply(undefined, args));
 			});
 			if (randomSettableItems.length == rule.length) {
 				this.removeRule(key);
@@ -18501,15 +18503,17 @@ var lSystemProducer = function () {
 		value: function addDiscreetProbabilityRuleMaybe(key, rule) {
 			var _this3 = this;
 
+			var args = [];
+			args[rule.length - 1] = this.constants;
 			var discreetSettableItems = rule.filter(function (item) {
 				if (!item) return false;
 				if (item.value) {
 					return item.probability && (_this3.isStringable(item.value) || //when value: 'string'
-					item.value.call && _this3.isStringable(item.value())); //when value: function
+					item.value.call && _this3.isStringable(item.value.apply(item, args))); //when value: function
 				} else if (item.set) {
 					return item.probability && item.set.reduce(function (bool, setItem) {
 						return bool && (_this3.isStringable(setItem) || //when string
-						setItem && setItem.call && _this3.isStringable(setItem.call())); //when function
+						setItem && setItem.call && _this3.isStringable(setItem.call.apply(setItem, args))); //when function
 					}, true);
 				}
 			});
@@ -18530,8 +18534,6 @@ var lSystemProducer = function () {
 	}, {
 		key: 'getRule',
 		value: function getRule(lookup) {
-			var _this4 = this;
-
 			var args = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 			var ctx = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 			var left = ctx.left,
@@ -18555,11 +18557,8 @@ var lSystemProducer = function () {
 			args && args.forEach(function (arg) {
 				return params.push(arg);
 			});
-			var consts = Object.keys(this._constants).reduce(function (sum, key) {
-				sum[key] = _this4.getConstant(key);
-				return sum;
-			}, {});
-			params.push(consts);
+			if (rule && rule.call && rule.length > 0) params.length = rule.length - 1;
+			params.push(this.constants);
 			return rule && rule.call && rule.apply(undefined, params) || rule || false;
 		}
 	}, {
@@ -18593,10 +18592,10 @@ var lSystemProducer = function () {
 	}, {
 		key: 'addConstants',
 		value: function addConstants(newConstants) {
-			var _this5 = this;
+			var _this4 = this;
 
 			return Object.keys(newConstants).map(function (key) {
-				var added = _this5.addConstant(key, newConstants[key]);
+				var added = _this4.addConstant(key, newConstants[key]);
 				return added;
 			});
 		}
@@ -18658,7 +18657,7 @@ var lSystemProducer = function () {
 	}, {
 		key: 'iterateLevels',
 		value: function iterateLevels(callback) {
-			var _this6 = this;
+			var _this5 = this;
 
 			var start = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 			var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._productionArray.length;
@@ -18666,7 +18665,7 @@ var lSystemProducer = function () {
 			var val = void 0,
 			    sum = [];
 			(0, _lodash.range)(start, end).forEach(function (pIndex) {
-				val = _this6.iterateLevel(callback, pIndex);
+				val = _this5.iterateLevel(callback, pIndex);
 				if (val == undefined) return;
 				val.forEach(function (item) {
 					return sum.push(item);
@@ -18768,6 +18767,18 @@ var lSystemProducer = function () {
 				}.bind(this), 0);
 			}.bind(this));
 		}
+	}, {
+		key: 'constants',
+		get: function get() {
+			var _this6 = this;
+
+			return Object.keys(this._constants).reduce(function (sum, key) {
+				sum[key] = _this6.getConstant(key);
+				return sum;
+			}, {});
+		}
+		// getters/setters
+
 	}, {
 		key: 'axiom',
 		set: function set(newAxiom) {
