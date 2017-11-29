@@ -171,7 +171,7 @@ describe('lSystemExecutor', () => {
 			let testSpy = sinon.spy(testObject, 'function1');
 			expect(lsystem.addInstruction('Z', testObject.function1)).to.equal(true)
 			expect(lsystem.getInstruction('Z', [1, 2, 3])).to.equal('function1')
-			expect(testSpy).to.have.been.calledWith('Z', 1, 2, 3);
+			expect(testSpy).to.have.been.calledWith(1, 2, 3);
 		})
 		describe('context-specific instructions', () => {
 			describe('left context match', () => {
@@ -276,8 +276,8 @@ describe('lSystemExecutor', () => {
 				'K': testObject.function1
 			})
 			lsystem.execute().then(function(){
-				expect(testSpy1).to.have.been.calledWith('K','2','3');
-				expect(testSpy1).to.have.been.calledWith('K','2','3');
+				expect(testSpy1).to.have.been.calledWith('2','3');
+				expect(testSpy1).to.have.been.calledWith('2','3');
 				expect(testSpy1.callCount).to.equal(2)
 				testSpy1.restore();
 				done();

@@ -33,6 +33,7 @@ class lSystemExecutor extends lSystemProducer {
 		}
 	}
 
+
 	addRandomProbabilityInstructionMaybe(key, instruction) {
 		let randomSettableItems = instruction.filter((item) => item && item.call);
 		if (randomSettableItems.length == instruction.length) {
@@ -64,6 +65,8 @@ class lSystemExecutor extends lSystemProducer {
 		return false;
 	}
 
+
+
 	addInstructions(newInstructions) {
 		return Object.keys(newInstructions)
 			.map((key) => {
@@ -71,7 +74,6 @@ class lSystemExecutor extends lSystemProducer {
 				return added;
 			})
 	}
-
 	addInstructionArray(key, instruction) {
 		if(this.addRandomProbabilityInstructionMaybe(key, instruction)) return true;
 		if(this.addDiscreetProbabilityInstructionMaybe(key, instruction)) return true;
@@ -92,7 +94,6 @@ class lSystemExecutor extends lSystemProducer {
 			otherParams && otherParams.split(',').forEach((otherParam) => params.push(otherParam));
 			lookup = lookup.charAt(0);
 		}
-		params.unshift(lookup);
 
 		let instruction = (left && right && this._instructions[`${left}<${lookup}>${right}`]) || //get between
 							 				(left && this._instructions[`${left}<${lookup}`]) || //get left

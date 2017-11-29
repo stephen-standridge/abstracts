@@ -10,6 +10,8 @@ class lSystemProducer {
 		if (axiom) {
 			this._productionArray[0] = [axiom];
 		}
+		this._constants = {};
+		this._constantSets = {};
 		this.maxLevels = maxLevels;
 		this.currentLevel = 0;
 	}
@@ -30,52 +32,12 @@ class lSystemProducer {
 		if (!found) return false;
 		return String(found.call && found(key) || found);
 	}
+	getFromConstantSet(key) {
+		let found = this._constantSets[key] && this._constantSets[key].choose();
+		if (!found) return false;
+		return String(found.call && found(key) || found);
+	}
 
-	addRules(newRules) {
-		return Object.keys(newRules)
-			.map((key) => {
-				let added = this.addRule(key, newRules[key]);
-				return added;
-			})
-	}
-	addRandomProbabilityRuleMaybe(key, rule) {
-		let randomSettableItems = rule.filter((item) => this.isStringable(item) || (item && item.call && this.isStringable(item(key))) );
-		if (randomSettableItems.length == rule.length) {
-			this.removeRule(key);
-			this._ruleSets[key] = new RandomProbabilitySet(rule);
-			this._rules[key] = this.getFromSet.bind(this, key);
-			return true;
-		}
-		return false;
-	}
-	addDiscreetProbabilityRuleMaybe(key, rule) {
-		let discreetSettableItems = rule.filter((item) => {
-			if (!item) return false;
-			if (item.value) {
-				return item.probability &&
-								(this.isStringable(item.value) || //when value: 'string'
-								item.value.call && this.isStringable(item.value(key)) ) //when value: function
-			} else if (item.set) {
-				return item.probability && item.set.reduce((bool, setItem) => {
-					return bool && (this.isStringable(setItem) || //when string
-						(setItem && setItem.call && this.isStringable(setItem.call(key))) ) //when function
-				}, true)
-			}
-		});
-		if (discreetSettableItems.length == rule.length) {
-			this.removeRule(key);
-			this._ruleSets[key] = new DiscreetProbabilitySet(rule);
-			this._rules[key] = this.getFromSet.bind(this, key);
-			return true;
-		}
-		return false;
-	}
-	addRuleArray(key, rule) {
-		if(this.addRandomProbabilityRuleMaybe(key, rule)) return true;
-		if(this.addDiscreetProbabilityRuleMaybe(key, rule)) return true;
-		console.warn(`lSystemProducer: could not add rule ${key} is the rule formatted properly?`);
-		return false;
-	}
 	addRule(key, rule) {
 		if (key == '-') { console.warn('lSystemProducer: no support for hyphen rules'); return false; }
 		if (typeof key !== 'string' && typeof key !== 'number') return false;
@@ -87,7 +49,7 @@ class lSystemProducer {
 				return true;
 				break;
 			case 'function':
-				if (!this.isStringable(rule(key))) {
+				if (!this.isStringable(rule())) {
 					console.warn(`lSystemProducer: could not add rule ${key} is the rule formatted properly?`);
 					return false;
 				}
@@ -107,6 +69,51 @@ class lSystemProducer {
 				break;
 		}
 	}
+	addRuleArray(key, rule) {
+		if(this.addRandomProbabilityRuleMaybe(key, rule)) return true;
+		if(this.addDiscreetProbabilityRuleMaybe(key, rule)) return true;
+		console.warn(`lSystemProducer: could not add rule ${key} is the rule formatted properly?`);
+		return false;
+	}
+	addRules(newRules) {
+		return Object.keys(newRules)
+			.map((key) => {
+				let added = this.addRule(key, newRules[key]);
+				return added;
+			})
+	}
+	addRandomProbabilityRuleMaybe(key, rule) {
+		let randomSettableItems = rule.filter((item) => this.isStringable(item) || (item && item.call && this.isStringable(item())) );
+		if (randomSettableItems.length == rule.length) {
+			this.removeRule(key);
+			this._ruleSets[key] = new RandomProbabilitySet(rule);
+			this._rules[key] = this.getFromSet.bind(this, key);
+			return true;
+		}
+		return false;
+	}
+	addDiscreetProbabilityRuleMaybe(key, rule) {
+		let discreetSettableItems = rule.filter((item) => {
+			if (!item) return false;
+			if (item.value) {
+				return item.probability &&
+								(this.isStringable(item.value) || //when value: 'string'
+								item.value.call && this.isStringable(item.value()) ) //when value: function
+			} else if (item.set) {
+				return item.probability && item.set.reduce((bool, setItem) => {
+					return bool && (this.isStringable(setItem) || //when string
+						(setItem && setItem.call && this.isStringable(setItem.call())) ) //when function
+				}, true)
+			}
+		});
+		if (discreetSettableItems.length == rule.length) {
+			this.removeRule(key);
+			this._ruleSets[key] = new DiscreetProbabilitySet(rule);
+			this._rules[key] = this.getFromSet.bind(this, key);
+			return true;
+		}
+		return false;
+	}
 	removeRule(key) {
 		this._rules[key] && delete this._rules[key];
 		this._ruleSets[key] && delete this._ruleSets[key];
@@ -114,23 +121,104 @@ class lSystemProducer {
 	getRule(lookup, args=false, ctx={}) {
 		let { left, right } = ctx, params = [];
 		if (lookup.length > 1) {
-			//remove the first letter and get the
 			let otherParams = lookup.slice(1,lookup.length).match(IN_PARAMS_REGEX)[0];
 			otherParams && otherParams.split(',').forEach((otherParam) => params.push(otherParam));
 			lookup = lookup.charAt(0)
 		}
 
-		params.unshift(lookup);
-
 		let rule = (left && right && this._rules[`${left}<${lookup}>${right}`]) || //get between
 							 (left && this._rules[`${left}<${lookup}`]) || //get left
 							 (right && this._rules[`${lookup}>${right}`]) || //get right
 							 this._rules[lookup]; //default rule
+
 		//call a rule if it's a function, try returning it if not, else return false
 		args && args.forEach((arg) => params.push(arg))
+		let consts = Object.keys(this._constants).reduce((sum, key) => {
+			sum[key] = this.getConstant(key);
+			return sum;
+		}, {})
+		params.push(consts);
 		return (rule && rule.call && rule(...params)) || rule || false;
 	}
 
+	addConstant(key, constant) {
+		if (key == '-') { console.warn('lSystemProducer: no support for hyphen constants'); return false; }
+		if (typeof key !== 'string' && isNaN(Number(key))) return false;
+		switch (typeof constant) {
+			case 'number':
+				this.removeConstant(key);
+				this._constants[key] = constant;
+				return true;
+				break;
+			case 'object':
+				if (constant.constructor == Array) {
+					return this.addConstantArray(key, constant);
+					break;
+				}
+			case 'function':
+			case 'number':
+			case 'string':
+			case 'boolean':
+			case 'undefined':
+				console.warn(`lSystemProducer: could not add constant ${key}; constants can only be numbers or array of numbers.`);
+				return false;
+				break;
+		}
+	}
+	addConstants(newConstants) {
+		return Object.keys(newConstants)
+			.map((key) => {
+				let added = this.addConstant(key, newConstants[key]);
+				return added;
+			})
+	}
+	addConstantArray(key, constant) {
+		if(this.addRandomProbabilityConstantMaybe(key, constant)) return true;
+		if(this.addDiscreetProbabilityConstantMaybe(key, constant)) return true;
+		console.warn(`lSystemProducer: could not add constant ${key} is the constant formatted properly?`);
+		return false;
+	}
+
+	addRandomProbabilityConstantMaybe(key, constant) {
+		let randomSettableItems = constant.filter((item) => !isNaN(Number(item)) );
+		if (randomSettableItems.length == constant.length) {
+			this.removeConstant(key);
+			this._constantSets[key] = new RandomProbabilitySet(constant);
+			this._constants[key] = this.getFromConstantSet.bind(this, key);
+			return true;
+		}
+		return false;
+	}
+
+	addDiscreetProbabilityConstantMaybe(key, constant) {
+		let discreetSettableItems = constant.filter((item) => {
+			if (!item) return false;
+			if (item.set) {
+				return item.probability && item.set.reduce((bool, setItem) => {
+					return bool && !isNaN(Number(setItem))//when number
+				}, true)
+			} else {
+				return item.probability &&!isNaN(Number(item.value))//when value: number
+			}
+		});
+		if (discreetSettableItems.length == constant.length) {
+			this.removeConstant(key);
+			this._constantSets[key] = new DiscreetProbabilitySet(constant);
+			this._constants[key] = this.getFromConstantSet.bind(this, key);
+			return true;
+		}
+		return false;
+	}
+
+	removeConstant(key) {
+		this._constants[key] && delete this._constants[key];
+		this._constantSets[key] && delete this._constantSets[key];
+	}
+
+	getConstant(lookup) {
+		let constant = this._constants[lookup];
+		return Number(constant == undefined ? constant : constant.call ? constant() : constant);
+	}
 	iterateLevels(callback, start=0, end=this._productionArray.length) {
 		let val, sum = [];
 		range(start,end).forEach((pIndex) => {
@@ -197,7 +285,7 @@ class lSystemProducer {
 					}
 					thisProduction = this._productionArray[prevLevel];
 					for (let j = 0; j< thisProduction.length; j++) {
-						produced = this.getRule(thisProduction[j], [j], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
+						produced = this.getRule(thisProduction[j], [], thisProduction[j - 1], thisProduction[j + 1]) || String(thisProduction[j]);
 						matched = matchAll(produced, PARAMETRIC_GRAMMAR_REGEX);
 						matched.forEach((item) => newProduction.push(item))
 						matched.length = 0;

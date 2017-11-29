@@ -1,6 +1,7 @@
 import {expect} from 'chai';
 import {uniqBy} from 'lodash';
 import { lSystemProducer } from '../../../source/structures/lsystems';
+import { RandomProbabilitySet, DiscreetProbabilitySet } from '../../../source/structures/probability';
 
 describe('lSystemProducer', ()=>{
 	let lsystem;
@@ -252,7 +253,18 @@ describe('lSystemProducer', ()=>{
 			let testSpy = sinon.spy(testObject, 'testFunction');
 			lsystem.addRule('Z', testObject.testFunction)
 			lsystem.getRule('Z', [1, 2, 3])
-			expect(testSpy).to.have.been.calledWith('Z', 1, 2, 3);
+			expect(testSpy).to.have.been.calledWith(1, 2, 3);
+		})
+		it('should call the rule with the constants as the last argument', () => {
+			let testFunction = function(...args){ return 'yes'}
+			let testObject = { testFunction };
+			let testSpy = sinon.spy(testObject, 'testFunction');
+			lsystem.addConstant('a', 1)
+			lsystem.addConstant('b', [23, 23])
+			lsystem.addConstant('c', [{ probability: 1, value: 27}, {probability: 1, value: 27}])
+			lsystem.addRule('Z', testObject.testFunction)
+			lsystem.getRule('Z', [1, 2, 3])
+			expect(testSpy).to.have.been.calledWith(1, 2, 3, { a: 1, b: 23, c: 27});
 		})
 		describe('context-specific rules', () => {
 			describe('left context match', () => {
@@ -368,33 +380,163 @@ describe('lSystemProducer', ()=>{
 			})
 		})
 		it('should pass the current key and index into function rules', (done) => {
-			let testFunction = function(key, arg1, arg2, arg3){ return 'yes'}
+			let testFunction = function(arg1, arg2, arg3){ return 'yes'}
 			let testObject = { testFunction };
 			let testSpy = sinon.spy(testObject, 'testFunction');
 			lsystem.addRule('B', testObject.testFunction)
 			lsystem.produce().then(function(){
 				lsystem.produce().then(function(){
-					expect(testSpy).to.have.been.calledWith('B', 0)
+					expect(testSpy).not.to.have.been.calledWith('B');
+					expect(testSpy).to.have.been.called;
 					testSpy.restore();
 					done();
-				})
-			})
+				}).catch(function(err){ done(err) })
+			}).catch(function(err){ done(err) })
 		})
 		describe('parametric rules', () => {
 			it('should attempt to call the method with the arguments if it encounters a parametric rule', (done) => {
-				let testFunction = function(...args){ return 'yes'}
+				let testFunction = function(...args){ return 'yes' }
 				let testObject = { testFunction };
 				let testSpy = sinon.spy(testObject, 'testFunction');
-
+				lsystem.addConstant('c', 123)
 				lsystem.addRule('K', testObject.testFunction)
 				lsystem._productionArray[1] = ['K(1,2)','K(2,3,4,5)'];
 				lsystem.currentLevel = 1;
 				lsystem.produce().then(function(){
-					expect(testSpy).to.have.been.calledWith('K','1','2',0);
-					expect(testSpy).to.have.been.calledWith('K','2','3','4','5',1);
+					expect(testSpy).to.have.been.calledWith('1','2', {c: 123});
+					expect(testSpy).to.have.been.calledWith('2','3','4','5',{c: 123});
 					done();
+				}).catch(function(err){ done(err)})
+			})
+		})
+	})
+
+	describe('#addConstant', () => {
+		it('should not take anything other than a number')
+		describe('with a number', () => {
+			it('should add the constant', () => {
+				expect(lsystem.addConstant('B', 1)).to.equal(true)
+				expect(lsystem._constants['B']).to.equal(1)
+			})
+			it('should call remove constant', () => {
+				expect(lsystem.addConstant('B', 1)).to.equal(true)
+				let removeConstantSpy = sinon.spy(lsystem, 'removeConstant');
+				lsystem.addConstant('B', 2)
+				expect(removeConstantSpy).to.have.been.calledWith('B')
+				expect(lsystem._constants['B']).to.equal(2)
+			})
+		})
+	})
+	describe('#addConstantArray', () => {
+		it('should not take anything other than a number')
+		it('should add a RandomProbabilitySet', () => {
+			let testArray = [1, 2, 3];
+			expect(lsystem.addConstantArray('B', testArray)).to.equal(true);
+			expect(lsystem._constantSets['B'].constructor).to.equal(RandomProbabilitySet)
+		})
+		it('should remove existing constants', () => {
+			let testArray = [1, 2, 3];
+			let testArray2 = [4, 5, 6];
+			expect(lsystem.addConstantArray('B', testArray2)).to.equal(true)
+			let removeConstantSpy = sinon.spy(lsystem, 'removeConstant');
+			expect(lsystem.addConstantArray('B', testArray)).to.equal(true)
+			expect(removeConstantSpy).to.have.been.calledWith('B');
+			expect(lsystem._constantSets['B'].constructor).to.equal(RandomProbabilitySet)
+		})
+		describe('with objects', () => {
+			it('should not take anything other than a number')
+			it('should not add anything when probability is not present', () => {
+					let testArray = [{ value: 1, probability: 20 }, { value: 2, probability: 10 }, { value: 3 }];
+					expect(lsystem.addConstantArray('B', testArray)).to.equal(false)
+					expect(lsystem._constantSets['B']).to.equal(undefined)
+			})
+			describe('with value', () => {
+				it('should add a DistributedProbabilitySet when the value is a number', () => {
+					let testArray = [{ value: 1, probability: 20 }, { value: 2, probability: 10 }, { value: 3, probability: 10 }];
+					expect(lsystem.addConstantArray('B', testArray)).to.equal(true)
+					expect(lsystem._constantSets['B'].constructor).to.equal(DiscreetProbabilitySet)
+				})
+				it('should remove existing constants', () => {
+					let testArray = [{ value: 1, probability: 20 }, { value: 2, probability: 10 }, { value: 3, probability: 10 }];
+					let testArray2 = [{ value: 4, probability: 20 }, { value: 5, probability: 10 }, { value: 6, probability: 10 }];
+					expect(lsystem.addConstantArray('B', testArray2)).to.equal(true)
+					let removeConstantSpy = sinon.spy(lsystem, 'removeConstant')
+					expect(lsystem.addConstantArray('B', testArray)).to.equal(true)
+					expect(removeConstantSpy).to.have.been.calledWith('B')
+					expect(lsystem._constantSets['B'].constructor).to.equal(DiscreetProbabilitySet)
 				})
 			})
+			describe('with set/max', () => {
+				it('should add a DistributedProbabilitySet when the set contains numbers', () => {
+					let testArray = [{ set: [1, 2, 3], probability: 20 }, { value: 4, probability: 10 }];
+					expect(lsystem.addConstantArray('B', testArray)).to.equal(true);
+					expect(lsystem._constantSets['B'].constructor).to.equal(DiscreetProbabilitySet)
+				})
+				it('should remove existing constants', () => {
+					let testArray = [{ set: [1, 2, 3], probability: 20 }, { value: 4, probability: 10 }];
+					let testArray2 = [{ set: [5, 6, 7], probability: 20 }, { value: 8, probability: 10 }];
+					expect(lsystem.addConstantArray('B', testArray2)).to.equal(true)
+					let removeConstantSpy = sinon.spy(lsystem, 'removeConstant')
+					expect(lsystem.addConstantArray('B', testArray)).to.equal(true)
+					expect(removeConstantSpy).to.have.been.calledWith('B')
+					expect(lsystem._constantSets['B'].constructor).to.equal(DiscreetProbabilitySet)
+				})
+			})
+		})
+	})
+
+	describe('#addConstants', () => {
+		it('should set the constants to the constant set', () => {
+			let constants = {
+				'B': [{ set: [1, 2], probability: 20 }, { value: 3, probability: 15 }],
+				'C': [{ value: 4, probability: 20 }, { value: 5, probability: 10 }, { value: 6, probability: 5 }],
+				'D': 7,
+				'E': [8, 9, 0]
+			}
+			expect(lsystem.addConstants(constants)).to.deep.equal([true, true, true, true]);
+			expect(lsystem._constantSets['B'].constructor).to.equal(DiscreetProbabilitySet)
+			expect(lsystem._constantSets['C'].constructor).to.equal(DiscreetProbabilitySet)
+			expect(lsystem._constants['D']).to.equal(7)
+			expect(lsystem._constantSets['E'].constructor).to.equal(RandomProbabilitySet)
+		})
+		it('should warn about invalid constants', () => {
+			let constants = {
+				'B': [{ set: [0, undefined], probability: 20 }, { value: 'Y', probability: 15 }],
+				'C': [{ value: 3, probability: 20 }, { value: 1, probability: 10 }, { value: 2, probability: 5 }],
+				'D': 'R',
+				'E': 3,
+				'F': [4, 5, undefined]
+			}
+			expect(lsystem.addConstants(constants)).to.deep.equal([false, true, false, true, false]);
+			expect(lsystem._constantSets['B']).to.equal(undefined)
+			expect(lsystem._constants['B']).to.equal(undefined)
+			expect(lsystem._constantSets['C'].constructor).to.equal(DiscreetProbabilitySet)
+			expect(lsystem._constants['D']).to.equal(undefined)
+			expect(lsystem._constantSets['D']).to.equal(undefined)
+			expect(lsystem._constants['E']).to.equal(3)
+			expect(lsystem._constants['F']).to.equal(undefined)
+		})
+	})
+
+	describe('#getConstant', () => {
+		beforeEach(() => {
+			lsystem.addConstants({
+				'B': 1,
+				'C': [2,3,4],
+				'D': [{ value: 7, probability: 20 }, { value: 5, probability: 10 }, { value: 6, probability: 5 }]
+			})
+		})
+		it('should get basic constants', () => {
+			expect(lsystem.getConstant('B')).to.equal(1)
+		})
+		it('should return not a number if not found', () => {
+			expect(isNaN(lsystem.getConstant('A'))).to.equal(true)
+		})
+		it('should return a RandomProbabilitySet number', () => {
+			expect(isNaN(Number(lsystem.getConstant('C')))).to.equal(false)
+		})
+		it('should return a DiscreetProbabilitySet number', () => {
+			expect(isNaN(Number(lsystem.getConstant('D')))).to.equal(false)
 		})
 	})
 
