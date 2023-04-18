@@ -6,7 +6,7 @@ import { BoundingBox } from '../../../space/bounds/bounding_box';
 import { BoundingSphere } from '../../../space/bounds/bounding_sphere';
 
 class SpaceTree extends NAryTree {
-	constructor(args={}){
+	constructor(args = {}) {
 
 		super(Object.assign(args, { branches: 8 }));
 		this.objects = args.objects || [];
@@ -15,9 +15,9 @@ class SpaceTree extends NAryTree {
 	}
 	division(index, bBox) {
 		let center = bBox ? bBox.center() : this.node.center(),
-				min = bBox ? bBox.min : this.node.min,
-				max = bBox ? bBox.max : this.node.max, coordinates;
-		switch(index){
+			min = bBox ? bBox.min : this.node.min,
+			max = bBox ? bBox.max : this.node.max, coordinates;
+		switch (index) {
 			case 0:
 				coordinates = [min, center]
 				break;
@@ -44,24 +44,24 @@ class SpaceTree extends NAryTree {
 				break;
 
 		}
-		if(coordinates) return new BoundingBox(...coordinates)
+		if (coordinates) return new BoundingBox(...coordinates)
 		return
 	}
-	insert(inserted, method){
-		let nodeSmallerThanMin = this.node.measurement().reduce((bool, m)=>{
+	insert(inserted, method) {
+		let nodeSmallerThanMin = this.node.size().reduce((bool, m) => {
 			return bool || m <= this.minSize
 		}, false)
 
-		if(nodeSmallerThanMin){
+		if (nodeSmallerThanMin) {
 			return method ? method(inserted) : this.nodeItem.add(inserted)
 		}
 
 		let bBox, found = false, parent = this.node;
 
-		this.eachChild(function(item, index){
+		this.eachChild(function (item, index) {
 			bBox = this.node || this.division(index, parent)
-			if(bBox.contains(inserted)){
-				if (!item){
+			if (bBox.contains(inserted)) {
+				if (!item) {
 					this.node = bBox;
 				}
 				found = true
@@ -69,17 +69,17 @@ class SpaceTree extends NAryTree {
 			}
 		})
 
-		if(!found){
+		if (!found) {
 			return method ? method(inserted) : this.nodeItem.add(inserted)
 		}
 	}
-	getClosest(queried){
-		if(!this.nodeItem){ return }
+	getClosest(queried) {
+		if (!this.nodeItem) { return }
 		let closest, closestDistance, distance;
-		this.nodeItem.objects.forEach((obj,i)=>{
-			if(!obj.distance){ return }
+		this.nodeItem.objects.forEach((obj, i) => {
+			if (!obj.distance) { return }
 			distance = obj.distance(queried)
-			if(!closestDistance || distance < closestDistance){
+			if (!closestDistance || distance < closestDistance) {
 				closestDistance = distance;
 				closest = obj;
 			}
@@ -87,50 +87,50 @@ class SpaceTree extends NAryTree {
 		return closest;
 	}
 	closest(queried, method) {
-		let nodeSmallerThanMin = this.node.measurement().reduce((bool, m)=>{
+		let nodeSmallerThanMin = this.node.size().reduce((bool, m) => {
 			return bool || m <= this.minSize
 		}, false)
 
-		if(nodeSmallerThanMin){
+		if (nodeSmallerThanMin) {
 			return this.getClosest(queried)
 		}
 
 		let bBox, found = false, parent = this.node, close;
 
-		this.eachChild(function(item, index){
+		this.eachChild(function (item, index) {
 			bBox = this.node || this.division(index, parent)
-			if(bBox.contains(queried)){
-				if(!this.node){ return }
+			if (bBox.contains(queried)) {
+				if (!this.node) { return }
 				close = this.closest(queried, method)
-				if(close){
+				if (close) {
 					found = true
 				}
 			}
 		})
 
-		if(!found){
+		if (!found) {
 			return this.getClosest(queried)
 		}
 		return close
 	}
-	randomPoint(){
-		return this.node.measurement().map((m, i)=> (Math.random() * m)  + this.node.min[i] )
+	randomPoint() {
+		return this.node.size().map((m, i) => (Math.random() * m) + this.node.min[i])
 	}
 	bestCandidate(numCandidates = 10) {
-	  let bestCandidate, bestDistance = 0, p, c, d;
-	  for (let i = 0; i < numCandidates; ++i) {
-	    p = this.randomPoint(),
-  		c = this.closest(p),
-  		d = c && c.distance ? c.distance(p) : undefined;
-	    if (d == undefined || d > bestDistance) {
-	      bestDistance = d;
-	      bestCandidate = p;
-	    }
-	  }
-	  return bestCandidate;
+		let bestCandidate, bestDistance = 0, p, c, d;
+		for (let i = 0; i < numCandidates; ++i) {
+			p = this.randomPoint(),
+				c = this.closest(p),
+				d = c && c.distance ? c.distance(p) : undefined;
+			if (d == undefined || d > bestDistance) {
+				bestDistance = d;
+				bestCandidate = p;
+			}
+		}
+		return bestCandidate;
 	}
 	makeNode(value) {
-		let val = value == undefined? false : value;
+		let val = value == undefined ? false : value;
 		return new SpaceTreeNode({ value: value, node: this.state.node, level: this.state.level })
 	}
 }
