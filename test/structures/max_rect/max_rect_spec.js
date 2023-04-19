@@ -26,7 +26,6 @@ describe('MaxRectsBinPack', () => {
         maxRect.insert(50, 100, 'hello');
         maxRect.insert(20, 75, 'goodbye');
 
-        console.log(maxRect.freeRectangles)
         expect(maxRect.freeRectangles.length).to.equal(2)
         expect(maxRect.freeRectangles[0].x).to.equal(70);
         expect(maxRect.freeRectangles[0].y).to.equal(0);
@@ -56,7 +55,6 @@ describe('MaxRectsBinPack', () => {
         maxRect.insert(50, 100, 'hello');
         maxRect.insert(20, 75, 'goodbye');
         maxRect.insert(25, 25, 1);
-        console.log(maxRect.freeRectangles)
         expect(maxRect.freeRectangles.length).to.equal(3)
         expect(maxRect.freeRectangles[0].x).to.equal(50);
         expect(maxRect.freeRectangles[0].y).to.equal(75);
@@ -122,25 +120,30 @@ describe('MaxRectsBinPack', () => {
         maxRect.insert(20, 75, 'goodbye');
         maxRect.insert(25, 25, 1);
         maxRect.insert(50, 10, true)
-        maxRect.printRectangles()
 
-        expect(maxRect.freeRectangles.length).to.equal(4)
-        expect(maxRect.freeRectangles[0].x).to.equal(50);
-        expect(maxRect.freeRectangles[0].y).to.equal(75);
-        expect(maxRect.freeRectangles[0].width).to.equal(20);
+        expect(maxRect.freeRectangles.length).to.equal(3)
+        expect(maxRect.freeRectangles[0].x).to.equal(95);
+        expect(maxRect.freeRectangles[0].y).to.equal(0);
+        expect(maxRect.freeRectangles[0].width).to.equal(5);
         expect(maxRect.freeRectangles[0].height).to.equal(25);
 
-        expect(maxRect.freeRectangles[1].x).to.equal(95);
-        expect(maxRect.freeRectangles[1].y).to.equal(0);
-        expect(maxRect.freeRectangles[1].width).to.equal(5);
-        expect(maxRect.freeRectangles[1].height).to.equal(25);
+        expect(maxRect.freeRectangles[1].x).to.equal(70);
+        expect(maxRect.freeRectangles[1].y).to.equal(25);
+        expect(maxRect.freeRectangles[1].width).to.equal(30);
+        expect(maxRect.freeRectangles[1].height).to.equal(50);
 
-        expect(maxRect.freeRectangles[2].x).to.equal(70);
-        expect(maxRect.freeRectangles[2].y).to.equal(25);
-        expect(maxRect.freeRectangles[2].width).to.equal(30);
-        expect(maxRect.freeRectangles[2].height).to.equal(75);
+        expect(maxRect.freeRectangles[2].x).to.equal(50);
+        expect(maxRect.freeRectangles[2].y).to.equal(85);
+        expect(maxRect.freeRectangles[2].width).to.equal(50);
+        expect(maxRect.freeRectangles[2].height).to.equal(15);
 
-        expect(maxRect.usedRectangles.length).to.equal(3)
+
+        // expect(maxRect.freeRectangles[2].x).to.equal(70);
+        // expect(maxRect.freeRectangles[2].y).to.equal(25);
+        // expect(maxRect.freeRectangles[2].width).to.equal(30);
+        // expect(maxRect.freeRectangles[2].height).to.equal(75);
+
+        expect(maxRect.usedRectangles.length).to.equal(4)
         expect(maxRect.usedRectangles[0].x).to.equal(0);
         expect(maxRect.usedRectangles[0].y).to.equal(0);
         expect(maxRect.usedRectangles[0].width).to.equal(50);
@@ -158,5 +161,11 @@ describe('MaxRectsBinPack', () => {
         expect(maxRect.usedRectangles[2].width).to.equal(25);
         expect(maxRect.usedRectangles[2].height).to.equal(25);
         expect(maxRect.usedRectangles[2].data).to.equal(1);
+
+        expect(maxRect.usedRectangles[3].x).to.equal(50);
+        expect(maxRect.usedRectangles[3].y).to.equal(75);
+        expect(maxRect.usedRectangles[3].width).to.equal(50);
+        expect(maxRect.usedRectangles[3].height).to.equal(10);
+        expect(maxRect.usedRectangles[3].data).to.equal(true);
     });
 })
