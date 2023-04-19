@@ -8,74 +8,61 @@ class SkylineEntry {
 }
 
 class SkylineSegment {
-    constructor(x, y, width, height = 0) {
+    constructor(x, y, width) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.subSegments = [];
-        this.height = height;
+        this.height = 0;
         this.entries = [];
     }
 
-    remainingSpace() {
-        let maxX = 0;
-        for (const e of this.entries) {
-            if (e.x + e.width > maxX) {
-                maxX = e.x + e.width;
-            }
-        }
-        return this.width - maxX;
-    }
-
     canFit(entry) {
-        if (entry.width > this.width) {
-            return false;
-        }
-
-        if (this.entries.length === 0) {
-            return true;
-        }
-
-        let maxX = 0;
-        for (const e of this.entries) {
-            if (e.x + e.width > maxX) {
-                maxX = e.x + e.width;
-            }
-        }
-
-        return entry.width <= this.width - maxX;
+        return entry.width <= this.width && entry.height <= this.height;
     }
 
     addEntry(entry) {
-        let bestSubSegment = null;
-        let minWastedSpace = Infinity;
-        for (const subSegment of this.subSegments) {
-            const wastedSpace = subSegment.canFit(entry);
-            if (wastedSpace) {
-                minWastedSpace = subSegment.remainingSpace(entry);
-                bestSubSegment = subSegment;
+        // Try to fit the entry horizontally first
+        let canFitHorizontally = false;
+        let newEntryX = this.x;
+        let newEntryY = this.y;
+        for (const existingEntry of this.entries) {
+            if (newEntryX + entry.width <= existingEntry.x || existingEntry.x + existingEntry.width <= newEntryX) {
+                // There is enough horizontal space between the entries to fit the new entry
+                canFitHorizontally = true;
+                newEntryY = Math.min(newEntryY, existingEntry.y - entry.height);
+                break;
             }
         }
 
-        if (bestSubSegment) {
-            console.log('sub best')
-            bestSubSegment.addEntry(entry);
-            return true;
-        } else if (this.canFit(entry) && entry.height <= this.height) {
-            console.log('sub other', this.x, this.width, this.remainingSpace(), entry.width, this.entries)
+        if (!canFitHorizontally) {
+            // Try to fit the entry in a sub-segment
+            let bestSubSegment = null;
+            let minWastedSpace = Infinity;
+            for (const subSegment of this.subSegments) {
+                const wastedSpace = subSegment.canFit(entry);
+                if (wastedSpace !== false && wastedSpace < minWastedSpace) {
+                    minWastedSpace = wastedSpace;
+                    bestSubSegment = subSegment;
+                }
+            }
 
-            const newSubSegment = new SkylineSegment(this.x + (this.width - this.remainingSpace()), this.y + this.height, entry.width, entry.height);
-            // newSubSegment.height = entry.height;
-            // newSubSegment.height = entry.height;
-            newSubSegment.addEntry(entry);
-            this.subSegments.push(newSubSegment);
-            this.height += entry.height;
-            this.entries.push(entry); // Store the entry in the entries array
-            return true;
+            if (bestSubSegment) {
+                bestSubSegment.addEntry(entry);
+                this.height = Math.max(this.height, bestSubSegment.y - this.y + bestSubSegment.height);
+            } else {
+                // Create a new sub-segment if there is not enough space
+                const newSubSegment = new SkylineSegment(this.x, this.y + this.height, this.width);
+                newSubSegment.addEntry(entry);
+                this.subSegments.push(newSubSegment);
+                this.height += newSubSegment.height;
+            }
         } else {
-            console.log('return false')
-            console.log(this.canFit(entry), entry.height, this.height)
-            return false;
+            // Add the entry to the current segment
+            entry.x = newEntryX;
+            entry.y = newEntryY;
+            this.entries.push(entry);
+            this.height = Math.max(this.height, newEntryY - this.y + entry.height);
         }
     }
 }
@@ -94,28 +81,26 @@ export class Skyline {
 
         for (const segment of this.segments) {
             const wastedSpace = segment.canFit(entry);
-            // console.log(segment.width, entry.width, wastedSpace);
-
-            if (wastedSpace) {
-                minWastedSpace = segment.remainingSpace(entry);
+            if (wastedSpace !== false && wastedSpace < minWastedSpace) {
+                minWastedSpace = wastedSpace;
                 bestSegment = segment;
             }
         }
 
         if (bestSegment) {
-            console.log('best')
             return bestSegment.addEntry(entry);
         } else {
-            console.log('other')
-            const newSegment = new SkylineSegment(0, this.height, this.maxWidth, entry.height);
-            newSegment.height = entry.height;
-            if (newSegment.addEntry(entry)) {
-                this.segments.push(newSegment);
-                this.height += entry.height;
-                return true;
-            } else {
-                return false;
-            }
+            const newSegment = new SkylineSegment(0, this.height, this.maxWidth);
+            newSegment.addEntry(entry);
+            this.segments.push(newSegment);
+            this.height += entry.height;
+            return true;
         }
     }
 }
+
+
+
+
+
+
