@@ -111,16 +111,41 @@ class SpaceTree extends NAryTree {
 			distance = obj.distance(queried)
 			if (!closestDistance || distance < closestDistance) {
 				closestDistance = distance;
-				closest = obj;
+				closest = {
+					item: obj,
+					dist: closestDistance,
+					index: this.nodeItem.indices[i]
+				}
 			}
 		})
-		return { item: closest, dist: closestDistance };
+		return closest;
 	}
-	closest(queried, method) {
-		const { item, dist } = this._closest(queried, method);
-		return item;
+	closestByColor(queried, options = {}) {
+		const deColorized = this.deColorize(queried);
+		const { item, dist, index } = this._closest(deColorized);
+		if (!options.index && !options.dist) return item;
+		if (options.index) {
+			let returned = { item, index }
+			if (options.dist) returned.dist = dist;
+			return returned;
+		}
+		if (options.dist) {
+			return { item, dist }
+		}
 	}
-	_closest(queried, method) {
+	closest(queried, options = {}) {
+		const { item, dist, index } = this._closest(queried);
+		if (!options.index && !options.dist) return item;
+		if (options.index) {
+			let returned = { item, index }
+			if (options.dist) returned.dist = dist;
+			return returned;
+		}
+		if (options.dist) {
+			return { item, dist }
+		}
+	}
+	_closest(queried) {
 		let nodeSmallerThanMin = this.node.size().reduce((bool, m) => {
 			return bool || m <= this.minSize
 		}, false)
@@ -141,7 +166,7 @@ class SpaceTree extends NAryTree {
 		for (const candidate of candidates) {
 			if (!closest || candidate.dist < closest.dist) {
 				this.goTo(candidate.n, candidate.l);
-				closest = this._closest(queried, method);
+				closest = this._closest(queried);
 				this.toParent();
 			}
 		}
@@ -179,6 +204,15 @@ class SpaceTree extends NAryTree {
 		return item.map((point, i) => {
 			return (point - min[i]) / (max[i] - min[i]);
 		})
+	}
+
+	deColorize(colorizedItem) {
+		const max = this.rootShape.max;
+		const min = this.rootShape.min;
+
+		return colorizedItem.map((colorizedValue, i) => {
+			return colorizedValue * (max[i] - min[i]) + min[i];
+		});
 	}
 
 	getValues(options) {

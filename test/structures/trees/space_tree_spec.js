@@ -142,6 +142,39 @@ describe('SpaceTree', () => {
 			})
 		})
 	})
+	describe('#closestByColor', () => {
+		let closest;
+		beforeEach(() => {
+			space_tree = new SpaceTree({ region: [min, max], minSize: 10 })
+			space_tree.insert(new BoundingSphere([8, 38, 38], 1))
+			space_tree.insert(new BoundingSphere([20, 0, 13], 1))
+			space_tree.insert(new BoundingSphere([20, 10, 13], 1))
+			space_tree.insert(new BoundingSphere([40, 10, 20], 1))
+			// console.log(space_tree.flatten())
+			expect(space_tree.data.length).to.equal(73)
+		})
+		describe('with a color', () => {
+			it('should return the closest leaf object', () => {
+
+				closest = space_tree.closestByColor([0.275, 0.825, 0.95]);
+				expect(closest).not.to.equal(undefined)
+				expect(closest.center()).to.have.members([8, 38, 38])
+
+				closest = space_tree.closestByColor([0.475, 0.025, 0.3]);
+				expect(closest).not.to.equal(undefined)
+				expect(closest.center()).to.have.members([20, 0, 13])
+
+				closest = space_tree.closestByColor([0.475, 0.25, 0.275]);
+				expect(closest).not.to.equal(undefined)
+				expect(closest.center()).to.have.members([20, 10, 13])
+
+				closest = space_tree.closestByColor([0.95, 0.2, 0.475]);
+				expect(closest).not.to.equal(undefined)
+				expect(closest.center()).to.have.members([40, 10, 20])
+
+			})
+		})
+	});
 	describe("#getValues", () => {
 		beforeEach(() => {
 			space_tree = new SpaceTree({ region: [min, max], minSize: 10 })
