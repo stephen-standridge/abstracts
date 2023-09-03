@@ -1,14 +1,27 @@
 import { Bounds } from './bounds';
 
+
 class BoundingBox extends Bounds {
-	constructor(min = [0, 0, 0], max = [0, 0, 0]) {
+	constructor(min = [], max = []) {
 		super()
-		if (min.x) min = Object.values(min);
-		if (max.y) max = Object.values(max);
+		if (!isNaN(Number(min.x))) min = Object.values(min);
+		if (!isNaN(Number(max.x))) max = Object.values(max);
 		this.min = min.map((value, index) => value <= max[index] ? value : max[index]);
 		this.max = max.map((value, index) => value >= min[index] ? value : min[index]);
 		this.dimensions = this.min.length;
 		this.max.length = this.dimensions;
+	}
+
+	get width() {
+		return Math.abs(this.max[0] - this.min[0]);
+	}
+
+	get height() {
+		return Math.abs(this.max[1] - this.min[1]);
+	}
+
+	get depth() {
+		return Math.abs(this.max[2] - this.min[2]);
 	}
 
 	size(whichDimension) {
@@ -35,20 +48,28 @@ class BoundingBox extends Bounds {
 		return this.min.map((value, index) => (value + this.max[index]) / 2)
 	}
 
-	union(minMaybe, max) {
-		let boundingBox = minMaybe;
-		if (Array.isArray(minMaybe)) {
-			boundingBox = {
-				min: minMaybe,
-				max: max
-			}
+	union(newMin, newMax) {
+		if (!this.min.length) {
+			this.min = newMin.x ? Object.values(newMin) : newMin;
 		}
-		this.min = this.min.map((min, i) => {
-			return Math.min(min, boundingBox.min[i]);
-		})
-		this.max = this.max.map((max, i) => {
-			return Math.max(max, boundingBox.max[i]);
-		})
+		if (!this.max.length) {
+			this.max = newMax.x ? Object.values(newMax) : newMax
+		}
+		const min = Object.values(newMin);
+		const max = Object.values(newMax);
+		this.min = [Math.min(min[0], this.min[0]), Math.min(min[1], this.min[1]), Math.min(min[2], this.min[2])];
+		this.max = [Math.max(max[0], this.max[0]), Math.max(max[1], this.max[1]), Math.max(max[2], this.max[2])];
+	}
+
+	setParams(center, extent) {
+		const [min, max] = center.reduce((newMinMax, value, i) => {
+			newMinMax[0][i] = value - extent[i];
+			newMinMax[1][i] = value + extent[i];
+
+			return newMinMax;
+		}, [[0, 0, 0], [0, 0, 0]]);
+		this.min = min;
+		this.max = max;
 	}
 
 	toParams() {

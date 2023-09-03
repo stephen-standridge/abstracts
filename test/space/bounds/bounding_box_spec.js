@@ -77,4 +77,13 @@ describe('BoundingBox', () => {
 		})
 	})
 
+	describe('#setParams', () => {
+		it('should set the min/max appropriately', () => {
+			bounding_box = new BoundingBox([1, 2], [3, 4])
+			bounding_box.setParams([0, 0, 0], [1, 3, 7])
+			expect(bounding_box.max).to.have.members([1, 3, 7])
+			expect(bounding_box.min).to.have.members([-1, -3, -7])
+		})
+	})
+
 })
