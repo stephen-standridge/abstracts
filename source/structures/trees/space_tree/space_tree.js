@@ -1,9 +1,6 @@
-import { filter } from 'lodash';
 import { NAryTree } from '../n_ary_tree';
 import { SpaceTreeNode } from './space_tree_node';
-import guid from '../../../generators/guid';
 import { BoundingBox } from '../../../space/bounds/bounding_box';
-import { BoundingSphere } from '../../../space/bounds/bounding_sphere';
 
 class SpaceTree extends NAryTree {
 	constructor(args = {}) {
@@ -51,9 +48,9 @@ class SpaceTree extends NAryTree {
 		return
 	}
 
-	rebuildTree() {
-		//call node.expand(toFit)
-	}
+	// rebuildTree() {
+	// 	//call node.expand(toFit)
+	// }
 
 	// get maxDepth() {
 	// 	if (!this.state.minSize) return super.maxDepth;
@@ -238,10 +235,10 @@ class SpaceTree extends NAryTree {
 				returned.sort((a, b) => a.index - b.index);
 				test = returned.reduce((result, a) => {
 					if (colors) {
-						result.colors = result.colors.concat(...a.color)
+						result.colors.push(...a.color)
 					}
 					if (positions) {
-						result.positions = result.positions.concat(...a.position)
+						result.positions.push(...a.position)
 					}
 					result.indices.push(a.index);
 

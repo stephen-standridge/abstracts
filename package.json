@@ -1,6 +1,6 @@
 {
   "name": "abstracts",
-  "version": "0.2.4",
+  "version": "0.3.5",
   "description": "Abstract data structures, algorithms, math",
   "main": "dist/bundle.commonjs.js",
   "repository": {
@@ -11,7 +11,7 @@
     "start": "webpack-dev-server --open --compress",
     "prod": "DESTINATION=prod webpack",
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js  --recursive",
-    "test:watch": "npm run test -- --watch"
+    "test:watch": "npm run test -- --watch -g 'SpaceTree'"
   },
   "author": "Stephen Standridge <Stephen@formisfunction.io> (www.formisfunction.io)",
   "license": "ISC",
