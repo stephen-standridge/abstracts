@@ -22296,41 +22296,41 @@ var SpaceTree = function (_NAryTree) {
 					pushed.index = nodeItem.indices[i];
 					returned.push(pushed);
 				});
-
-				if (buffer) {
-					returned.sort(function (a, b) {
-						return a.index - b.index;
-					});
-					test = returned.reduce(function (result, a) {
-						if (colors) {
-							var _result$colors;
-
-							result.colors = (_result$colors = result.colors).concat.apply(_result$colors, _toConsumableArray(a.color));
-						}
-						if (positions) {
-							var _result$positions;
-
-							result.positions = (_result$positions = result.positions).concat.apply(_result$positions, _toConsumableArray(a.position));
-						}
-						result.indices.push(a.index);
-
-						return result;
-					}, { colors: [], indices: [], positions: [] });
-				} else {
-
-					test = returned.reduce(function (result, a) {
-						if (colors) {
-							result.colors.push(a.color);
-						}
-						if (positions) {
-							result.positions.push(a.position);
-						}
-						result.indices.push(a.index);
-
-						return result;
-					}, { colors: [], indices: [], positions: [] });
-				}
 			});
+
+			if (buffer) {
+				returned.sort(function (a, b) {
+					return a.index - b.index;
+				});
+				test = returned.reduce(function (result, a) {
+					if (colors) {
+						var _result$colors;
+
+						(_result$colors = result.colors).push.apply(_result$colors, _toConsumableArray(a.color));
+					}
+					if (positions) {
+						var _result$positions;
+
+						(_result$positions = result.positions).push.apply(_result$positions, _toConsumableArray(a.position));
+					}
+					result.indices.push(a.index);
+
+					return result;
+				}, { colors: [], indices: [], positions: [] });
+			} else {
+
+				test = returned.reduce(function (result, a) {
+					if (colors) {
+						result.colors.push(a.color);
+					}
+					if (positions) {
+						result.positions.push(a.position);
+					}
+					result.indices.push(a.index);
+
+					return result;
+				}, { colors: [], indices: [], positions: [] });
+			}
 			return { positions: test.positions, indices: test.indices, colors: test.colors };
 		}
 	}]);

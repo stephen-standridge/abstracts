@@ -28,6 +28,11 @@ describe('SpaceTree', () => {
 		beforeEach(() => {
 			space_tree = new SpaceTree({ region: [min, max], minSize: 20 })
 		})
+		it('should return false when not inserted', () => {
+			const inserted = space_tree.insert([51, 52, 53]);
+			console.log(space_tree.data[0].objects)
+			expect(inserted).to.equal(false)
+		})
 		it('should insert the item as far down the tree as possible', () => {
 			space_tree = new SpaceTree({ region: [min, max], minSize: 10 })
 			space_tree.insert([8, 38, 38])
@@ -88,6 +93,25 @@ describe('SpaceTree', () => {
 			// expect(space_tree.node.min).to.have.all.members([0, 0, 0])
 			// expect(space_tree.node.max).to.have.all.members([40, 41, 40])
 
+		})
+		it('should divide into an octree', () => {
+			space_tree.insert([10, 10, 10])
+			space_tree.insert([30, 30, 30])
+			space_tree.insert([10, 10, 30])
+			space_tree.insert([10, 30, 10])
+			space_tree.insert([30, 10, 10])
+			space_tree.insert([10, 30, 30])
+			space_tree.insert([30, 30, 10])
+			space_tree.insert([30, 10, 30])
+			expect(space_tree.data.length).to.equal(9)
+			const levels = [];
+			const nodes = [];
+			space_tree.preOrderDepth(function (node, nodeAddress, levelAddress) {
+				levels.push(levelAddress);
+				nodes.push(nodeAddress)
+			}.bind(space_tree));
+			expect(levels.length).to.equal(9)
+			expect(nodes.length).to.equal(9)
 		})
 	})
 	describe('#closest', () => {
@@ -150,7 +174,6 @@ describe('SpaceTree', () => {
 			space_tree.insert(new BoundingSphere([20, 0, 13], 1))
 			space_tree.insert(new BoundingSphere([20, 10, 13], 1))
 			space_tree.insert(new BoundingSphere([40, 10, 20], 1))
-			// console.log(space_tree.flatten())
 			expect(space_tree.data.length).to.equal(73)
 		})
 		describe('with a color', () => {

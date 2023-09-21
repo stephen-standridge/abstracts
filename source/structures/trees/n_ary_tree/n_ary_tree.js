@@ -224,13 +224,16 @@ class NAryTree {
 	}
 	preOrderDepth(callback) {
 		callback(this.node, this.state.node, this.state.level)
+		if (!this.shouldTraverseDeeper()) return;
 		for (let i = 0; i < this.state.branches; i++) {
 			this.toNth(i)
 			// console.log(this.getIndex(this.state.level, this.state.node), this.length, this.state.level, this.state.node)
 			// console.log(this.maxNodeIndex(this.state.maxDepth), this.state.maxDepth)
-			if (this.shouldTraverseDeeper()) {
-				this.preOrderDepth(callback)
-			}
+			// console.log(this.shouldTraverseDeeper())
+			// if (this.shouldTraverseDeeper()) {
+			// console.log('yup')
+			this.preOrderDepth(callback)
+			// }
 			this.toParent()
 		}
 	}

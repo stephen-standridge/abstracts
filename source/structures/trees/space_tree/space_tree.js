@@ -94,10 +94,12 @@ class SpaceTree extends NAryTree {
 			}
 		})
 
-		if (!found) {
-			if (callback) callback(inserted)
-			return this.nodeItem.add(inserted)
-		}
+		// if (!found) {
+		// if (callback) callback(inserted)
+		// this.leafCount++;
+
+		// return this.nodeItem.add(inserted)
+		// }
 		return found;
 	}
 	getClosest(queried) {
@@ -231,34 +233,35 @@ class SpaceTree extends NAryTree {
 				returned.push(pushed);
 			})
 
-			if (buffer) {
-				returned.sort((a, b) => a.index - b.index);
-				test = returned.reduce((result, a) => {
-					if (colors) {
-						result.colors.push(...a.color)
-					}
-					if (positions) {
-						result.positions.push(...a.position)
-					}
-					result.indices.push(a.index);
-
-					return result
-				}, { colors: [], indices: [], positions: [] })
-			} else {
-
-				test = returned.reduce((result, a) => {
-					if (colors) {
-						result.colors.push(a.color)
-					}
-					if (positions) {
-						result.positions.push(a.position)
-					}
-					result.indices.push(a.index);
-
-					return result
-				}, { colors: [], indices: [], positions: [] })
-			}
 		});
+
+		if (buffer) {
+			returned.sort((a, b) => a.index - b.index);
+			test = returned.reduce((result, a) => {
+				if (colors) {
+					result.colors.push(...a.color)
+				}
+				if (positions) {
+					result.positions.push(...a.position)
+				}
+				result.indices.push(a.index);
+
+				return result
+			}, { colors: [], indices: [], positions: [] })
+		} else {
+
+			test = returned.reduce((result, a) => {
+				if (colors) {
+					result.colors.push(a.color)
+				}
+				if (positions) {
+					result.positions.push(a.position)
+				}
+				result.indices.push(a.index);
+
+				return result
+			}, { colors: [], indices: [], positions: [] })
+		}
 		return { positions: test.positions, indices: test.indices, colors: test.colors };
 	}
 }
