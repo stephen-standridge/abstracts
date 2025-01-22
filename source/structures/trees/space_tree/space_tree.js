@@ -1,6 +1,6 @@
 import { NAryTree } from '../n_ary_tree';
 import { SpaceTreeNode } from './space_tree_node';
-import { BoundingBox } from '../../../space/bounds/bounding_box';
+import { BoundingBox } from '../../../space/bounds';
 
 class SpaceTree extends NAryTree {
 	constructor(args = {}) {
@@ -175,10 +175,15 @@ class SpaceTree extends NAryTree {
 		}
 		return closest
 	}
+
 	randomPoint() {
 		return this.node.size().map((m, i) => (Math.random() * m) + this.node.min[i])
 	}
+
 	bestCandidate(numCandidates = 10) {
+		if (this.state.data.length == 0) {
+			return this.randomPoint();
+		}
 		let bestCandidate, bestDistance = 0, p, c, d;
 		for (let i = 0; i < numCandidates; ++i) {
 			p = this.randomPoint(),
@@ -213,6 +218,63 @@ class SpaceTree extends NAryTree {
 			return colorizedValue * (max[i] - min[i]) + min[i];
 		});
 	}
+	removeClosest(queried) {
+		if (!this.nodeItem) { return }
+		let closest, closestDistance, distance;
+		this.nodeItem.objects.forEach((obj, i) => {
+			if (obj.distance) {
+				distance = obj.distance(queried)
+			} else {
+				distance = this.distance(queried, obj)
+			}
+			if (!closestDistance || distance < closestDistance) {
+				closestDistance = distance;
+				closest = {
+					i,
+					item: obj,
+					dist: closestDistance,
+					index: this.nodeItem.indices[i]
+				}
+			}
+		})
+		if (closest) {
+			this.nodeItem.objects.splice(closest.i, 1);
+		}
+		return closest;
+	}
+
+	_removeClosest(queried) {
+		let nodeSmallerThanMin = this.node.size().reduce((bool, m) => {
+			return bool || m <= this.minSize
+		}, false)
+		if (nodeSmallerThanMin) {
+			return this.removeClosest(queried)
+		}
+
+		let bBox, found = false, parent = this.node, close;
+		const candidates = [];
+		this.eachChild(function (item, index) {
+			bBox = this.node;
+			if (!bBox) return;
+			candidates.push({ l: this.state.level, n: this.state.node, dist: bBox.distance(queried) })
+		});
+
+		candidates.sort((a, b) => a.dist - b.dist);
+		let closest = null;
+		for (const candidate of candidates) {
+			if (!closest || candidate.dist < closest.dist) {
+				this.goTo(candidate.n, candidate.l);
+				closest = this._removeClosest(queried);
+				this.toParent();
+			}
+		}
+
+		if (!closest) {
+			return this.removeClosest(queried)
+		}
+		return closest
+	}
+
 
 	getValues(options) {
 		const { buffer, colors, positions, indices } = options;
@@ -266,3 +328,4 @@ class SpaceTree extends NAryTree {
 	}
 }
 export { SpaceTree }
+

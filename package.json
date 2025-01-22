@@ -10,7 +10,7 @@
   "scripts": {
     "start": "webpack-dev-server --open --compress",
     "prod": "DESTINATION=prod webpack",
-    "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --require ./test/test_helper.js  --recursive",
+    "test": "mocha --require @babel/register --recursive ${FILE:-test/**/*.js}",
     "test:watch": "npm run test -- --watch -g 'SpaceTree'"
   },
   "author": "Stephen Standridge <Stephen@formisfunction.io> (www.formisfunction.io)",
@@ -19,23 +19,27 @@
     "lodash": "^4.16.6"
   },
   "devDependencies": {
-    "babel-cli": "^6.2.0",
-    "babel-core": "^6.2.1",
-    "babel-loader": "^6.2.4",
-    "babel-preset-es2015": "^6.5.0",
+    "@babel/cli": "^7.26.4",
+    "@babel/core": "^7.26.0",
+    "@babel/plugin-proposal-optional-chaining": "^7.21.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/register": "^7.25.9",
     "chai": "^3.4.1",
     "chai-immutable": "^1.5.3",
     "html-webpack-plugin": "^2.28.0",
     "mocha": "^2.3.4",
+    "rx": "^4.1.0",
     "sinon": "^2.2.0",
     "sinon-chai": "^2.10.0",
     "webpack": "^2.2.1",
-    "webpack-dev-server": "^2.4.1",
-    "rx": "^4.1.0"
+    "webpack-dev-server": "^2.4.1"
   },
   "babel": {
     "presets": [
-      "es2015"
+      "@babel/preset-env"
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-optional-chaining"
     ]
   }
 }
