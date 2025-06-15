@@ -1,45 +1,59 @@
-var HtmlWebpackPlugin = require('html-webpack-plugin');
+const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
-var prodOutput = {
-  path: __dirname + '/dist',
-  filename: 'bundle.commonjs.js',
-  // export itself to a global var
-  libraryTarget: "commonjs"
-}
-
-var devOutput = {
-  path: __dirname + '/dist',
-  filename: 'bundle.var.js',
-  // export itself to a global var
-  libraryTarget: "var",
-  // name of the global var: "Foo"
-  library: "abstracts"
-}
+const isProd = process.env.DESTINATION === "prod";
 
 module.exports = {
-  watch: false,
-  entry: [
-    './source/index.js'
-  ],
+  mode: isProd ? "production" : "development",
+  entry: "./source/app-index.js",
+  output: {
+    path: path.resolve(__dirname, "dist"),
+    filename: isProd ? "bundle.commonjs.js" : "bundle.var.js",
+    libraryTarget: isProd ? "commonjs" : "var",
+    library: isProd ? undefined : "abstracts",
+  },
+  resolve: {
+    extensions: [".js", ".jsx"], // <- lets you omit file extensions in imports
+  },
   module: {
-	  loaders: [
-	    {
-	      test: /\.js?$/,
-	      exclude: /node_modules/,
-	      loader: 'babel-loader', // 'babel-loader' is also a legal name to reference
-        query: {
-          presets: ['es2015']
-        }
-	    }
-	  ]
+    rules: [
+      {
+        test: /\.(js|jsx)$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["@babel/preset-env", "@babel/preset-react"],
+            plugins: ["@babel/plugin-proposal-optional-chaining"],
+          },
+        },
+      },
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["@babel/preset-env"],
+          },
+        },
+      },
+    ],
   },
   plugins: [
     new HtmlWebpackPlugin({
-      filename: 'index.html',
-      template: 'index.html',
-      inject: true
-    })
+      filename: "index.html",
+      template: "index.html",
+      inject: true,
+    }),
   ],
-  watch: process.env.DESTINATION != 'prod',
-  output: process.env.DESTINATION == 'prod' ? prodOutput : devOutput
+  devServer: {
+    historyApiFallback: true,
+    static: {
+      directory: path.resolve(__dirname, "dist"),
+    },
+    compress: true,
+    port: 9000,
+    open: true,
+  },
 };
