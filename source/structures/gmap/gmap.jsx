@@ -3,31 +3,63 @@ import { Link } from 'react-router-dom'
 import styled from '@emotion/styled'
 
 const Gmap = () => {
-
   const canvasRef = useRef(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     const gl = canvas.getContext('webgl2')
     if (!gl) throw new Error('WebGL2 not supported')
+    if (!canvas) return
+    const ext = gl.getExtension('EXT_color_buffer_float')
+    if (!ext) {
+      throw new Error('EXT_color_buffer_float not supported')
+    }
 
     // Input data
     const inputData = new Float32Array([1, 2, 3, 4])
 
     const texture = gl.createTexture()
     gl.bindTexture(gl.TEXTURE_2D, texture)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 1, 1, 0, gl.RGBA, gl.FLOAT, inputData)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA32F,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      inputData
+    )
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
     // Output texture + framebuffer
     const outputTex = gl.createTexture()
     gl.bindTexture(gl.TEXTURE_2D, outputTex)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 1, 1, 0, gl.RGBA, gl.FLOAT, null)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA32F,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      null
+    )
 
     const fb = gl.createFramebuffer()
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, outputTex, 0)
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      outputTex,
+      0
+    )
 
     // Shaders
     const vs = `#version 300 es
@@ -43,7 +75,7 @@ const Gmap = () => {
       void main() {
         vec2 uv = vec2(0.5, 0.5);
         vec4 val = texture(inputTex, uv);
-        outColor = val * 2.0;
+        outColor = val;
       }`
 
     function compileShader(type, src) {
@@ -87,20 +119,22 @@ const Gmap = () => {
     const result = new Float32Array(4)
     gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.FLOAT, result)
     console.log('Result:', result)
-  }, [])
+  }, [canvasRef])
 
+  return (
+    <PageWrapper style={{ padding: '2rem' }}>
+      <h2>Gmap </h2>
+      <p>An implementation of a generalized map</p>
+      <Canvas ref={canvasRef} />
+      <Link to="/">← Back to Home</Link>
+    </PageWrapper>
+  )
+}
 
-
-
-    return(
-  <div style={{ padding: '2rem' }}>
-    <h2>Gmap </h2>
-    <p>An implementation of a generalized map</p>
-    <Canvas ref={canvasRef} />
-    <Link to="/">← Back to Home</Link>
-  </div>
-)}
-
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+`
 const Canvas = styled.canvas`
   border: 2px solid hotpink;
   width: 200px;
