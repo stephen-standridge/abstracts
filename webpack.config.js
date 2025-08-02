@@ -19,7 +19,7 @@ module.exports = {
     rules: [
       {
         test: /\.glsl$/,
-        use: 'raw-loader',
+        use: ['raw-loader', 'glslify-loader'],
       },
       {
         test: /\.(js|jsx)$/,
