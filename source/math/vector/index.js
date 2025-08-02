@@ -1,2 +1,2 @@
-export * from './vector3'
-export * from './vector4'
+export * from './vector4d'
+export * from './vector3d'

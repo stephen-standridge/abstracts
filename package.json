@@ -10,8 +10,8 @@
   "scripts": {
     "start": "webpack-dev-server --open --compress",
     "prod": "DESTINATION=prod webpack",
-    "test": "mocha --require @babel/register --recursive ${FILE:-test/**/*.js}",
-    "test:watch": "npm run test -- --watch -g 'SpaceTree'"
+    "test": "mocha --require @babel/register --recursive",
+    "test:watch": "mocha --require @babel/register --recursive --watch"
   },
   "author": "Stephen Standridge <Stephen@formisfunction.io> (www.formisfunction.io)",
   "license": "ISC",
@@ -34,8 +34,11 @@
     "chai": "^3.4.1",
     "chai-immutable": "^1.5.3",
     "cross-env": "^7.0.3",
+    "glslify": "^7.1.1",
+    "glslify-loader": "^2.0.0",
     "html-webpack-plugin": "^5.6.3",
     "mocha": "^2.3.4",
+    "raw-loader": "^4.0.2",
     "rx": "^4.1.0",
     "sinon": "^2.2.0",
     "sinon-chai": "^2.10.0",

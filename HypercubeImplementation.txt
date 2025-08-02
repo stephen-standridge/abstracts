@@ -1,0 +1,76 @@
+Step-by-Step Implementation Plan:
+Step 1: Core 4D Math Module 📐
+Goal: Get basic 4D ray-hypercube intersection working
+Deliverable: Testable 4D math utilities
+Test: Unit tests for ray intersection - known rays should hit/miss as expected
+Success criteria: Ray hits known points on hypercube faces
+// New file: source/structures/gmap/math4d.js
+class Math4D {
+  static rayIntersectHypercube(rayOrigin, rayDir, hypercubeMin, hypercubeMax)
+  static vec4Distance(a, b)
+  static vec4Normalize(v)
+  static vec4Add(a, b)
+  // ... other 4D utilities
+}
+Step 2: Fixed Shadow Plane Renderer 🖥️
+Goal: Render 3D shadow on a fixed plane using existing WebGL setup
+Deliverable: Basic shadow casting working
+Test: Should see hypercube shadow outline on canvas
+Success criteria: Recognizable 3D cross-section of hypercube
+// Update gmap.jsx with:
+- Fixed shadow plane at z=0
+- Fixed 4D light at [0,0,0,3]
+- Fragment shader that casts rays and checks hypercube intersection
+- Simple binary rendering (hit=white, miss=black)
+Step 3: Camera-Controlled Shadow Plane 📹
+Goal: Shadow plane orientation follows camera position
+Deliverable: Dynamic shadow plane that's always "in front" of camera
+Test: Moving mouse changes shadow plane, hypercube shadow rotates accordingly
+Success criteria: Intuitive camera movement shows different shadow perspectives
+// Add camera controls:
+class Camera4D {
+  constructor(position4D, target4D)
+  getShadowPlaneOrientation() // Returns 3D plane in 4D space
+  update(mouseX, mouseY) // Update camera from user input
+}
+
+Step 4: Interactive Controls UI 🎛️
+Goal: Add UI controls for all parameters
+Deliverable: Full interactive experience
+Test: All controls affect rendering in expected ways
+Success criteria: Smooth, responsive interaction
+// Add React controls:
+- Light position sliders (4D: x,y,z,w)
+- Camera position controls
+- Shadow plane distance slider
+- Hypercube rotation controls
+
+Step 5: Multi-Light Architecture 💡
+Goal: Support multiple 4D lights (design only, single light implementation)
+Deliverable: Code structure ready for multiple lights
+Test: Switch between single/multi-light modes
+Success criteria: Architecture supports easy light addition
+// Refactor to:
+class LightSystem4D {
+  addLight(position4D, intensity, color)
+  removeLight(id)
+  renderShadows(shadowPlane, hypercube) // Composite multiple shadows
+}
+
+Step 6: Advanced Shadow Features ✨
+Goal: Distance-based sharpness, colored shadows, surface materials
+Deliverable: Polished rendering with realistic effects
+Test: Visually appealing, realistic-looking 4D shadows
+Success criteria: Demo-ready quality rendering
+// Add:
+- Distance-based shadow softness
+- Surface material properties (from GMap face types)
+- Colored lighting based on 4D position
+- Animation/interpolation between viewpoints
+Modular Architecture: 🏗️
+Testing Strategy: 🧪
+Each step gets:
+Unit tests for pure math functions
+Visual tests with known expected outputs
+Interactive tests for user controls
+Performance benchmarks for WebGL operations

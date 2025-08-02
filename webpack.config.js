@@ -13,10 +13,14 @@ module.exports = {
     library: isProd ? undefined : "abstracts",
   },
   resolve: {
-    extensions: [".js", ".jsx"], // <- lets you omit file extensions in imports
+    extensions: [".js", ".jsx", ".glsl"], // <- lets you omit file extensions in imports
   },
   module: {
     rules: [
+      {
+        test: /\.glsl$/,
+        use: 'raw-loader',
+      },
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,

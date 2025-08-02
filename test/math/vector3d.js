@@ -1,5 +1,5 @@
 import {expect, assert} from 'chai';
-import * as vector from '../../source/math/vector';
+import * as vector from '../../source/math/vector/vector3d';
 
 describe('vectors', ()=>{
 	describe('#cross', ()=>{
