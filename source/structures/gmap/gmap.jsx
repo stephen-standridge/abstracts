@@ -1,13 +1,19 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import styled from '@emotion/styled'
 import { HyperCube } from './hypercubegmap'
 import vertexShaderSource from './shaders/hypercube.vert.glsl'
 import fragmentShaderSource from './shaders/hypercube.frag.glsl'
+import { use4DRotation } from './hooks/use4DRotation'
 
 const Gmap = () => {
   const canvasRef = useRef(null)
+  const { rotation, rotateVertex4D, mouseHandlers } = use4DRotation()
+  
+  // Store WebGL context and program for re-rendering
+  const webglRef = useRef({ gl: null, program: null, uniforms: null })
 
+  // Setup WebGL once
   useEffect(() => {
     if (!canvasRef.current) return
 
@@ -63,37 +69,24 @@ const Gmap = () => {
     gl.useProgram(program)
 
     // Get uniform locations
-    const light4DPosLocation = gl.getUniformLocation(program, 'light4DPos')
-    const verticesLocation = gl.getUniformLocation(program, 'vertices')
-    const edgesLocation = gl.getUniformLocation(program, 'edges')
-    const shadowPlaneWLocation = gl.getUniformLocation(program, 'shadowPlaneW')
-    const resolutionLocation = gl.getUniformLocation(program, 'resolution')
+    const uniforms = {
+      light4DPos: gl.getUniformLocation(program, 'light4DPos'),
+      vertices: gl.getUniformLocation(program, 'vertices'),
+      edges: gl.getUniformLocation(program, 'edges'),
+      shadowPlaneW: gl.getUniformLocation(program, 'shadowPlaneW'),
+      resolution: gl.getUniformLocation(program, 'resolution')
+    }
 
     // Create hypercube data
     const hypercube = new HyperCube()
     hypercube.makeHypercube()
     
     // Get all 16 vertex coordinates
-    const vertex4DCoords = []
+    const baseVertices = []
     for (let i = 0; i < 16; i++) {
-      vertex4DCoords.push(hypercube.getVertexCoords(i))
+      baseVertices.push(hypercube.getVertexCoords(i))
     }
     const edges = hypercube.getEdges()
-
-
-
-    // Upload uniforms
-    gl.uniform4f(light4DPosLocation, 0.0, 0.0, 0.0, 3.0)
-    gl.uniform1f(shadowPlaneWLocation, 0.0)
-    gl.uniform2f(resolutionLocation, 512, 512)
-    
-    // Upload vertex data
-    const flatVertices = new Float32Array(vertex4DCoords.flat())
-    gl.uniform4fv(verticesLocation, flatVertices)
-    
-    // Upload edge data
-    const flatEdges = new Int32Array(edges.flat())
-    gl.uniform1iv(edgesLocation, flatEdges)
 
     // Create fullscreen quad
     const quadVertices = new Float32Array([
@@ -111,17 +104,52 @@ const Gmap = () => {
     gl.enableVertexAttribArray(positionLocation)
     gl.vertexAttribPointer(positionLocation, 4, gl.FLOAT, false, 0, 0)
 
+    // Store for re-rendering
+    webglRef.current = { gl, program, uniforms, baseVertices, edges }
+
+  }, [])
+
+  // Render function that applies current rotation
+  const render = useCallback(() => {
+    const { gl, program, uniforms, baseVertices, edges } = webglRef.current
+    if (!gl || !program) return
+
+    // Apply rotation to all vertices
+    const rotatedVertices = baseVertices.map(vertex => rotateVertex4D(vertex))
+
+    // Upload uniforms
+    gl.uniform4f(uniforms.light4DPos, 0.0, 0.0, 0.0, 3.0)
+    gl.uniform1f(uniforms.shadowPlaneW, 0.0)
+    gl.uniform2f(uniforms.resolution, 512, 512)
+    
+    // Upload rotated vertex data
+    const flatVertices = new Float32Array(rotatedVertices.flat())
+    gl.uniform4fv(uniforms.vertices, flatVertices)
+    
+    // Upload edge data
+    const flatEdges = new Int32Array(edges.flat())
+    gl.uniform1iv(uniforms.edges, flatEdges)
+
     // Render
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+  }, [rotateVertex4D])
 
-  }, [])
+  // Re-render when rotation changes
+  useEffect(() => {
+    render()
+  }, [rotation, render])
 
   return (
     <PageWrapper style={{ padding: '2rem' }}>
       <h2>Gmap </h2>
       <p>An implementation of a generalized map</p>
-      <Canvas ref={canvasRef} width={512} height={512} />
+      <Canvas 
+        ref={canvasRef} 
+        width={512} 
+        height={512}
+        {...mouseHandlers}
+      />
       <Link to="/">← Back to Home</Link>
     </PageWrapper>
   )
@@ -136,6 +164,11 @@ const Canvas = styled.canvas`
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   border-radius: 8px;
   background-color: #1a1a2e;
+  cursor: grab;
+  
+  &:active {
+    cursor: grabbing;
+  }
 `
 
 export default Gmap
