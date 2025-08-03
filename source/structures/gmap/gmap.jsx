@@ -8,7 +8,7 @@ import { use4DRotation } from './hooks/use4DRotation'
 
 const Gmap = () => {
   const canvasRef = useRef(null)
-  const { rotation, light4DPos, rotateVertex4D, resetLight, mouseHandlers } = use4DRotation()
+  const { rotation, light4DPos, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance, rotateVertex4D, resetLight, resetCamera, mouseHandlers } = use4DRotation()
   
   // Store WebGL context and program for re-rendering
   const webglRef = useRef({ gl: null, program: null, uniforms: null })
@@ -73,8 +73,13 @@ const Gmap = () => {
       light4DPos: gl.getUniformLocation(program, 'light4DPos'),
       vertices: gl.getUniformLocation(program, 'vertices'),
       edges: gl.getUniformLocation(program, 'edges'),
-      shadowPlaneW: gl.getUniformLocation(program, 'shadowPlaneW'),
-      resolution: gl.getUniformLocation(program, 'resolution')
+      resolution: gl.getUniformLocation(program, 'resolution'),
+      cameraPos: gl.getUniformLocation(program, 'cameraPos'),
+      cameraTarget: gl.getUniformLocation(program, 'cameraTarget'),
+      cameraUp: gl.getUniformLocation(program, 'cameraUp'),
+      cameraForward: gl.getUniformLocation(program, 'cameraForward'),
+      shadowPlaneCenter: gl.getUniformLocation(program, 'shadowPlaneCenter'),
+      shadowPlaneDistance: gl.getUniformLocation(program, 'shadowPlaneDistance')
     }
 
     // Create hypercube data
@@ -119,8 +124,13 @@ const Gmap = () => {
 
     // Upload uniforms
     gl.uniform4f(uniforms.light4DPos, ...light4DPos)
-    gl.uniform1f(uniforms.shadowPlaneW, 0.0)
     gl.uniform2f(uniforms.resolution, 512, 512)
+    gl.uniform3f(uniforms.cameraPos, ...camera3DPos)
+    gl.uniform3f(uniforms.cameraTarget, ...cameraTarget)
+    gl.uniform3f(uniforms.cameraUp, ...cameraUp)
+    gl.uniform3f(uniforms.cameraForward, ...cameraForward)
+    gl.uniform3f(uniforms.shadowPlaneCenter, ...shadowPlaneCenter)
+    gl.uniform1f(uniforms.shadowPlaneDistance, shadowPlaneDistance)
     
     // Upload rotated vertex data
     const flatVertices = new Float32Array(rotatedVertices.flat())
@@ -133,12 +143,12 @@ const Gmap = () => {
     // Render
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  }, [rotateVertex4D, light4DPos])
+  }, [rotateVertex4D, light4DPos, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance])
 
-  // Re-render when rotation or light position changes
+  // Re-render when rotation, light position, or camera changes
   useEffect(() => {
     render()
-  }, [rotation, light4DPos, render])
+  }, [rotation, light4DPos, camera3DPos, cameraForward, shadowPlaneCenter, shadowPlaneDistance, render])
 
   return (
     <PageWrapper style={{ padding: '2rem' }}>
@@ -151,14 +161,20 @@ const Gmap = () => {
         {...mouseHandlers}
       />
       <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
-        <strong>Enhanced 4D Controls:</strong><br/>
+        <strong>4D Camera Ray Casting Controls:</strong><br/>
         <strong>Hypercube Rotation:</strong><br/>
         • <strong>Left drag:</strong> XW + YW rotations (primary 4D)<br/>
         • <strong>Right drag:</strong> XY + XZ rotations (3D-like)<br/>
-        <strong>4D Light Positioning:</strong><br/>
+        <strong>4D Light (affects brightness only):</strong><br/>
         • <strong>Shift+Left drag:</strong> Light orbit (azimuth + elevation)<br/>
         • <strong>Shift+Right drag:</strong> Light distance + 4D W coordinate<br/>
-        • <strong>Press 'R':</strong> Reset light to default position
+        <strong>3D Camera (ray origin):</strong><br/>
+        • <strong>Alt+Left drag:</strong> Camera orbit around hypercube view<br/>
+        • <strong>Alt+Right drag:</strong> Camera zoom in/out<br/>
+        <strong>Reset Keys:</strong><br/>
+        • <strong>Press 'R':</strong> Reset light position<br/>
+        • <strong>Press 'C':</strong> Reset camera position<br/>
+        <strong>Rendering:</strong> Camera casts rays through screen to intersect 4D hypercube
       </div>
       <Link to="/">← Back to Home</Link>
     </PageWrapper>

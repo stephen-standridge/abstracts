@@ -1,14 +1,21 @@
 #version 300 es
 precision highp float;
 
-// Note: Would use 4D vector math imports here, but glslify issues
-// Functions inlined directly instead
+// 4D Hypercube Ray Casting Renderer
+// Camera casts rays through screen pixels to intersect with 4D hypercube (projected to 3D)
+// 4D light affects brightness only, not geometry
+// Shadow plane acts as camera frustum/screen
 
 uniform vec4 light4DPos;
 uniform vec4 vertices[16];
 uniform int edges[96]; // 32 edges * 3 values each
-uniform float shadowPlaneW;
 uniform vec2 resolution;
+uniform vec3 cameraPos;
+uniform vec3 cameraTarget;
+uniform vec3 cameraUp;
+uniform vec3 cameraForward;
+uniform vec3 shadowPlaneCenter;
+uniform float shadowPlaneDistance;
 
 out vec4 outColor;
 
@@ -22,190 +29,174 @@ float distanceToLineSegment(vec2 point, vec2 start, vec2 end) {
   return distance(point, projection);
 }
 
-// Cast ray from 4D light through 4D vertex to 3D shadow plane
-vec3 castShadow4D(vec4 light4D, vec4 vertex4D, float shadowPlaneW) {
-  vec4 rayDir = vertex4D - light4D;
+// Get 3D world position of pixel on shadow plane (screen)
+vec3 getPixelWorldPosition(vec2 screenCoord) {
+  // Create right and up vectors for the shadow plane (screen-like coordinates)
+  vec3 worldUp = vec3(0.0, 1.0, 0.0);
+  vec3 right = normalize(cross(cameraForward, worldUp));
+  vec3 up = normalize(cross(right, cameraForward));
   
-  // Check if ray is parallel to shadow plane (rayDir.w ≈ 0)
-  if (abs(rayDir.w) < 1e-6) {
-    return vec3(0.0, 0.0, 0.0); // Invalid shadow point
-  }
+  // Convert screen coordinates to world position on shadow plane
+  vec3 pixelPosition = shadowPlaneCenter + 
+                      screenCoord.x * right + 
+                      screenCoord.y * up;
   
-  // Find intersection parameter t where ray hits shadow plane (w = shadowPlaneW)
-  // light4D.w + t * rayDir.w = shadowPlaneW
-  float t = (shadowPlaneW - light4D.w) / rayDir.w;
-  
-  // Skip if shadow is "behind" the light (t <= 0)
-  if (t <= 0.0) {
-    return vec3(0.0, 0.0, 0.0); // Invalid shadow point
-  }
-  
-  // Calculate 3D shadow point
-  vec4 shadowPoint4D = light4D + t * rayDir;
-  return shadowPoint4D.xyz;
+  return pixelPosition;
 }
 
-void main() {
-  vec2 uv = gl_FragCoord.xy / resolution;
-  vec2 coord = (uv - 0.5) * 8.0; // Bigger view range [-4, 4] to see all shadows
+// Cast ray from camera through pixel position, find closest intersection with 4D hypercube
+float castCameraRay(vec2 screenCoord) {
+  // Get 3D world position of this pixel on the shadow plane
+  vec3 pixelPos = getPixelWorldPosition(screenCoord);
   
-  vec3 color = vec3(0.1, 0.1, 0.15); // Dark background
+  // Ray from camera through pixel
+  vec3 rayDirection = normalize(pixelPos - cameraPos);
   
-  // Render 4D light as a bright indicator with distance visualization
-  // Project 4D light to 2D screen using same projection as hypercube
-  float perspective4D = 2.0;
-  vec2 lightProjected = light4DPos.xy / (perspective4D - light4DPos.w) + light4DPos.z * 0.3;
+  float closestDistance = 999.0;
+  int closestVertexIdx = -1;
+  int closestEdgeIdx = -1;
   
-  float distToLight = distance(coord, lightProjected);
-  
-  // Light indicator size varies with light's distance from origin
-  float lightDistance = length(light4DPos.xyz);
-  float lightRadius = 0.1 + (lightDistance - 2.0) * 0.03; // Scale radius with distance
-  lightRadius = clamp(lightRadius, 0.05, 0.25); // Clamp to reasonable range
-  
-  if (distToLight < lightRadius) {
-    // Bright yellow/orange light indicator
-    float intensity = 1.0 - (distToLight / lightRadius);
-    vec3 lightColor = vec3(1.0, 0.8, 0.2);
-    
-    // Add W-coordinate color tinting (blue = far in 4D, red = close in 4D)
-    float wNormalized = (light4DPos.w - 1.0) / 4.0; // Normalize W to [0,1] roughly
-    lightColor.b += wNormalized * 0.3; // More blue for higher W
-    lightColor.r += (1.0 - wNormalized) * 0.2; // More red for lower W
-    
-    color = mix(color, lightColor, intensity * 0.9);
-  }
-  
-  // Render edges as lines
-  for (int i = 0; i < 32; i++) {
-    int idx = i * 3;
-    int vertex1Idx = edges[idx];
-    int vertex2Idx = edges[idx + 1];
-    int dimension = edges[idx + 2];
-    
-    vec4 v1 = vertices[vertex1Idx];
-    vec4 v2 = vertices[vertex2Idx];
-    
-    // 4D perspective projection for both vertices
-    float perspective4D = 2.0;
-    vec2 p1 = v1.xy / (perspective4D - v1.w) + v1.z * 0.3;
-    vec2 p2 = v2.xy / (perspective4D - v2.w) + v2.z * 0.3;
-    
-    // Distance to line segment
-    float lineDistance = distanceToLineSegment(coord, p1, p2);
-    if (lineDistance < 0.02) {
-      // Color based on dimension
-      if (dimension == 0) color = vec3(1.0, 0.2, 0.2); // X edges - red
-      else if (dimension == 1) color = vec3(0.2, 1.0, 0.2); // Y edges - green  
-      else if (dimension == 2) color = vec3(0.2, 0.2, 1.0); // Z edges - blue
-      else if (dimension == 3) color = vec3(1.0, 1.0, 0.2); // W edges - yellow
-    }
-  }
-  
-  // Still render vertices as dots on top
+  // Check intersection with 4D vertices (projected to 3D)
   for (int i = 0; i < 16; i++) {
     vec4 vertex4D = vertices[i];
     
-    // 4D perspective projection
-    float perspective4D = 2.0;
-    vec2 projected = vertex4D.xy / (perspective4D - vertex4D.w) + vertex4D.z * 0.3;
+    // Project 4D vertex to 3D space (same as before)
+    vec3 vertex3D = vertex4D.xyz + vec3(0.0, 0.0, vertex4D.w * 2.0);
     
-    float dist = distance(coord, projected);
-    if (dist < 0.05) {
-      color = vec3(1.0, 1.0, 1.0); // White dots
-    }
-  }
-  
-  // NEW: Render 3D shadows of 4D edges (complete wireframe)
-  for (int i = 0; i < 32; i++) {
-    int idx = i * 3;
-    int vertex1Idx = edges[idx];
-    int vertex2Idx = edges[idx + 1];
-    int dimension = edges[idx + 2];
+    // Find closest point on ray to vertex
+    vec3 toVertex = vertex3D - cameraPos;
+    float projLength = dot(toVertex, rayDirection);
     
-    vec4 v1_4d = vertices[vertex1Idx];
-    vec4 v2_4d = vertices[vertex2Idx];
-    
-    // Cast shadows of both edge endpoints to 3D shadow plane
-    vec3 shadow1_3d = castShadow4D(light4DPos, v1_4d, shadowPlaneW);
-    vec3 shadow2_3d = castShadow4D(light4DPos, v2_4d, shadowPlaneW);
-    
-    // Skip if either shadow is invalid
-    if (length(shadow1_3d) < 1e-6 || length(shadow2_3d) < 1e-6) continue;
-    
-    // Project 3D shadow edge to 2D screen
-    vec2 shadowP1 = shadow1_3d.xy;
-    vec2 shadowP2 = shadow2_3d.xy;
-    
-    // Render shadow edge as line segment
-    float shadowLineDist = distanceToLineSegment(coord, shadowP1, shadowP2);
-    if (shadowLineDist < 0.03) {
-      // Render shadow edges as orange lines
-      color = vec3(1.0, 0.4, 0.1); // Bright orange shadow wireframe
-    }
-  }
-  
-  // DEBUG: Render shadow vertices with enhanced visualization
-  for (int i = 0; i < 16; i++) {
-    vec4 vertex4D = vertices[i];
-    
-    // Cast shadow from light through vertex to shadow plane
-    vec3 shadow3D = castShadow4D(light4DPos, vertex4D, shadowPlaneW);
-    
-    // Skip invalid shadows (behind light or parallel rays)  
-    if (length(shadow3D) < 1e-6) continue;
-    
-    // Project 3D shadow to 2D screen
-    vec2 shadowProjected = shadow3D.xy;
-    
-    float shadowDist = distance(coord, shadowProjected);
-    
-    // Different sizes and colors for the two cube layers
-    float dotRadius;
-    vec3 shadowColor;
-    if (vertex4D.w < 0.0) {
-      // Inner cube (w = -1) - smaller, orange
-      dotRadius = 0.08;
-      shadowColor = vec3(1.0, 0.4, 0.1); // Bright orange
-    } else {
-      // Outer cube (w = +1) - larger, green 
-      dotRadius = 0.12;
-      shadowColor = vec3(0.2, 1.0, 0.4); // Bright green
-    }
-    
-    if (shadowDist < dotRadius) {
-      float intensity = 1.0 - (shadowDist / dotRadius);
-      // Add bright center for better visibility
-      if (shadowDist < dotRadius * 0.3) {
-        color = shadowColor; // Solid color center
-      } else {
-        color = mix(color, shadowColor, intensity * 0.7); // Fade to edges
+    if (projLength > 0.0) { // In front of camera
+      vec3 closestPointOnRay = cameraPos + projLength * rayDirection;
+      float distanceToRay = distance(vertex3D, closestPointOnRay);
+      
+      if (distanceToRay < closestDistance) {
+        closestDistance = distanceToRay;
+        closestVertexIdx = i;
       }
     }
   }
   
-  // Add coordinate grid for reference
-  float gridSpacing = 1.0;
-  float gridThickness = 0.02;
+  // Return distance to closest intersection (or large number if no hit)
+  return closestDistance;
+}
+
+// Calculate distance-based lighting factor
+float getLightingFactor(vec4 vertex4D) {
+  float distance4D = length(vertex4D - light4DPos);
+  // Brighter when closer to light, with falloff
+  return 1.0 / (1.0 + distance4D * 0.3);
+}
+
+
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / resolution;
+  vec2 coord = (uv - 0.5) * 4.0; // Screen coordinates [-2, 2] for camera ray casting
   
-  // Vertical grid lines
+  vec3 color = vec3(0.05, 0.05, 0.1); // Dark space background
+  
+  // Cast ray from camera through this pixel and find intersections with 4D hypercube
+  float rayDistance = castCameraRay(coord);
+  
+  // If ray hits something close enough, render it
+  if (rayDistance < 0.2) { // Threshold for "hit"
+    // Calculate brightness based on distance to intersection
+    float hitIntensity = 1.0 - (rayDistance / 0.2);
+    
+    // Find which vertex/edge this ray is closest to for coloring and lighting
+    vec3 pixelPos = getPixelWorldPosition(coord);
+    vec3 rayDirection = normalize(pixelPos - cameraPos);
+    
+    float bestLighting = 0.2; // Base ambient lighting
+    vec3 hitColor = vec3(0.6, 0.8, 1.0); // Default light blue
+    int hitDimension = -1;
+    
+    // Check which vertex is closest to this ray for lighting calculation
+    for (int i = 0; i < 16; i++) {
+      vec4 vertex4D = vertices[i];
+      vec3 vertex3D = vertex4D.xyz + vec3(0.0, 0.0, vertex4D.w * 2.0);
+      
+      vec3 toVertex = vertex3D - cameraPos;
+      float projLength = dot(toVertex, rayDirection);
+      
+      if (projLength > 0.0) {
+        vec3 closestPointOnRay = cameraPos + projLength * rayDirection;
+        float distToVertex = distance(vertex3D, closestPointOnRay);
+        
+        if (distToVertex < 0.25) { // This ray is near this vertex
+          float lighting = getLightingFactor(vertex4D);
+          bestLighting = max(bestLighting, lighting);
+          
+          // Color based on W coordinate (4D depth)
+          if (vertex4D.w < 0.0) {
+            hitColor = vec3(1.0, 0.6, 0.2); // Orange for inner cube (w=-1)
+          } else {
+            hitColor = vec3(0.2, 0.8, 1.0); // Blue for outer cube (w=+1)
+          }
+        }
+      }
+    }
+    
+    // Check which edge this ray might be hitting for better coloring
+    for (int i = 0; i < 32; i++) {
+      int idx = i * 3;
+      int vertex1Idx = edges[idx];
+      int vertex2Idx = edges[idx + 1];
+      int dimension = edges[idx + 2];
+      
+      vec4 v1_4d = vertices[vertex1Idx];
+      vec4 v2_4d = vertices[vertex2Idx];
+      
+      vec3 v1_3d = v1_4d.xyz + vec3(0.0, 0.0, v1_4d.w * 2.0);
+      vec3 v2_3d = v2_4d.xyz + vec3(0.0, 0.0, v2_4d.w * 2.0);
+      
+      // Check if ray is close to this edge
+      vec3 edgeDir = normalize(v2_3d - v1_3d);
+      vec3 toV1 = v1_3d - cameraPos;
+      vec3 crossProduct = cross(rayDirection, edgeDir);
+      float distToEdge = length(cross(toV1, rayDirection)) / length(crossProduct);
+      
+      if (distToEdge < 0.15) { // Ray is close to this edge
+        // Color based on edge dimension
+        if (dimension == 0) hitColor = vec3(1.0, 0.4, 0.4); // X edges - red
+        else if (dimension == 1) hitColor = vec3(0.4, 1.0, 0.4); // Y edges - green  
+        else if (dimension == 2) hitColor = vec3(0.4, 0.4, 1.0); // Z edges - blue
+        else if (dimension == 3) hitColor = vec3(1.0, 1.0, 0.4); // W edges - yellow
+        
+        // Use edge lighting
+        float lightingFactor1 = getLightingFactor(v1_4d);
+        float lightingFactor2 = getLightingFactor(v2_4d);
+        float edgeLighting = (lightingFactor1 + lightingFactor2) * 0.5;
+        bestLighting = max(bestLighting, edgeLighting);
+        break;
+      }
+    }
+    
+    // Apply lighting and intensity to final color
+    float finalBrightness = bestLighting * hitIntensity;
+    color = hitColor * finalBrightness;
+  }
+  
+  // Add subtle grid for reference (camera frustum visualization)
+  float gridSpacing = 0.5;
+  float gridThickness = 0.01;
+  
+  // Draw grid lines
   float xGrid = mod(coord.x + gridSpacing * 0.5, gridSpacing) - gridSpacing * 0.5;
   if (abs(xGrid) < gridThickness) {
-    color = mix(color, vec3(0.3, 0.3, 0.4), 0.3);
+    color = mix(color, vec3(0.15, 0.15, 0.2), 0.3);
   }
   
-  // Horizontal grid lines  
   float yGrid = mod(coord.y + gridSpacing * 0.5, gridSpacing) - gridSpacing * 0.5;
   if (abs(yGrid) < gridThickness) {
-    color = mix(color, vec3(0.3, 0.3, 0.4), 0.3);
+    color = mix(color, vec3(0.15, 0.15, 0.2), 0.3);
   }
   
-  // Center axes (brighter)
-  if (abs(coord.x) < gridThickness * 2.0) {
-    color = mix(color, vec3(0.5, 0.5, 0.6), 0.5); // Bright Y axis
-  }
-  if (abs(coord.y) < gridThickness * 2.0) {
-    color = mix(color, vec3(0.5, 0.5, 0.6), 0.5); // Bright X axis  
+  // Draw center crosshair
+  if (abs(coord.x) < 0.02 || abs(coord.y) < 0.02) {
+    color = mix(color, vec3(0.3, 0.4, 0.5), 0.5);
   }
   
   outColor = vec4(color, 1.0);

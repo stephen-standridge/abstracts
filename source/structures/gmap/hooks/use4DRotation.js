@@ -18,6 +18,13 @@ export function use4DRotation() {
     radius: 3.0,  // Distance from origin
     w: 3.0        // 4D W coordinate
   })
+
+  // Track 3D camera position for shadow plane visualization
+  const [cameraParams, setCameraParams] = useState({
+    theta: Math.PI * 0.25,  // Camera azimuth (45 degrees)
+    phi: Math.PI * 0.2,     // Camera elevation (better angle to see shadows) 
+    radius: 5.0             // Camera distance from shadow plane center
+  })
   
   // Convert enhanced spherical to cartesian for 4D light position
   const light4DPos = [
@@ -26,6 +33,36 @@ export function use4DRotation() {
     lightParams.radius * Math.sin(lightParams.phi),                               // Z
     lightParams.w                                                                  // W
   ]
+
+  // Define shadow plane center as the orbit target (where shadows typically appear)
+  const shadowPlaneCenter = [0, 0, 1.5]  // Slightly in front of hypercube
+  
+  // Convert camera spherical to cartesian, orbiting around the shadow plane center
+  const camera3DPos = [
+    shadowPlaneCenter[0] + cameraParams.radius * Math.cos(cameraParams.phi) * Math.cos(cameraParams.theta), // X
+    shadowPlaneCenter[1] + cameraParams.radius * Math.cos(cameraParams.phi) * Math.sin(cameraParams.theta), // Y
+    shadowPlaneCenter[2] + cameraParams.radius * Math.sin(cameraParams.phi)                                 // Z
+  ]
+  
+  // Camera always looks at shadow plane center, up vector is world Y
+  const cameraTarget = shadowPlaneCenter
+  const cameraUp = [0, 1, 0]
+  
+  // Calculate camera direction (from camera to target)
+  const cameraDirection = [
+    cameraTarget[0] - camera3DPos[0],
+    cameraTarget[1] - camera3DPos[1], 
+    cameraTarget[2] - camera3DPos[2]
+  ]
+  const dirLength = Math.sqrt(cameraDirection[0]**2 + cameraDirection[1]**2 + cameraDirection[2]**2)
+  const cameraForward = [
+    cameraDirection[0] / dirLength,
+    cameraDirection[1] / dirLength,
+    cameraDirection[2] / dirLength
+  ]
+  
+  // Shadow plane distance from camera
+  const shadowPlaneDistance = 2.0
 
   const isDragging = useRef(false)
   const mouseButton = useRef(0) // 0 = left, 2 = right
@@ -45,8 +82,23 @@ export function use4DRotation() {
     const deltaY = e.clientY - lastMouse.current.y
     const rotationSpeed = 0.01
     const lightSpeed = 0.02
+    const cameraSpeed = 0.02
     
-    if (e.shiftKey && mouseButton.current === 0) {
+    if (e.altKey && mouseButton.current === 0) {
+      // Alt+Left: Camera orbit around hypercube (azimuth + elevation)
+      setCameraParams(prev => ({
+        ...prev,
+        theta: prev.theta + deltaX * cameraSpeed,
+        phi: Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, prev.phi - deltaY * cameraSpeed))
+      }))
+    } else if (e.altKey && mouseButton.current === 2) {
+      // Alt+Right: Camera zoom in/out (orbit distance from shadow plane)
+      const zoomSpeed = 0.1
+      setCameraParams(prev => ({
+        ...prev,
+        radius: Math.max(1.5, Math.min(10.0, prev.radius + deltaY * zoomSpeed)) // Clamp zoom range for shadow viewing
+      }))
+    } else if (e.shiftKey && mouseButton.current === 0) {
       // Shift+Left: Light orbital motion (azimuth + elevation)
       setLightParams(prev => ({
         ...prev,
@@ -90,17 +142,25 @@ export function use4DRotation() {
     setLightParams({ theta: 0, phi: 0, radius: 3.0, w: 3.0 })
   }, [])
 
+  // Reset camera position (orbit around shadow plane center)
+  const resetCamera = useCallback(() => {
+    setCameraParams({ theta: Math.PI * 0.25, phi: Math.PI * 0.2, radius: 5.0 })
+  }, [])
+
   // Keyboard handler for reset
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'r' || e.key === 'R') {
         resetLight()
       }
+      if (e.key === 'c' || e.key === 'C') {
+        resetCamera()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [resetLight])
+  }, [resetLight, resetCamera])
 
   // Apply all 6 rotation planes sequentially to a 4D vertex
   const rotateVertex4D = useCallback((vertex) => {
@@ -161,8 +221,15 @@ export function use4DRotation() {
   return {
     rotation,
     light4DPos,
+    camera3DPos,
+    cameraTarget,
+    cameraUp,
+    cameraForward,
+    shadowPlaneCenter,
+    shadowPlaneDistance,
     rotateVertex4D,
     resetLight,
+    resetCamera,
     mouseHandlers: {
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,
