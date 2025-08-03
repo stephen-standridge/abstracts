@@ -1,8 +1,8 @@
 #version 300 es
 precision highp float;
 
-// Import 4D vector math functions
-#pragma glslify: require(../../math/glsl/vector4d.glsl)
+// Note: Would use 4D vector math imports here, but glslify issues
+// Functions inlined directly instead
 
 uniform vec4 light4DPos;
 uniform vec4 vertices[16];
@@ -27,6 +27,18 @@ void main() {
   vec2 coord = (uv - 0.5) * 4.0; // View range [-2, 2]
   
   vec3 color = vec3(0.1, 0.1, 0.15); // Dark background
+  
+  // Render 4D light as a bright indicator
+  // Project 4D light to 2D screen using same projection as hypercube
+  float perspective4D = 2.0;
+  vec2 lightProjected = light4DPos.xy / (perspective4D - light4DPos.w) + light4DPos.z * 0.3;
+  
+  float distToLight = distance(coord, lightProjected);
+  if (distToLight < 0.15) {
+    // Large bright yellow/orange light indicator
+    float intensity = 1.0 - (distToLight / 0.15);
+    color = mix(color, vec3(1.0, 0.8, 0.2), intensity * 0.9); // Bright light glow
+  }
   
   // Render edges as lines
   for (int i = 0; i < 32; i++) {

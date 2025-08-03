@@ -8,7 +8,7 @@ import { use4DRotation } from './hooks/use4DRotation'
 
 const Gmap = () => {
   const canvasRef = useRef(null)
-  const { rotation, rotateVertex4D, mouseHandlers } = use4DRotation()
+  const { rotation, light4DPos, rotateVertex4D, resetLight, mouseHandlers } = use4DRotation()
   
   // Store WebGL context and program for re-rendering
   const webglRef = useRef({ gl: null, program: null, uniforms: null })
@@ -118,7 +118,7 @@ const Gmap = () => {
     const rotatedVertices = baseVertices.map(vertex => rotateVertex4D(vertex))
 
     // Upload uniforms
-    gl.uniform4f(uniforms.light4DPos, 0.0, 0.0, 0.0, 3.0)
+    gl.uniform4f(uniforms.light4DPos, ...light4DPos)
     gl.uniform1f(uniforms.shadowPlaneW, 0.0)
     gl.uniform2f(uniforms.resolution, 512, 512)
     
@@ -133,12 +133,12 @@ const Gmap = () => {
     // Render
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  }, [rotateVertex4D])
+  }, [rotateVertex4D, light4DPos])
 
-  // Re-render when rotation changes
+  // Re-render when rotation or light position changes
   useEffect(() => {
     render()
-  }, [rotation, render])
+  }, [rotation, light4DPos, render])
 
   return (
     <PageWrapper style={{ padding: '2rem' }}>
@@ -150,6 +150,12 @@ const Gmap = () => {
         height={512}
         {...mouseHandlers}
       />
+      <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
+        <strong>Controls:</strong><br/>
+        • <strong>Drag:</strong> Rotate hypercube<br/>
+        • <strong>Shift+Drag:</strong> Rotate light around center<br/>
+        • <strong>Press 'R':</strong> Reset light position
+      </div>
       <Link to="/">← Back to Home</Link>
     </PageWrapper>
   )
