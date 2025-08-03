@@ -151,10 +151,14 @@ const Gmap = () => {
         {...mouseHandlers}
       />
       <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
-        <strong>Controls:</strong><br/>
-        • <strong>Drag:</strong> Rotate hypercube<br/>
-        • <strong>Shift+Drag:</strong> Rotate light around center<br/>
-        • <strong>Press 'R':</strong> Reset light position
+        <strong>Enhanced 4D Controls:</strong><br/>
+        <strong>Hypercube Rotation:</strong><br/>
+        • <strong>Left drag:</strong> XW + YW rotations (primary 4D)<br/>
+        • <strong>Right drag:</strong> XY + XZ rotations (3D-like)<br/>
+        <strong>4D Light Positioning:</strong><br/>
+        • <strong>Shift+Left drag:</strong> Light orbit (azimuth + elevation)<br/>
+        • <strong>Shift+Right drag:</strong> Light distance + 4D W coordinate<br/>
+        • <strong>Press 'R':</strong> Reset light to default position
       </div>
       <Link to="/">← Back to Home</Link>
     </PageWrapper>

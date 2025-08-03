@@ -51,16 +51,29 @@ void main() {
   
   vec3 color = vec3(0.1, 0.1, 0.15); // Dark background
   
-  // Render 4D light as a bright indicator
+  // Render 4D light as a bright indicator with distance visualization
   // Project 4D light to 2D screen using same projection as hypercube
   float perspective4D = 2.0;
   vec2 lightProjected = light4DPos.xy / (perspective4D - light4DPos.w) + light4DPos.z * 0.3;
   
   float distToLight = distance(coord, lightProjected);
-  if (distToLight < 0.15) {
-    // Large bright yellow/orange light indicator
-    float intensity = 1.0 - (distToLight / 0.15);
-    color = mix(color, vec3(1.0, 0.8, 0.2), intensity * 0.9); // Bright light glow
+  
+  // Light indicator size varies with light's distance from origin
+  float lightDistance = length(light4DPos.xyz);
+  float lightRadius = 0.1 + (lightDistance - 2.0) * 0.03; // Scale radius with distance
+  lightRadius = clamp(lightRadius, 0.05, 0.25); // Clamp to reasonable range
+  
+  if (distToLight < lightRadius) {
+    // Bright yellow/orange light indicator
+    float intensity = 1.0 - (distToLight / lightRadius);
+    vec3 lightColor = vec3(1.0, 0.8, 0.2);
+    
+    // Add W-coordinate color tinting (blue = far in 4D, red = close in 4D)
+    float wNormalized = (light4DPos.w - 1.0) / 4.0; // Normalize W to [0,1] roughly
+    lightColor.b += wNormalized * 0.3; // More blue for higher W
+    lightColor.r += (1.0 - wNormalized) * 0.2; // More red for lower W
+    
+    color = mix(color, lightColor, intensity * 0.9);
   }
   
   // Render edges as lines
