@@ -8,7 +8,25 @@ import { use4DRotation } from './hooks/use4DRotation'
 
 const Gmap = () => {
   const canvasRef = useRef(null)
-  const { rotation, light4DPos, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance, rotateVertex4D, resetLight, resetCamera, mouseHandlers } = use4DRotation()
+  const { 
+    rotation, 
+    light4DPos, 
+    // 4D Camera
+    camera4DPos, 
+    camera4DTarget, 
+    camera4DForward,
+    // Legacy 3D Camera (for compatibility)
+    camera3DPos, 
+    cameraTarget, 
+    cameraUp, 
+    cameraForward, 
+    shadowPlaneCenter, 
+    shadowPlaneDistance, 
+    rotateVertex4D, 
+    resetLight, 
+    resetCamera, 
+    mouseHandlers 
+  } = use4DRotation()
   
   // Store WebGL context and program for re-rendering
   const webglRef = useRef({ gl: null, program: null, uniforms: null })
@@ -80,6 +98,10 @@ const Gmap = () => {
       cameraForward: gl.getUniformLocation(program, 'cameraForward'),
       shadowPlaneCenter: gl.getUniformLocation(program, 'shadowPlaneCenter'),
       shadowPlaneDistance: gl.getUniformLocation(program, 'shadowPlaneDistance'),
+      // 4D Camera uniforms
+      camera4DPos: gl.getUniformLocation(program, 'camera4DPos'),
+      camera4DTarget: gl.getUniformLocation(program, 'camera4DTarget'),
+      camera4DForward: gl.getUniformLocation(program, 'camera4DForward'),
       // 4D rotation angles for inside/outside detection
       rotationXY: gl.getUniformLocation(program, 'rotationXY'),
       rotationXZ: gl.getUniformLocation(program, 'rotationXZ'),
@@ -139,6 +161,11 @@ const Gmap = () => {
     gl.uniform3f(uniforms.shadowPlaneCenter, ...shadowPlaneCenter)
     gl.uniform1f(uniforms.shadowPlaneDistance, shadowPlaneDistance)
     
+    // Upload 4D camera data
+    gl.uniform4f(uniforms.camera4DPos, ...camera4DPos)
+    gl.uniform4f(uniforms.camera4DTarget, ...camera4DTarget)
+    gl.uniform4f(uniforms.camera4DForward, ...camera4DForward)
+    
     // Upload 4D rotation angles for inside/outside detection
     gl.uniform1f(uniforms.rotationXY, rotation.xy)
     gl.uniform1f(uniforms.rotationXZ, rotation.xz)
@@ -158,12 +185,12 @@ const Gmap = () => {
     // Render
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  }, [rotation, rotateVertex4D, light4DPos, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance])
+  }, [rotation, rotateVertex4D, light4DPos, camera4DPos, camera4DTarget, camera4DForward, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance])
 
   // Re-render when rotation, light position, or camera changes
   useEffect(() => {
     render()
-  }, [rotation, light4DPos, camera3DPos, cameraForward, shadowPlaneCenter, shadowPlaneDistance, render])
+  }, [rotation, light4DPos, camera4DPos, camera4DForward, shadowPlaneCenter, shadowPlaneDistance, render])
 
   return (
     <PageWrapper style={{ padding: '2rem' }}>
@@ -183,9 +210,11 @@ const Gmap = () => {
         <strong>4D Light (affects brightness only):</strong><br/>
         • <strong>Shift+Left drag:</strong> Light orbit (azimuth + elevation)<br/>
         • <strong>Shift+Right drag:</strong> Light distance + 4D W coordinate<br/>
-        <strong>3D Camera (ray origin):</strong><br/>
+        <strong>4D Camera (ray origin):</strong><br/>
         • <strong>Alt+Left drag:</strong> Camera orbit around hypercube view<br/>
         • <strong>Alt+Right drag:</strong> Camera zoom in/out<br/>
+        • <strong>Ctrl+Left drag:</strong> 4D Camera W position + target W<br/>
+        • <strong>Ctrl+Right drag:</strong> 4D Camera W position only<br/>
         <strong>Reset Keys:</strong><br/>
         • <strong>Press 'R':</strong> Reset light position<br/>
         • <strong>Press 'C':</strong> Reset camera position<br/>

@@ -16,6 +16,10 @@ uniform vec3 cameraUp;
 uniform vec3 cameraForward;
 uniform vec3 shadowPlaneCenter;
 uniform float shadowPlaneDistance;
+// 4D Camera uniforms
+uniform vec4 camera4DPos;
+uniform vec4 camera4DTarget;
+uniform vec4 camera4DForward;
 // 4D rotation angles for inverse transformation
 uniform float rotationXY;
 uniform float rotationXZ; 
@@ -95,13 +99,42 @@ bool isInside4D(vec4 point) {
           alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
 }
 
-// Adaptive ray marching to find precise surface intersections
+// Generate 4D ray direction from 2D screen coordinates
+vec4 generate4DRayDirection(vec2 screenCoord) {
+  // Create 4D coordinate system around camera forward direction
+  // Screen coordinates map to a 4D "viewing cone"
+  
+  // Use screen coordinates to create offset from camera forward direction
+  float fov = 0.8; // Field of view factor
+  vec4 ray4D = camera4DForward; // Start with camera forward direction
+  
+  // Apply screen offset in a way that creates a 4D viewing volume
+  // We'll use the first two components for screen X/Y offset
+  // and create perpendicular 4D directions for the projection
+  
+  // Create orthogonal 4D vectors (simplified approach)
+  vec4 right4D = vec4(1.0, 0.0, 0.0, 0.0); // 4D right vector
+  vec4 up4D = vec4(0.0, 1.0, 0.0, 0.0);     // 4D up vector
+  
+  // Apply screen offset to ray direction
+  ray4D += screenCoord.x * fov * right4D;
+  ray4D += screenCoord.y * fov * up4D;
+  
+  // Normalize the 4D ray direction
+  float length4D = sqrt(ray4D.x*ray4D.x + ray4D.y*ray4D.y + ray4D.z*ray4D.z + ray4D.w*ray4D.w);
+  return ray4D / length4D;
+}
+
+// Adaptive ray marching to find precise surface intersections using 4D rays
 // Returns: x = surface hit distance (-1 if no hit), y = surface normal component, z = surface type (face ID)
-vec3 adaptiveRayMarch4D(vec3 rayOrigin, vec3 rayDirection) {
+vec3 adaptiveRayMarch4D(vec2 screenCoord) {
   const float maxDistance = 12.0;
   const float coarseStep = 0.1;     // Coarse detection step
   const float fineStep = 0.002;     // Fine surface refinement step
   const float surfaceThreshold = 0.02; // Distance to surface to consider a hit
+  
+  // Generate 4D ray from camera position through screen coordinate
+  vec4 ray4DDirection = generate4DRayDirection(screenCoord);
   
   // Phase 1: Coarse ray marching to find approximate entry point
   float t = 0.05;
@@ -109,8 +142,7 @@ vec3 adaptiveRayMarch4D(vec3 rayOrigin, vec3 rayDirection) {
   float entryApprox = -1.0;
   
   for (int i = 0; i < 120 && t < maxDistance; i++) {
-    vec3 samplePos3D = rayOrigin + t * rayDirection;
-    vec4 samplePos4D = vec4(samplePos3D, 0.0);
+    vec4 samplePos4D = camera4DPos + t * ray4DDirection; // True 4D ray marching
     bool isInside = isInside4D(samplePos4D);
     
     if (!wasInside && isInside) {
@@ -136,8 +168,7 @@ vec3 adaptiveRayMarch4D(vec3 rayOrigin, vec3 rayDirection) {
   float closestToSurface = 999.0;
   
   for (float ft = searchStart; ft <= searchEnd; ft += fineStep) {
-    vec3 samplePos3D = rayOrigin + ft * rayDirection;
-    vec4 samplePos4D = vec4(samplePos3D, 0.0);
+    vec4 samplePos4D = camera4DPos + ft * ray4DDirection; // True 4D sampling
     
     // Transform to axis-aligned space for surface analysis
     vec4 alignedPoint = inverseRotateVertex4D(samplePos4D);
@@ -324,12 +355,8 @@ void main() {
   
   vec3 color = vec3(0.05, 0.05, 0.1); // Dark space background
   
-  // Get camera ray for this pixel
-  vec3 pixelPos = getPixelWorldPosition(coord);
-  vec3 rayDirection = normalize(pixelPos - cameraPos);
-  
-  // Perform adaptive ray marching to find precise surface intersections
-  vec3 marchResult = adaptiveRayMarch4D(cameraPos, rayDirection);
+  // Perform adaptive 4D ray marching to find precise surface intersections
+  vec3 marchResult = adaptiveRayMarch4D(coord);
   float surfaceHitDistance = marchResult.x;
   float surfaceNormal = marchResult.y;
   float surfaceType = marchResult.z;
@@ -337,8 +364,8 @@ void main() {
   // Visual feedback based on precise surface intersections
   if (surfaceHitDistance >= 0.0) {
     // Ray hits a 4D hypercube surface
-    vec3 hitPos3D = cameraPos + surfaceHitDistance * rayDirection;
-    vec4 hitPos4D = vec4(hitPos3D, 0.0);
+    vec4 ray4DDirection = generate4DRayDirection(coord);
+    vec4 hitPos4D = camera4DPos + surfaceHitDistance * ray4DDirection;
     
     // Color based on surface type and normal direction
     vec3 surfaceColor;

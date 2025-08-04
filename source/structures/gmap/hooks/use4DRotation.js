@@ -19,11 +19,13 @@ export function use4DRotation() {
     w: 3.0        // 4D W coordinate
   })
 
-  // Track 3D camera position for shadow plane visualization
+  // Track 4D camera position and orientation
   const [cameraParams, setCameraParams] = useState({
     theta: Math.PI * 0.25,  // Camera azimuth (45 degrees)
     phi: Math.PI * 0.2,     // Camera elevation (better angle to see shadows) 
-    radius: 5.0             // Camera distance from shadow plane center
+    radius: 5.0,            // Camera distance from target
+    w: 3.0,                 // 4D W coordinate
+    targetW: 0.0            // W coordinate of what camera is looking at
   })
   
   // Convert enhanced spherical to cartesian for 4D light position
@@ -34,32 +36,37 @@ export function use4DRotation() {
     lightParams.w                                                                  // W
   ]
 
-  // Define shadow plane center as the orbit target (where shadows typically appear)
-  const shadowPlaneCenter = [0, 0, 1.5]  // Slightly in front of hypercube
+  // Define 4D camera target (what the camera looks at)
+  const camera4DTarget = [0, 0, 0, cameraParams.targetW]  // Look at origin with specific W
   
-  // Convert camera spherical to cartesian, orbiting around the shadow plane center
-  const camera3DPos = [
-    shadowPlaneCenter[0] + cameraParams.radius * Math.cos(cameraParams.phi) * Math.cos(cameraParams.theta), // X
-    shadowPlaneCenter[1] + cameraParams.radius * Math.cos(cameraParams.phi) * Math.sin(cameraParams.theta), // Y
-    shadowPlaneCenter[2] + cameraParams.radius * Math.sin(cameraParams.phi)                                 // Z
+  // Convert camera spherical to 4D cartesian, orbiting around the target
+  const camera4DPos = [
+    camera4DTarget[0] + cameraParams.radius * Math.cos(cameraParams.phi) * Math.cos(cameraParams.theta), // X
+    camera4DTarget[1] + cameraParams.radius * Math.cos(cameraParams.phi) * Math.sin(cameraParams.theta), // Y
+    camera4DTarget[2] + cameraParams.radius * Math.sin(cameraParams.phi),                                // Z
+    cameraParams.w                                                                                        // W
   ]
   
-  // Camera always looks at shadow plane center, up vector is world Y
-  const cameraTarget = shadowPlaneCenter
+  // Calculate 4D camera direction (from camera to target)
+  const camera4DDirection = [
+    camera4DTarget[0] - camera4DPos[0],
+    camera4DTarget[1] - camera4DPos[1], 
+    camera4DTarget[2] - camera4DPos[2],
+    camera4DTarget[3] - camera4DPos[3]
+  ]
+  const dir4DLength = Math.sqrt(camera4DDirection[0]**2 + camera4DDirection[1]**2 + camera4DDirection[2]**2 + camera4DDirection[3]**2)
+  const camera4DForward = [
+    camera4DDirection[0] / dir4DLength,
+    camera4DDirection[1] / dir4DLength,
+    camera4DDirection[2] / dir4DLength,
+    camera4DDirection[3] / dir4DLength
+  ]
+  
+  // Legacy 3D compatibility (for shadow plane rendering)
+  const camera3DPos = [camera4DPos[0], camera4DPos[1], camera4DPos[2]]
+  const cameraTarget = [camera4DTarget[0], camera4DTarget[1], camera4DTarget[2]]
   const cameraUp = [0, 1, 0]
-  
-  // Calculate camera direction (from camera to target)
-  const cameraDirection = [
-    cameraTarget[0] - camera3DPos[0],
-    cameraTarget[1] - camera3DPos[1], 
-    cameraTarget[2] - camera3DPos[2]
-  ]
-  const dirLength = Math.sqrt(cameraDirection[0]**2 + cameraDirection[1]**2 + cameraDirection[2]**2)
-  const cameraForward = [
-    cameraDirection[0] / dirLength,
-    cameraDirection[1] / dirLength,
-    cameraDirection[2] / dirLength
-  ]
+  const cameraForward = [camera4DForward[0], camera4DForward[1], camera4DForward[2]]
   
   // Shadow plane distance from camera
   const shadowPlaneDistance = 2.0
@@ -92,11 +99,26 @@ export function use4DRotation() {
         phi: Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, prev.phi - deltaY * cameraSpeed))
       }))
     } else if (e.altKey && mouseButton.current === 2) {
-      // Alt+Right: Camera zoom in/out (orbit distance from shadow plane)
+      // Alt+Right: Camera zoom in/out (orbit distance from target)
       const zoomSpeed = 0.1
       setCameraParams(prev => ({
         ...prev,
-        radius: Math.max(1.5, Math.min(10.0, prev.radius + deltaY * zoomSpeed)) // Clamp zoom range for shadow viewing
+        radius: Math.max(1.5, Math.min(10.0, prev.radius + deltaY * zoomSpeed)) // Clamp zoom range
+      }))
+    } else if (e.ctrlKey && mouseButton.current === 0) {
+      // Ctrl+Left: 4D Camera movement (W position and target W)
+      const wSpeed = 0.03
+      setCameraParams(prev => ({
+        ...prev,
+        w: prev.w + deltaX * wSpeed,           // Camera W position
+        targetW: prev.targetW + deltaY * wSpeed // Target W position (what camera looks at)
+      }))
+    } else if (e.ctrlKey && mouseButton.current === 2) {
+      // Ctrl+Right: 4D Camera W positioning only
+      const wCameraSpeed = 0.05
+      setCameraParams(prev => ({
+        ...prev,
+        w: prev.w + deltaY * wCameraSpeed // Move camera in W dimension
       }))
     } else if (e.shiftKey && mouseButton.current === 0) {
       // Shift+Left: Light orbital motion (azimuth + elevation)
@@ -142,9 +164,15 @@ export function use4DRotation() {
     setLightParams({ theta: 0, phi: 0, radius: 3.0, w: 3.0 })
   }, [])
 
-  // Reset camera position (orbit around shadow plane center)
+  // Reset camera position (orbit around hypercube center)
   const resetCamera = useCallback(() => {
-    setCameraParams({ theta: Math.PI * 0.25, phi: Math.PI * 0.2, radius: 5.0 })
+    setCameraParams({ 
+      theta: Math.PI * 0.25, 
+      phi: Math.PI * 0.2, 
+      radius: 5.0,
+      w: 3.0,
+      targetW: 0.0
+    })
   }, [])
 
   // Keyboard handler for reset
@@ -221,11 +249,16 @@ export function use4DRotation() {
   return {
     rotation,
     light4DPos,
+    // 4D Camera data
+    camera4DPos,
+    camera4DTarget,
+    camera4DForward,
+    // Legacy 3D Camera data (for compatibility)
     camera3DPos,
     cameraTarget,
     cameraUp,
     cameraForward,
-    shadowPlaneCenter,
+    shadowPlaneCenter: [0, 0, 0], // Updated shadow plane center
     shadowPlaneDistance,
     rotateVertex4D,
     resetLight,
