@@ -25,6 +25,7 @@ const Gmap = () => {
     rotateVertex4D, 
     resetLight, 
     resetCamera, 
+    resetRotation,
     mouseHandlers 
   } = use4DRotation()
   
@@ -218,6 +219,7 @@ const Gmap = () => {
         <strong>Reset Keys:</strong><br/>
         • <strong>Press 'R':</strong> Reset light position<br/>
         • <strong>Press 'C':</strong> Reset camera position<br/>
+        • <strong>Press 'H':</strong> Reset hypercube rotation<br/>
         <strong>Rendering:</strong> Camera casts rays through screen to intersect 4D hypercube
       </div>
       <Link to="/">← Back to Home</Link>

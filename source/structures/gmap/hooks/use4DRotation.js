@@ -175,6 +175,18 @@ export function use4DRotation() {
     })
   }, [])
 
+  // Reset hypercube rotation to identity (no rotation)
+  const resetRotation = useCallback(() => {
+    setRotation({
+      xy: 0,
+      xz: 0, 
+      yz: 0,
+      xw: 0,
+      yw: 0,
+      zw: 0
+    })
+  }, [])
+
   // Keyboard handler for reset
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -184,11 +196,14 @@ export function use4DRotation() {
       if (e.key === 'c' || e.key === 'C') {
         resetCamera()
       }
+      if (e.key === 'h' || e.key === 'H') {
+        resetRotation()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [resetLight, resetCamera])
+  }, [resetLight, resetCamera, resetRotation])
 
   // Apply all 6 rotation planes sequentially to a 4D vertex
   const rotateVertex4D = useCallback((vertex) => {
@@ -263,6 +278,7 @@ export function use4DRotation() {
     rotateVertex4D,
     resetLight,
     resetCamera,
+    resetRotation,
     mouseHandlers: {
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,
