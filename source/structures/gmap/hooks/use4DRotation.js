@@ -33,7 +33,7 @@ export function use4DRotation() {
     x: { min: -2.0, max: 2.0 },  // X dimension viewing bounds
     y: { min: -2.0, max: 2.0 },  // Y dimension viewing bounds
     z: { min: -2.0, max: 2.0 },  // Z dimension viewing bounds
-    w: { min: -2.0, max: 2.0 }   // W dimension viewing bounds
+    w: { min: -4.0, max: 4.0 }   // W dimension viewing bounds (wider for better initial visibility)
   })
 
   // Track which dimension is currently selected for editing
@@ -206,7 +206,7 @@ export function use4DRotation() {
       x: { min: -2.0, max: 2.0 },
       y: { min: -2.0, max: 2.0 },
       z: { min: -2.0, max: 2.0 },
-      w: { min: -2.0, max: 2.0 }
+      w: { min: -4.0, max: 4.0 }  // Wider W bounds for better visibility
     })
   }, [])
 
@@ -226,12 +226,12 @@ export function use4DRotation() {
 
   // Reset frustum bounds to default
   const resetFrustumBounds = useCallback(() => {
-    console.log('Resetting all frustum bounds to default [-2.0, 2.0]')
+    console.log('Resetting all frustum bounds to default (W: [-4.0, 4.0], others: [-2.0, 2.0])')
     setFrustumParams({
       x: { min: -2.0, max: 2.0 },
       y: { min: -2.0, max: 2.0 },
       z: { min: -2.0, max: 2.0 },
-      w: { min: -2.0, max: 2.0 }
+      w: { min: -4.0, max: 4.0 }  // Wider W bounds for better visibility
     })
   }, [])
 

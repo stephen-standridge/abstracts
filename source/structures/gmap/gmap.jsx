@@ -237,14 +237,14 @@ const Gmap = () => {
         • <strong>Ctrl+Right drag:</strong> 4D Camera W position only<br/>
         <strong>4D Frustum Collapsing:</strong><br/>
         • <strong>Press '1', '2', '3', '4':</strong> Select X, Y, Z, W dimension<br/>
-        • <strong>Middle mouse drag:</strong> Expand/collapse selected dimension bounds<br/>
+        • <strong>Middle mouse drag (no keys):</strong> Expand/collapse selected dimension bounds<br/>
         • <strong>Press '5':</strong> Reset frustum bounds<br/>
         • <strong>Selected:</strong> <span style={{color: '#4CAF50', fontWeight: 'bold', fontSize: '1.2em'}}>{selectedDimension.toUpperCase()}</span> dimension<br/>
         • <strong>All Bounds:</strong><br/>
-        &nbsp;&nbsp;X: <span style={{color: selectedDimension === 'x' ? '#4CAF50' : '#666'}}>[{frustumParams.x.min.toFixed(1)}, {frustumParams.x.max.toFixed(1)}]</span><br/>
-        &nbsp;&nbsp;Y: <span style={{color: selectedDimension === 'y' ? '#4CAF50' : '#666'}}>[{frustumParams.y.min.toFixed(1)}, {frustumParams.y.max.toFixed(1)}]</span><br/>
-        &nbsp;&nbsp;Z: <span style={{color: selectedDimension === 'z' ? '#4CAF50' : '#666'}}>[{frustumParams.z.min.toFixed(1)}, {frustumParams.z.max.toFixed(1)}]</span><br/>
-        &nbsp;&nbsp;W: <span style={{color: selectedDimension === 'w' ? '#4CAF50' : '#666'}}>[{frustumParams.w.min.toFixed(1)}, {frustumParams.w.max.toFixed(1)}]</span><br/>
+        &nbsp;&nbsp;X: <span style={{color: selectedDimension === 'x' ? '#4CAF50' : '#666'}}>[{frustumParams.x.min.toFixed(1)}, {frustumParams.x.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
+        &nbsp;&nbsp;Y: <span style={{color: selectedDimension === 'y' ? '#4CAF50' : '#666'}}>[{frustumParams.y.min.toFixed(1)}, {frustumParams.y.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
+        &nbsp;&nbsp;Z: <span style={{color: selectedDimension === 'z' ? '#4CAF50' : '#666'}}>[{frustumParams.z.min.toFixed(1)}, {frustumParams.z.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
+        &nbsp;&nbsp;W: <span style={{color: selectedDimension === 'w' ? '#4CAF50' : '#666'}}>[{frustumParams.w.min.toFixed(1)}, {frustumParams.w.max.toFixed(1)}]</span> (default: [-4.0, 4.0])<br/>
         <strong>Reset Keys:</strong><br/>
         • <strong>Press 'R':</strong> Reset light position<br/>
         • <strong>Press 'C':</strong> Reset camera position<br/>

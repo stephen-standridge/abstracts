@@ -405,8 +405,17 @@ void main() {
   
   // Check if selected dimension's frustum bounds are non-default (indicating active collapsing)
   bool hasActiveFrustum = false;
-  if (abs(frustumBounds[selectedDim][0] + 2.0) > 0.1 || abs(frustumBounds[selectedDim][1] - 2.0) > 0.1) {
-    hasActiveFrustum = true;
+  if (selectedDim == 3) { // W dimension has different default bounds
+    if (abs(frustumBounds[selectedDim][0] + 4.0) > 0.1 || abs(frustumBounds[selectedDim][1] - 4.0) > 0.1) {
+      hasActiveFrustum = true;
+    }
+  } else { // X, Y, Z dimensions
+    if (abs(frustumBounds[selectedDim][0] + 2.0) > 0.1 || abs(frustumBounds[selectedDim][1] - 2.0) > 0.1) {
+      hasActiveFrustum = true;
+    }
+  }
+  
+  if (hasActiveFrustum) {
     // Add pulsing effect for active collapsing
     float pulse = 0.5 + 0.3 * sin(gl_FragCoord.x * 0.1 + gl_FragCoord.y * 0.1);
     color = mix(color, vec3(0.3, 0.3, 0.3), 0.2 * pulse); // Pulsing bright when actively collapsing
