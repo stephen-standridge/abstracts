@@ -16,8 +16,191 @@ uniform vec3 cameraUp;
 uniform vec3 cameraForward;
 uniform vec3 shadowPlaneCenter;
 uniform float shadowPlaneDistance;
+// 4D rotation angles for inverse transformation
+uniform float rotationXY;
+uniform float rotationXZ; 
+uniform float rotationYZ;
+uniform float rotationXW;
+uniform float rotationYW;
+uniform float rotationZW;
 
 out vec4 outColor;
+
+// Apply inverse 4D rotation to transform point back to axis-aligned hypercube space
+vec4 inverseRotateVertex4D(vec4 vertex) {
+  float x = vertex.x, y = vertex.y, z = vertex.z, w = vertex.w;
+  
+  // Apply rotations in reverse order with negated angles
+  
+  // Reverse ZW rotation
+  if (rotationZW != 0.0) {
+    float cosZW = cos(-rotationZW), sinZW = sin(-rotationZW);
+    float newZ = z * cosZW - w * sinZW;
+    float newW = z * sinZW + w * cosZW;
+    z = newZ; w = newW;
+  }
+  
+  // Reverse YW rotation
+  if (rotationYW != 0.0) {
+    float cosYW = cos(-rotationYW), sinYW = sin(-rotationYW);
+    float newY = y * cosYW - w * sinYW;
+    float newW = y * sinYW + w * cosYW;
+    y = newY; w = newW;
+  }
+  
+  // Reverse XW rotation
+  if (rotationXW != 0.0) {
+    float cosXW = cos(-rotationXW), sinXW = sin(-rotationXW);
+    float newX = x * cosXW - w * sinXW;
+    float newW = x * sinXW + w * cosXW;
+    x = newX; w = newW;
+  }
+  
+  // Reverse YZ rotation
+  if (rotationYZ != 0.0) {
+    float cosYZ = cos(-rotationYZ), sinYZ = sin(-rotationYZ);
+    float newY = y * cosYZ - z * sinYZ;
+    float newZ = y * sinYZ + z * cosYZ;
+    y = newY; z = newZ;
+  }
+  
+  // Reverse XZ rotation
+  if (rotationXZ != 0.0) {
+    float cosXZ = cos(-rotationXZ), sinXZ = sin(-rotationXZ);
+    float newX = x * cosXZ - z * sinXZ;
+    float newZ = x * sinXZ + z * cosXZ;
+    x = newX; z = newZ;
+  }
+  
+  // Reverse XY rotation
+  if (rotationXY != 0.0) {
+    float cosXY = cos(-rotationXY), sinXY = sin(-rotationXY);
+    float newX = x * cosXY - y * sinXY;
+    float newY = x * sinXY + y * cosXY;
+    x = newX; y = newY;
+  }
+  
+  return vec4(x, y, z, w);
+}
+
+// Test if a 4D point is inside the axis-aligned hypercube (all coords in [-1,1])
+bool isInside4D(vec4 point) {
+  // Transform point back to axis-aligned space
+  vec4 alignedPoint = inverseRotateVertex4D(point);
+  
+  // Check if point is inside all 8 hyperfaces (4D equivalent of 6 cube faces)
+  return (alignedPoint.x >= -1.0 && alignedPoint.x <= 1.0 &&
+          alignedPoint.y >= -1.0 && alignedPoint.y <= 1.0 &&
+          alignedPoint.z >= -1.0 && alignedPoint.z <= 1.0 &&
+          alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
+}
+
+// Adaptive ray marching to find precise surface intersections
+// Returns: x = surface hit distance (-1 if no hit), y = surface normal component, z = surface type (face ID)
+vec3 adaptiveRayMarch4D(vec3 rayOrigin, vec3 rayDirection) {
+  const float maxDistance = 12.0;
+  const float coarseStep = 0.1;     // Coarse detection step
+  const float fineStep = 0.002;     // Fine surface refinement step
+  const float surfaceThreshold = 0.02; // Distance to surface to consider a hit
+  
+  // Phase 1: Coarse ray marching to find approximate entry point
+  float t = 0.05;
+  bool wasInside = false;
+  float entryApprox = -1.0;
+  
+  for (int i = 0; i < 120 && t < maxDistance; i++) {
+    vec3 samplePos3D = rayOrigin + t * rayDirection;
+    vec4 samplePos4D = vec4(samplePos3D, 0.0);
+    bool isInside = isInside4D(samplePos4D);
+    
+    if (!wasInside && isInside) {
+      entryApprox = t - coarseStep; // Back up to just before entry
+      break;
+    }
+    
+    wasInside = isInside;
+    t += coarseStep;
+  }
+  
+  if (entryApprox < 0.0) {
+    return vec3(-1.0, 0.0, 0.0); // No intersection found
+  }
+  
+  // Phase 2: Fine ray marching to find precise surface intersection
+  float searchStart = max(0.0, entryApprox);
+  float searchEnd = entryApprox + coarseStep * 2.0;
+  
+  float bestHitDistance = -1.0;
+  float bestSurfaceNormal = 0.0;
+  float bestSurfaceType = 0.0;
+  float closestToSurface = 999.0;
+  
+  for (float ft = searchStart; ft <= searchEnd; ft += fineStep) {
+    vec3 samplePos3D = rayOrigin + ft * rayDirection;
+    vec4 samplePos4D = vec4(samplePos3D, 0.0);
+    
+    // Transform to axis-aligned space for surface analysis
+    vec4 alignedPoint = inverseRotateVertex4D(samplePos4D);
+    
+    // Calculate distance to each face and find the closest
+    float distToXPos = abs(alignedPoint.x - 1.0);
+    float distToXNeg = abs(alignedPoint.x + 1.0);
+    float distToYPos = abs(alignedPoint.y - 1.0);
+    float distToYNeg = abs(alignedPoint.y + 1.0);
+    float distToZPos = abs(alignedPoint.z - 1.0);
+    float distToZNeg = abs(alignedPoint.z + 1.0);
+    float distToWPos = abs(alignedPoint.w - 1.0);
+    float distToWNeg = abs(alignedPoint.w + 1.0);
+    
+    // Find minimum distance to any face
+    float minDist = min(min(min(distToXPos, distToXNeg), min(distToYPos, distToYNeg)),
+                       min(min(distToZPos, distToZNeg), min(distToWPos, distToWNeg)));
+    
+    // Check if we're close enough to a surface and inside the hypercube
+    bool isInside = isInside4D(samplePos4D);
+    if (isInside && minDist < surfaceThreshold) {
+      
+      if (minDist < closestToSurface) {
+        closestToSurface = minDist;
+        bestHitDistance = ft;
+        
+        // Determine which face we're closest to and calculate surface normal
+        if (minDist == distToXPos) {
+          bestSurfaceNormal = 1.0;  // +X face
+          bestSurfaceType = 0.0;
+        } else if (minDist == distToXNeg) {
+          bestSurfaceNormal = -1.0; // -X face  
+          bestSurfaceType = 0.0;
+        } else if (minDist == distToYPos) {
+          bestSurfaceNormal = 1.0;  // +Y face
+          bestSurfaceType = 1.0;
+        } else if (minDist == distToYNeg) {
+          bestSurfaceNormal = -1.0; // -Y face
+          bestSurfaceType = 1.0;
+        } else if (minDist == distToZPos) {
+          bestSurfaceNormal = 1.0;  // +Z face
+          bestSurfaceType = 2.0;
+        } else if (minDist == distToZNeg) {
+          bestSurfaceNormal = -1.0; // -Z face
+          bestSurfaceType = 2.0;
+        } else if (minDist == distToWPos) {
+          bestSurfaceNormal = 1.0;  // +W face
+          bestSurfaceType = 3.0;
+        } else {
+          bestSurfaceNormal = -1.0; // -W face
+          bestSurfaceType = 3.0;
+        }
+        
+        // Early exit if we found a very close surface hit
+        if (minDist < fineStep) {
+          break;
+        }
+      }
+    }
+  }
+  
+  return vec3(bestHitDistance, bestSurfaceNormal, bestSurfaceType);
+}
 
 // Get 3D world position of pixel on shadow plane (screen)
 vec3 getPixelWorldPosition(vec2 screenCoord) {
@@ -141,13 +324,60 @@ void main() {
   
   vec3 color = vec3(0.05, 0.05, 0.1); // Dark space background
   
-  // Cast ray from camera and get intersection info (distance, W-coord, type)
+  // Get camera ray for this pixel
+  vec3 pixelPos = getPixelWorldPosition(coord);
+  vec3 rayDirection = normalize(pixelPos - cameraPos);
+  
+  // Perform adaptive ray marching to find precise surface intersections
+  vec3 marchResult = adaptiveRayMarch4D(cameraPos, rayDirection);
+  float surfaceHitDistance = marchResult.x;
+  float surfaceNormal = marchResult.y;
+  float surfaceType = marchResult.z;
+  
+  // Visual feedback based on precise surface intersections
+  if (surfaceHitDistance >= 0.0) {
+    // Ray hits a 4D hypercube surface
+    vec3 hitPos3D = cameraPos + surfaceHitDistance * rayDirection;
+    vec4 hitPos4D = vec4(hitPos3D, 0.0);
+    
+    // Color based on surface type and normal direction
+    vec3 surfaceColor;
+    if (surfaceType < 0.5) {
+      // X faces
+      surfaceColor = surfaceNormal > 0.0 ? vec3(1.0, 0.3, 0.3) : vec3(0.8, 0.2, 0.2);
+    } else if (surfaceType < 1.5) {
+      // Y faces  
+      surfaceColor = surfaceNormal > 0.0 ? vec3(0.3, 1.0, 0.3) : vec3(0.2, 0.8, 0.2);
+    } else if (surfaceType < 2.5) {
+      // Z faces
+      surfaceColor = surfaceNormal > 0.0 ? vec3(0.3, 0.3, 1.0) : vec3(0.2, 0.2, 0.8);
+    } else {
+      // W faces
+      surfaceColor = surfaceNormal > 0.0 ? vec3(1.0, 1.0, 0.3) : vec3(0.8, 0.8, 0.2);
+    }
+    
+    // Calculate lighting based on 4D light position
+    float lightingFactor = getLightingFactor(hitPos4D);
+    
+    // Apply distance-based fade
+    float fadeFactor = 1.0 - (surfaceHitDistance / 10.0);
+    fadeFactor = clamp(fadeFactor, 0.1, 1.0);
+    
+    // Combine surface color with lighting and distance fade
+    color = surfaceColor * lightingFactor * fadeFactor;
+    
+    // Add subtle rim lighting based on surface normal
+    float rimIntensity = abs(surfaceNormal) * 0.3;
+    color += vec3(rimIntensity * 0.5, rimIntensity * 0.7, rimIntensity * 1.0);
+  }
+  
+  // DISABLED: Old ray casting (replaced by adaptive ray marching above)
+  /*
   vec3 rayResult = castCameraRay(coord);
   float rayDistance = rayResult.x;
   float intersectionW = rayResult.y;
   float intersectionType = rayResult.z;
   
-  // If ray hits something, render it
   if (intersectionType >= 0.0) {
     vec3 pixelPos = getPixelWorldPosition(coord);
     vec3 rayDirection = normalize(pixelPos - cameraPos);
@@ -229,6 +459,7 @@ void main() {
     
     color = hitColor * finalBrightness;
   }
+  */
   
   // Add subtle grid for reference (camera frustum visualization)
   float gridSpacing = 0.5;

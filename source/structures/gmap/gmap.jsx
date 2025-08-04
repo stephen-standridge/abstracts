@@ -79,7 +79,14 @@ const Gmap = () => {
       cameraUp: gl.getUniformLocation(program, 'cameraUp'),
       cameraForward: gl.getUniformLocation(program, 'cameraForward'),
       shadowPlaneCenter: gl.getUniformLocation(program, 'shadowPlaneCenter'),
-      shadowPlaneDistance: gl.getUniformLocation(program, 'shadowPlaneDistance')
+      shadowPlaneDistance: gl.getUniformLocation(program, 'shadowPlaneDistance'),
+      // 4D rotation angles for inside/outside detection
+      rotationXY: gl.getUniformLocation(program, 'rotationXY'),
+      rotationXZ: gl.getUniformLocation(program, 'rotationXZ'),
+      rotationYZ: gl.getUniformLocation(program, 'rotationYZ'),
+      rotationXW: gl.getUniformLocation(program, 'rotationXW'),
+      rotationYW: gl.getUniformLocation(program, 'rotationYW'),
+      rotationZW: gl.getUniformLocation(program, 'rotationZW')
     }
 
     // Create hypercube data
@@ -132,6 +139,14 @@ const Gmap = () => {
     gl.uniform3f(uniforms.shadowPlaneCenter, ...shadowPlaneCenter)
     gl.uniform1f(uniforms.shadowPlaneDistance, shadowPlaneDistance)
     
+    // Upload 4D rotation angles for inside/outside detection
+    gl.uniform1f(uniforms.rotationXY, rotation.xy)
+    gl.uniform1f(uniforms.rotationXZ, rotation.xz)
+    gl.uniform1f(uniforms.rotationYZ, rotation.yz)
+    gl.uniform1f(uniforms.rotationXW, rotation.xw)
+    gl.uniform1f(uniforms.rotationYW, rotation.yw)
+    gl.uniform1f(uniforms.rotationZW, rotation.zw)
+    
     // Upload rotated vertex data
     const flatVertices = new Float32Array(rotatedVertices.flat())
     gl.uniform4fv(uniforms.vertices, flatVertices)
@@ -143,7 +158,7 @@ const Gmap = () => {
     // Render
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  }, [rotateVertex4D, light4DPos, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance])
+  }, [rotation, rotateVertex4D, light4DPos, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance])
 
   // Re-render when rotation, light position, or camera changes
   useEffect(() => {
