@@ -27,6 +27,17 @@ export function use4DRotation() {
     w: 3.0,                 // 4D W coordinate
     targetW: 0.0            // W coordinate of what camera is looking at
   })
+
+  // Track 4D camera frustum bounds for collapsing (relative to camera position)
+  const [frustumParams, setFrustumParams] = useState({
+    x: { min: -2.0, max: 2.0 },  // X dimension viewing bounds
+    y: { min: -2.0, max: 2.0 },  // Y dimension viewing bounds
+    z: { min: -2.0, max: 2.0 },  // Z dimension viewing bounds
+    w: { min: -2.0, max: 2.0 }   // W dimension viewing bounds
+  })
+
+  // Track which dimension is currently selected for editing
+  const [selectedDimension, setSelectedDimension] = useState('x') // 'x', 'y', 'z', or 'w'
   
   // Convert enhanced spherical to cartesian for 4D light position
   const light4DPos = [
@@ -136,6 +147,23 @@ export function use4DRotation() {
         radius: Math.max(0.5, prev.radius + deltaY * radiusSpeed), // Zoom in/out (clamped to min distance)
         w: prev.w + deltaX * wSpeed // 4D W coordinate movement
       }))
+    } else if (mouseButton.current === 1) {
+      // Middle mouse: Adjust frustum bounds for selected dimension
+      const frustumSpeed = 0.02
+      const delta = deltaY * frustumSpeed // Positive Y = expand bounds, negative Y = collapse bounds
+      
+      // Update frustum bounds directly to avoid stale closure
+      setFrustumParams(prev => {
+        const newBounds = {
+          min: prev[selectedDimension].min - delta,
+          max: prev[selectedDimension].max + delta
+        }
+        console.log(`Adjusting ${selectedDimension.toUpperCase()} bounds by ${delta.toFixed(3)} -> [${newBounds.min.toFixed(2)}, ${newBounds.max.toFixed(2)}]`)
+        return {
+          ...prev,
+          [selectedDimension]: newBounds
+        }
+      })
     } else if (mouseButton.current === 0) {
       // Left button: XW and YW rotations (primary 4D rotations)
       setRotation(prev => ({
@@ -153,7 +181,7 @@ export function use4DRotation() {
     }
 
     lastMouse.current = { x: e.clientX, y: e.clientY }
-  }, [])
+  }, [selectedDimension]) // Add selectedDimension to dependencies
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = false
@@ -173,6 +201,13 @@ export function use4DRotation() {
       w: 3.0,
       targetW: 0.0
     })
+    // Also reset frustum bounds when camera resets
+    setFrustumParams({
+      x: { min: -2.0, max: 2.0 },
+      y: { min: -2.0, max: 2.0 },
+      z: { min: -2.0, max: 2.0 },
+      w: { min: -2.0, max: 2.0 }
+    })
   }, [])
 
   // Reset hypercube rotation to identity (no rotation)
@@ -187,9 +222,23 @@ export function use4DRotation() {
     })
   }, [])
 
-  // Keyboard handler for reset
+  // Removed adjustFrustumBounds function - now handled inline to avoid stale closure
+
+  // Reset frustum bounds to default
+  const resetFrustumBounds = useCallback(() => {
+    console.log('Resetting all frustum bounds to default [-2.0, 2.0]')
+    setFrustumParams({
+      x: { min: -2.0, max: 2.0 },
+      y: { min: -2.0, max: 2.0 },
+      z: { min: -2.0, max: 2.0 },
+      w: { min: -2.0, max: 2.0 }
+    })
+  }, [])
+
+  // Keyboard handler for reset and dimension selection
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Reset keys
       if (e.key === 'r' || e.key === 'R') {
         resetLight()
       }
@@ -199,11 +248,34 @@ export function use4DRotation() {
       if (e.key === 'h' || e.key === 'H') {
         resetRotation()
       }
+      
+      // Dimension selection keys (1,2,3,4 for X,Y,Z,W)
+      if (e.key === '1') {
+        setSelectedDimension('x')
+        console.log('Selected X dimension for frustum adjustment')
+      }
+      if (e.key === '2') {
+        setSelectedDimension('y')
+        console.log('Selected Y dimension for frustum adjustment')
+      }
+      if (e.key === '3') {
+        setSelectedDimension('z')
+        console.log('Selected Z dimension for frustum adjustment')
+      }
+      if (e.key === '4') {
+        setSelectedDimension('w')
+        console.log('Selected W dimension for frustum adjustment')
+      }
+      
+      // Reset frustum bounds (5)
+      if (e.key === '5') resetFrustumBounds()
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [resetLight, resetCamera, resetRotation])
+  }, [resetLight, resetCamera, resetRotation, resetFrustumBounds])
+
+  // No longer need wheel handler - using middle mouse drag instead
 
   // Apply all 6 rotation planes sequentially to a 4D vertex
   const rotateVertex4D = useCallback((vertex) => {
@@ -275,10 +347,14 @@ export function use4DRotation() {
     cameraForward,
     shadowPlaneCenter: [0, 0, 0], // Updated shadow plane center
     shadowPlaneDistance,
+    // 4D Frustum data for collapsing
+    frustumParams,
+    selectedDimension,
     rotateVertex4D,
     resetLight,
     resetCamera,
     resetRotation,
+    resetFrustumBounds,
     mouseHandlers: {
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,

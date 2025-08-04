@@ -27,6 +27,9 @@ uniform float rotationYZ;
 uniform float rotationXW;
 uniform float rotationYW;
 uniform float rotationZW;
+// 4D Frustum uniforms for collapsing
+uniform mat4 frustumBounds; // Each row contains [min, max, 0, 0] for X,Y,Z,W
+uniform int selectedDim;     // Currently selected dimension (0=x, 1=y, 2=z, 3=w)
 
 out vec4 outColor;
 
@@ -87,38 +90,77 @@ vec4 inverseRotateVertex4D(vec4 vertex) {
   return vec4(x, y, z, w);
 }
 
+// Test if a 4D point is inside the frustum bounds for collapsing
+bool isInsideFrustum4D(vec4 point) {
+  // For better W dimension handling, use absolute coordinates with offset
+  // This makes W bounds behave more independently
+  vec4 testPoint = point;
+  
+  // Apply different coordinate systems for different dimensions
+  // X,Y,Z relative to camera target, W relative to camera position
+  vec4 xyzRelative = point - camera4DTarget;
+  float wRelative = point.w - camera4DPos.w;
+  
+  // Check each dimension's frustum bounds
+  float xMin = frustumBounds[0][0];
+  float xMax = frustumBounds[0][1];
+  float yMin = frustumBounds[1][0];
+  float yMax = frustumBounds[1][1];
+  float zMin = frustumBounds[2][0];
+  float zMax = frustumBounds[2][1];
+  float wMin = frustumBounds[3][0];
+  float wMax = frustumBounds[3][1];
+  
+  return (xyzRelative.x >= xMin && xyzRelative.x <= xMax &&
+          xyzRelative.y >= yMin && xyzRelative.y <= yMax &&
+          xyzRelative.z >= zMin && xyzRelative.z <= zMax &&
+          wRelative >= wMin && wRelative <= wMax);
+}
+
 // Test if a 4D point is inside the axis-aligned hypercube (all coords in [-1,1])
 bool isInside4D(vec4 point) {
   // Transform point back to axis-aligned space
   vec4 alignedPoint = inverseRotateVertex4D(point);
   
   // Check if point is inside all 8 hyperfaces (4D equivalent of 6 cube faces)
-  return (alignedPoint.x >= -1.0 && alignedPoint.x <= 1.0 &&
-          alignedPoint.y >= -1.0 && alignedPoint.y <= 1.0 &&
-          alignedPoint.z >= -1.0 && alignedPoint.z <= 1.0 &&
-          alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
+  bool insideHypercube = (alignedPoint.x >= -1.0 && alignedPoint.x <= 1.0 &&
+                          alignedPoint.y >= -1.0 && alignedPoint.y <= 1.0 &&
+                          alignedPoint.z >= -1.0 && alignedPoint.z <= 1.0 &&
+                          alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
+  
+  // Apply frustum bounds for collapsing effect
+  if (insideHypercube && !isInsideFrustum4D(point)) {
+    return false; // Outside frustum bounds
+  }
+  
+  return insideHypercube;
 }
 
-// Generate 4D ray direction from 2D screen coordinates
+// Generate 4D ray direction from 2D screen coordinates with proper W exploration
 vec4 generate4DRayDirection(vec2 screenCoord) {
-  // Create 4D coordinate system around camera forward direction
-  // Screen coordinates map to a 4D "viewing cone"
+  // Create a true 4D viewing volume where screen coordinates map to 4D directions
   
-  // Use screen coordinates to create offset from camera forward direction
   float fov = 0.8; // Field of view factor
+  
+  // Create a 4D coordinate system relative to camera
+  // Use screen X,Y to vary multiple 4D dimensions, not just X,Y
   vec4 ray4D = camera4DForward; // Start with camera forward direction
   
-  // Apply screen offset in a way that creates a 4D viewing volume
-  // We'll use the first two components for screen X/Y offset
-  // and create perpendicular 4D directions for the projection
+  // Create 4D basis vectors for screen mapping
+  // Screen X affects both X and W dimensions  
+  // Screen Y affects both Y and Z dimensions
+  // This creates a proper 4D viewing volume
+  vec4 screenX_4D = vec4(1.0, 0.0, 0.0, 0.3); // X movement also affects W
+  vec4 screenY_4D = vec4(0.0, 1.0, 0.2, 0.0); // Y movement also affects Z
   
-  // Create orthogonal 4D vectors (simplified approach)
-  vec4 right4D = vec4(1.0, 0.0, 0.0, 0.0); // 4D right vector
-  vec4 up4D = vec4(0.0, 1.0, 0.0, 0.0);     // 4D up vector
+  // Apply screen offset to create 4D viewing rays
+  ray4D += screenCoord.x * fov * screenX_4D;
+  ray4D += screenCoord.y * fov * screenY_4D;
   
-  // Apply screen offset to ray direction
-  ray4D += screenCoord.x * fov * right4D;
-  ray4D += screenCoord.y * fov * up4D;
+  // Add some W variation based on distance from screen center
+  float distFromCenter = length(screenCoord);
+  vec4 wVariation = vec4(0.0, 0.0, 0.0, distFromCenter * 0.2);
+  ray4D += wVariation;
   
   // Normalize the 4D ray direction
   float length4D = sqrt(ray4D.x*ray4D.x + ray4D.y*ray4D.y + ray4D.z*ray4D.z + ray4D.w*ray4D.w);
@@ -354,6 +396,30 @@ void main() {
   vec2 coord = (uv - 0.5) * 4.0; // Screen coordinates [-2, 2] for camera ray casting
   
   vec3 color = vec3(0.05, 0.05, 0.1); // Dark space background
+  
+  // Strong visual feedback for selected dimension
+  if (selectedDim == 0) color = mix(color, vec3(0.2, 0.05, 0.05), 0.4); // Strong red tint for X
+  else if (selectedDim == 1) color = mix(color, vec3(0.05, 0.2, 0.05), 0.4); // Strong green tint for Y
+  else if (selectedDim == 2) color = mix(color, vec3(0.05, 0.05, 0.2), 0.4); // Strong blue tint for Z
+  else if (selectedDim == 3) color = mix(color, vec3(0.2, 0.2, 0.05), 0.4); // Strong yellow tint for W
+  
+  // Check if selected dimension's frustum bounds are non-default (indicating active collapsing)
+  bool hasActiveFrustum = false;
+  if (abs(frustumBounds[selectedDim][0] + 2.0) > 0.1 || abs(frustumBounds[selectedDim][1] - 2.0) > 0.1) {
+    hasActiveFrustum = true;
+    // Add pulsing effect for active collapsing
+    float pulse = 0.5 + 0.3 * sin(gl_FragCoord.x * 0.1 + gl_FragCoord.y * 0.1);
+    color = mix(color, vec3(0.3, 0.3, 0.3), 0.2 * pulse); // Pulsing bright when actively collapsing
+  }
+  
+  // DEBUG: Show W coordinate distribution across screen when W dimension is selected
+  if (selectedDim == 3) { // W dimension selected
+    vec4 ray4DDirection = generate4DRayDirection(coord);
+    vec4 testPoint = camera4DPos + 3.0 * ray4DDirection; // Sample point along ray
+    float wValue = testPoint.w;
+    // Color based on W coordinate to visualize W distribution
+    color = mix(color, vec3(0.5 + wValue * 0.5, 0.5, 0.5 - wValue * 0.5), 0.3);
+  }
   
   // Perform adaptive 4D ray marching to find precise surface intersections
   vec3 marchResult = adaptiveRayMarch4D(coord);

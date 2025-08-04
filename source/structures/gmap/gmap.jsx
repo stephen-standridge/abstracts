@@ -22,6 +22,9 @@ const Gmap = () => {
     cameraForward, 
     shadowPlaneCenter, 
     shadowPlaneDistance, 
+    // 4D Frustum for collapsing
+    frustumParams,
+    selectedDimension,
     rotateVertex4D, 
     resetLight, 
     resetCamera, 
@@ -109,7 +112,10 @@ const Gmap = () => {
       rotationYZ: gl.getUniformLocation(program, 'rotationYZ'),
       rotationXW: gl.getUniformLocation(program, 'rotationXW'),
       rotationYW: gl.getUniformLocation(program, 'rotationYW'),
-      rotationZW: gl.getUniformLocation(program, 'rotationZW')
+      rotationZW: gl.getUniformLocation(program, 'rotationZW'),
+      // 4D Frustum uniforms for collapsing
+      frustumBounds: gl.getUniformLocation(program, 'frustumBounds'),
+      selectedDim: gl.getUniformLocation(program, 'selectedDim')
     }
 
     // Create hypercube data
@@ -175,6 +181,19 @@ const Gmap = () => {
     gl.uniform1f(uniforms.rotationYW, rotation.yw)
     gl.uniform1f(uniforms.rotationZW, rotation.zw)
     
+    // Upload 4D frustum bounds for collapsing (as mat4 with min/max for each dimension)
+    const frustumMatrix = new Float32Array([
+      frustumParams.x.min, frustumParams.x.max, 0, 0,
+      frustumParams.y.min, frustumParams.y.max, 0, 0,
+      frustumParams.z.min, frustumParams.z.max, 0, 0,
+      frustumParams.w.min, frustumParams.w.max, 0, 0
+    ])
+    gl.uniformMatrix4fv(uniforms.frustumBounds, false, frustumMatrix)
+    
+    // Upload selected dimension index (0=x, 1=y, 2=z, 3=w)
+    const dimIndex = { x: 0, y: 1, z: 2, w: 3 }[selectedDimension]
+    gl.uniform1i(uniforms.selectedDim, dimIndex)
+    
     // Upload rotated vertex data
     const flatVertices = new Float32Array(rotatedVertices.flat())
     gl.uniform4fv(uniforms.vertices, flatVertices)
@@ -186,12 +205,12 @@ const Gmap = () => {
     // Render
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  }, [rotation, rotateVertex4D, light4DPos, camera4DPos, camera4DTarget, camera4DForward, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance])
+  }, [rotation, rotateVertex4D, light4DPos, camera4DPos, camera4DTarget, camera4DForward, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension])
 
-  // Re-render when rotation, light position, or camera changes
+  // Re-render when rotation, light position, camera, or frustum changes
   useEffect(() => {
     render()
-  }, [rotation, light4DPos, camera4DPos, camera4DForward, shadowPlaneCenter, shadowPlaneDistance, render])
+  }, [rotation, light4DPos, camera4DPos, camera4DForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension, render])
 
   return (
     <PageWrapper style={{ padding: '2rem' }}>
@@ -216,11 +235,21 @@ const Gmap = () => {
         • <strong>Alt+Right drag:</strong> Camera zoom in/out<br/>
         • <strong>Ctrl+Left drag:</strong> 4D Camera W position + target W<br/>
         • <strong>Ctrl+Right drag:</strong> 4D Camera W position only<br/>
+        <strong>4D Frustum Collapsing:</strong><br/>
+        • <strong>Press '1', '2', '3', '4':</strong> Select X, Y, Z, W dimension<br/>
+        • <strong>Middle mouse drag:</strong> Expand/collapse selected dimension bounds<br/>
+        • <strong>Press '5':</strong> Reset frustum bounds<br/>
+        • <strong>Selected:</strong> <span style={{color: '#4CAF50', fontWeight: 'bold', fontSize: '1.2em'}}>{selectedDimension.toUpperCase()}</span> dimension<br/>
+        • <strong>All Bounds:</strong><br/>
+        &nbsp;&nbsp;X: <span style={{color: selectedDimension === 'x' ? '#4CAF50' : '#666'}}>[{frustumParams.x.min.toFixed(1)}, {frustumParams.x.max.toFixed(1)}]</span><br/>
+        &nbsp;&nbsp;Y: <span style={{color: selectedDimension === 'y' ? '#4CAF50' : '#666'}}>[{frustumParams.y.min.toFixed(1)}, {frustumParams.y.max.toFixed(1)}]</span><br/>
+        &nbsp;&nbsp;Z: <span style={{color: selectedDimension === 'z' ? '#4CAF50' : '#666'}}>[{frustumParams.z.min.toFixed(1)}, {frustumParams.z.max.toFixed(1)}]</span><br/>
+        &nbsp;&nbsp;W: <span style={{color: selectedDimension === 'w' ? '#4CAF50' : '#666'}}>[{frustumParams.w.min.toFixed(1)}, {frustumParams.w.max.toFixed(1)}]</span><br/>
         <strong>Reset Keys:</strong><br/>
         • <strong>Press 'R':</strong> Reset light position<br/>
         • <strong>Press 'C':</strong> Reset camera position<br/>
         • <strong>Press 'H':</strong> Reset hypercube rotation<br/>
-        <strong>Rendering:</strong> Camera casts rays through screen to intersect 4D hypercube
+        <strong>Rendering:</strong> 4D Camera with frustum-based collapsing
       </div>
       <Link to="/">← Back to Home</Link>
     </PageWrapper>
