@@ -25,10 +25,15 @@ const Gmap = () => {
     // 4D Frustum for collapsing
     frustumParams,
     selectedDimension,
+    // Orthographic/Flattening mode
+    orthographicMode,
+    orthographicSlice,
+    orthographicBounds,
     rotateVertex4D, 
     resetLight, 
     resetCamera, 
     resetRotation,
+    resetOrthographic,
     mouseHandlers 
   } = use4DRotation()
   
@@ -113,9 +118,13 @@ const Gmap = () => {
       rotationXW: gl.getUniformLocation(program, 'rotationXW'),
       rotationYW: gl.getUniformLocation(program, 'rotationYW'),
       rotationZW: gl.getUniformLocation(program, 'rotationZW'),
-      // 4D Frustum uniforms for collapsing
-      frustumBounds: gl.getUniformLocation(program, 'frustumBounds'),
-      selectedDim: gl.getUniformLocation(program, 'selectedDim')
+                // 4D Frustum uniforms for collapsing
+          frustumBounds: gl.getUniformLocation(program, 'frustumBounds'),
+          selectedDim: gl.getUniformLocation(program, 'selectedDim'),
+          // Orthographic/Flattening uniforms
+          orthographicMode: gl.getUniformLocation(program, 'orthographicMode'),
+          orthographicSlice: gl.getUniformLocation(program, 'orthographicSlice'),
+          orthographicBounds: gl.getUniformLocation(program, 'orthographicBounds')
     }
 
     // Create hypercube data
@@ -190,9 +199,23 @@ const Gmap = () => {
     ])
     gl.uniformMatrix4fv(uniforms.frustumBounds, false, frustumMatrix)
     
-    // Upload selected dimension index (0=x, 1=y, 2=z, 3=w)
-    const dimIndex = { x: 0, y: 1, z: 2, w: 3 }[selectedDimension]
-    gl.uniform1i(uniforms.selectedDim, dimIndex)
+            // Upload selected dimension index (0=x, 1=y, 2=z, 3=w)
+        const dimIndex = { x: 0, y: 1, z: 2, w: 3 }[selectedDimension]
+        gl.uniform1i(uniforms.selectedDim, dimIndex)
+        
+        // Upload orthographic mode data
+        const orthoModeIndex = orthographicMode ? { x: 0, y: 1, z: 2, w: 3 }[orthographicMode] : -1
+        gl.uniform1i(uniforms.orthographicMode, orthoModeIndex) // -1 for disabled, 0-3 for x,y,z,w
+        gl.uniform1f(uniforms.orthographicSlice, orthographicSlice)
+        
+        // Upload orthographic viewing bounds (projection scale)
+        const orthoBoundsMatrix = new Float32Array([
+          orthographicBounds.x.min, orthographicBounds.x.max, 0, 0,
+          orthographicBounds.y.min, orthographicBounds.y.max, 0, 0,
+          orthographicBounds.z.min, orthographicBounds.z.max, 0, 0,
+          orthographicBounds.w.min, orthographicBounds.w.max, 0, 0
+        ])
+        gl.uniformMatrix4fv(uniforms.orthographicBounds, false, orthoBoundsMatrix)
     
     // Upload rotated vertex data
     const flatVertices = new Float32Array(rotatedVertices.flat())
@@ -205,12 +228,12 @@ const Gmap = () => {
     // Render
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  }, [rotation, rotateVertex4D, light4DPos, camera4DPos, camera4DTarget, camera4DForward, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension])
+  }, [rotation, rotateVertex4D, light4DPos, camera4DPos, camera4DTarget, camera4DForward, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension, orthographicMode, orthographicSlice, orthographicBounds])
 
   // Re-render when rotation, light position, camera, or frustum changes
   useEffect(() => {
     render()
-  }, [rotation, light4DPos, camera4DPos, camera4DForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension, render])
+  }, [rotation, light4DPos, camera4DPos, camera4DForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension, orthographicMode, orthographicSlice, orthographicBounds, render])
 
   return (
     <PageWrapper style={{ padding: '2rem' }}>
@@ -239,12 +262,34 @@ const Gmap = () => {
         • <strong>Press '1', '2', '3', '4':</strong> Select X, Y, Z, W dimension<br/>
         • <strong>Middle mouse drag (no keys):</strong> Expand/collapse selected dimension bounds<br/>
         • <strong>Press '5':</strong> Reset frustum bounds<br/>
+        <strong>Orthographic/Dimensional Flattening:</strong><br/>
+        • <strong>Press 'A':</strong> Flatten X dimension (YZW view)<br/>
+        • <strong>Press 'S':</strong> Flatten Y dimension (XZW view)<br/>
+        • <strong>Press 'D':</strong> Flatten Z dimension (XYW view)<br/>
+        • <strong>Press 'F':</strong> Flatten W dimension (XYZ view)<br/>
+        • <strong>Press 'G':</strong> Disable flattening (normal 4D view)<br/>
+        • <strong>Middle mouse drag:</strong> {orthographicMode ? 'Adjust orthographic viewing bounds (both axes)' : 'Adjust frustum bounds (selected dimension)'}<br/>
+        • <strong>Shift+Middle mouse drag:</strong> Projection offset control (currently disabled)<br/>
+        • <strong>Current Mode:</strong> <span style={{color: '#FF9800', fontWeight: 'bold', fontSize: '1.2em'}}>
+          {orthographicMode ? `${orthographicMode.toUpperCase()}-Flattened (offset: ${orthographicSlice.toFixed(2)})` : 'Normal 4D'}
+        </span><br/>
         • <strong>Selected:</strong> <span style={{color: '#4CAF50', fontWeight: 'bold', fontSize: '1.2em'}}>{selectedDimension.toUpperCase()}</span> dimension<br/>
-        • <strong>All Bounds:</strong><br/>
-        &nbsp;&nbsp;X: <span style={{color: selectedDimension === 'x' ? '#4CAF50' : '#666'}}>[{frustumParams.x.min.toFixed(1)}, {frustumParams.x.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
-        &nbsp;&nbsp;Y: <span style={{color: selectedDimension === 'y' ? '#4CAF50' : '#666'}}>[{frustumParams.y.min.toFixed(1)}, {frustumParams.y.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
-        &nbsp;&nbsp;Z: <span style={{color: selectedDimension === 'z' ? '#4CAF50' : '#666'}}>[{frustumParams.z.min.toFixed(1)}, {frustumParams.z.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
-        &nbsp;&nbsp;W: <span style={{color: selectedDimension === 'w' ? '#4CAF50' : '#666'}}>[{frustumParams.w.min.toFixed(1)}, {frustumParams.w.max.toFixed(1)}]</span> (default: [-4.0, 4.0])<br/>
+        • <strong>{orthographicMode ? 'Orthographic Viewing Bounds:' : 'Frustum Bounds (Clipping):'}</strong><br/>
+        {orthographicMode ? (
+          <>
+            &nbsp;&nbsp;X: <span style={{color: selectedDimension === 'x' ? '#4CAF50' : '#666'}}>[{orthographicBounds.x.min.toFixed(1)}, {orthographicBounds.x.max.toFixed(1)}]</span> (default: [-3.0, 3.0])<br/>
+            &nbsp;&nbsp;Y: <span style={{color: selectedDimension === 'y' ? '#4CAF50' : '#666'}}>[{orthographicBounds.y.min.toFixed(1)}, {orthographicBounds.y.max.toFixed(1)}]</span> (default: [-3.0, 3.0])<br/>
+            &nbsp;&nbsp;Z: <span style={{color: selectedDimension === 'z' ? '#4CAF50' : '#666'}}>[{orthographicBounds.z.min.toFixed(1)}, {orthographicBounds.z.max.toFixed(1)}]</span> (default: [-3.0, 3.0])<br/>
+            &nbsp;&nbsp;W: <span style={{color: selectedDimension === 'w' ? '#4CAF50' : '#666'}}>[{orthographicBounds.w.min.toFixed(1)}, {orthographicBounds.w.max.toFixed(1)}]</span> (default: [-3.0, 3.0])<br/>
+          </>
+        ) : (
+          <>
+            &nbsp;&nbsp;X: <span style={{color: selectedDimension === 'x' ? '#4CAF50' : '#666'}}>[{frustumParams.x.min.toFixed(1)}, {frustumParams.x.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
+            &nbsp;&nbsp;Y: <span style={{color: selectedDimension === 'y' ? '#4CAF50' : '#666'}}>[{frustumParams.y.min.toFixed(1)}, {frustumParams.y.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
+            &nbsp;&nbsp;Z: <span style={{color: selectedDimension === 'z' ? '#4CAF50' : '#666'}}>[{frustumParams.z.min.toFixed(1)}, {frustumParams.z.max.toFixed(1)}]</span> (default: [-2.0, 2.0])<br/>
+            &nbsp;&nbsp;W: <span style={{color: selectedDimension === 'w' ? '#4CAF50' : '#666'}}>[{frustumParams.w.min.toFixed(1)}, {frustumParams.w.max.toFixed(1)}]</span> (default: [-4.0, 4.0])<br/>
+          </>
+        )}
         <strong>Reset Keys:</strong><br/>
         • <strong>Press 'R':</strong> Reset light position<br/>
         • <strong>Press 'C':</strong> Reset camera position<br/>

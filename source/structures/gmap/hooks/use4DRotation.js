@@ -39,6 +39,18 @@ export function use4DRotation() {
   // Track which dimension is currently selected for editing
   const [selectedDimension, setSelectedDimension] = useState('x') // 'x', 'y', 'z', or 'w'
   
+  // Track orthographic/flattening mode
+  const [orthographicMode, setOrthographicMode] = useState(null) // null, 'x', 'y', 'z', or 'w'
+  const [orthographicSlice, setOrthographicSlice] = useState(0.0) // Which slice/plane to show when flattened
+  
+  // Track orthographic viewing bounds (scale of the orthographic projection)
+  const [orthographicBounds, setOrthographicBounds] = useState({
+    x: { min: -3.0, max: 3.0 },  // X viewing bounds for orthographic projection
+    y: { min: -3.0, max: 3.0 },  // Y viewing bounds for orthographic projection  
+    z: { min: -3.0, max: 3.0 },  // Z viewing bounds for orthographic projection
+    w: { min: -3.0, max: 3.0 }   // W viewing bounds for orthographic projection
+  })
+  
   // Convert enhanced spherical to cartesian for 4D light position
   const light4DPos = [
     lightParams.radius * Math.cos(lightParams.phi) * Math.cos(lightParams.theta), // X
@@ -147,23 +159,77 @@ export function use4DRotation() {
         radius: Math.max(0.5, prev.radius + deltaY * radiusSpeed), // Zoom in/out (clamped to min distance)
         w: prev.w + deltaX * wSpeed // 4D W coordinate movement
       }))
-    } else if (mouseButton.current === 1) {
-      // Middle mouse: Adjust frustum bounds for selected dimension
-      const frustumSpeed = 0.02
-      const delta = deltaY * frustumSpeed // Positive Y = expand bounds, negative Y = collapse bounds
-      
-      // Update frustum bounds directly to avoid stale closure
-      setFrustumParams(prev => {
-        const newBounds = {
-          min: prev[selectedDimension].min - delta,
-          max: prev[selectedDimension].max + delta
-        }
-        console.log(`Adjusting ${selectedDimension.toUpperCase()} bounds by ${delta.toFixed(3)} -> [${newBounds.min.toFixed(2)}, ${newBounds.max.toFixed(2)}]`)
-        return {
-          ...prev,
-          [selectedDimension]: newBounds
-        }
-      })
+                  } else if (mouseButton.current === 1) {
+                // Middle mouse: Adjust bounds based on current mode
+                const speed = 0.02
+                const deltaXBounds = deltaX * speed // Left/right mouse controls first visible dimension
+                const deltaYBounds = deltaY * speed // Up/down mouse controls second visible dimension
+                
+                if (orthographicMode) {
+                  // In orthographic mode: adjust the two visible dimensions for the flattened view
+                  setOrthographicBounds(prev => {
+                    let firstDim, secondDim
+                    
+                    // Determine which two dimensions are visible for each orthographic mode
+                    if (orthographicMode === 'x') { // X-flattened: Y and Z are visible
+                      firstDim = 'y'  // Screen X controls Y bounds
+                      secondDim = 'z' // Screen Y controls Z bounds
+                    } else if (orthographicMode === 'y') { // Y-flattened: X and Z are visible
+                      firstDim = 'x'  // Screen X controls X bounds
+                      secondDim = 'z' // Screen Y controls Z bounds
+                    } else if (orthographicMode === 'z') { // Z-flattened: X and Y are visible
+                      firstDim = 'x'  // Screen X controls X bounds
+                      secondDim = 'y' // Screen Y controls Y bounds
+                    } else if (orthographicMode === 'w') { // W-flattened: X and Y are visible
+                      firstDim = 'x'  // Screen X controls X bounds
+                      secondDim = 'y' // Screen Y controls Y bounds
+                    }
+                    
+                    const newFirstBounds = {
+                      min: prev[firstDim].min - deltaXBounds,
+                      max: prev[firstDim].max + deltaXBounds
+                    }
+                    const newSecondBounds = {
+                      min: prev[secondDim].min - deltaYBounds,
+                      max: prev[secondDim].max + deltaYBounds
+                    }
+                    
+                    console.log(`Adjusting orthographic bounds: ${firstDim.toUpperCase()} by ${deltaXBounds.toFixed(3)} -> [${newFirstBounds.min.toFixed(2)}, ${newFirstBounds.max.toFixed(2)}], ${secondDim.toUpperCase()} by ${deltaYBounds.toFixed(3)} -> [${newSecondBounds.min.toFixed(2)}, ${newSecondBounds.max.toFixed(2)}]`)
+                    
+                    return {
+                      ...prev,
+                      [firstDim]: newFirstBounds,
+                      [secondDim]: newSecondBounds
+                    }
+                  })
+                } else {
+                  // In perspective mode: adjust frustum bounds (clipping) - single dimension selected
+                  const delta = deltaYBounds // Use Y movement for perspective mode
+                  setFrustumParams(prev => {
+                    const newBounds = {
+                      min: prev[selectedDimension].min - delta,
+                      max: prev[selectedDimension].max + delta
+                    }
+                    console.log(`Adjusting frustum ${selectedDimension.toUpperCase()} bounds by ${delta.toFixed(3)} -> [${newBounds.min.toFixed(2)}, ${newBounds.max.toFixed(2)}]`)
+                    return {
+                      ...prev,
+                      [selectedDimension]: newBounds
+                    }
+                  })
+                }
+              } else if (e.shiftKey && mouseButton.current === 1) {
+                // Shift+Middle mouse: Adjust orthographic projection offset when in orthographic mode
+                // Note: Currently disabled for true orthographic projection, but orthographic bounds work!
+                if (orthographicMode) {
+                  console.log(`Orthographic projection offset control - currently disabled, but use middle mouse (no shift) to adjust orthographic viewing bounds!`)
+                  // const sliceSpeed = 0.05
+                  // const sliceDelta = deltaY * sliceSpeed
+                  // setOrthographicSlice(prev => {
+                  //   const newSlice = prev + sliceDelta
+                  //   console.log(`Adjusting ${orthographicMode.toUpperCase()} projection offset by ${sliceDelta.toFixed(3)} -> ${newSlice.toFixed(2)}`)
+                  //   return newSlice
+                  // })
+                }
     } else if (mouseButton.current === 0) {
       // Left button: XW and YW rotations (primary 4D rotations)
       setRotation(prev => ({
@@ -180,8 +246,8 @@ export function use4DRotation() {
       }))
     }
 
-    lastMouse.current = { x: e.clientX, y: e.clientY }
-  }, [selectedDimension]) // Add selectedDimension to dependencies
+          lastMouse.current = { x: e.clientX, y: e.clientY }
+    }, [selectedDimension, orthographicMode]) // Add selectedDimension and orthographicMode to dependencies
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = false
@@ -235,6 +301,20 @@ export function use4DRotation() {
     })
   }, [])
 
+  // Reset orthographic mode
+  const resetOrthographic = useCallback(() => {
+    console.log('Resetting orthographic mode to normal 4D view')
+    setOrthographicMode(null)
+    setOrthographicSlice(0.0)
+    // Also reset orthographic bounds
+    setOrthographicBounds({
+      x: { min: -3.0, max: 3.0 },
+      y: { min: -3.0, max: 3.0 },
+      z: { min: -3.0, max: 3.0 },
+      w: { min: -3.0, max: 3.0 }
+    })
+  }, [])
+
   // Keyboard handler for reset and dimension selection
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -249,31 +329,53 @@ export function use4DRotation() {
         resetRotation()
       }
       
-      // Dimension selection keys (1,2,3,4 for X,Y,Z,W)
-      if (e.key === '1') {
-        setSelectedDimension('x')
-        console.log('Selected X dimension for frustum adjustment')
-      }
-      if (e.key === '2') {
-        setSelectedDimension('y')
-        console.log('Selected Y dimension for frustum adjustment')
-      }
-      if (e.key === '3') {
-        setSelectedDimension('z')
-        console.log('Selected Z dimension for frustum adjustment')
-      }
-      if (e.key === '4') {
-        setSelectedDimension('w')
-        console.log('Selected W dimension for frustum adjustment')
-      }
+              // Dimension selection keys (1,2,3,4 for X,Y,Z,W)
+        if (e.key === '1') {
+          setSelectedDimension('x')
+          console.log('Selected X dimension for bounds adjustment')
+        }
+        if (e.key === '2') {
+          setSelectedDimension('y')
+          console.log('Selected Y dimension for bounds adjustment')
+        }
+        if (e.key === '3') {
+          setSelectedDimension('z')
+          console.log('Selected Z dimension for bounds adjustment')
+        }
+        if (e.key === '4') {
+          setSelectedDimension('w')
+          console.log('Selected W dimension for bounds adjustment')
+        }
       
-      // Reset frustum bounds (5)
-      if (e.key === '5') resetFrustumBounds()
+              // Reset frustum bounds (5)
+        if (e.key === '5') resetFrustumBounds()
+        
+        // Orthographic/Flattening mode selection (A,S,D,F,G)
+        if (e.key.toLowerCase() === 'a') {
+          setOrthographicMode('x')
+          console.log('Orthographic mode: X-dimension flattened')
+        }
+        if (e.key.toLowerCase() === 's') {
+          setOrthographicMode('y')
+          console.log('Orthographic mode: Y-dimension flattened')
+        }
+        if (e.key.toLowerCase() === 'd') {
+          setOrthographicMode('z')
+          console.log('Orthographic mode: Z-dimension flattened')
+        }
+        if (e.key.toLowerCase() === 'f') {
+          setOrthographicMode('w')
+          console.log('Orthographic mode: W-dimension flattened')
+        }
+        if (e.key.toLowerCase() === 'g') {
+          setOrthographicMode(null)
+          console.log('Orthographic mode: Disabled (normal 4D view)')
+        }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [resetLight, resetCamera, resetRotation, resetFrustumBounds])
+  }, [resetLight, resetCamera, resetRotation, resetFrustumBounds, orthographicMode, selectedDimension])
 
   // No longer need wheel handler - using middle mouse drag instead
 
@@ -350,11 +452,16 @@ export function use4DRotation() {
     // 4D Frustum data for collapsing
     frustumParams,
     selectedDimension,
+    // Orthographic/Flattening mode data
+    orthographicMode,
+    orthographicSlice,
+    orthographicBounds,
     rotateVertex4D,
     resetLight,
     resetCamera,
     resetRotation,
     resetFrustumBounds,
+    resetOrthographic,
     mouseHandlers: {
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,

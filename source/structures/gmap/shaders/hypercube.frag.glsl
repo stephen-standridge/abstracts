@@ -31,6 +31,11 @@ uniform float rotationZW;
 uniform mat4 frustumBounds; // Each row contains [min, max, 0, 0] for X,Y,Z,W
 uniform int selectedDim;     // Currently selected dimension (0=x, 1=y, 2=z, 3=w)
 
+// Orthographic/Flattening uniforms  
+uniform int orthographicMode;   // -1=disabled, 0=x, 1=y, 2=z, 3=w flattened
+uniform float orthographicSlice; // Which slice/plane to show when flattened
+uniform mat4 orthographicBounds; // Orthographic viewing bounds for each dimension [min, max, 0, 0]
+
 out vec4 outColor;
 
 // Apply inverse 4D rotation to transform point back to axis-aligned hypercube space
@@ -122,49 +127,154 @@ bool isInside4D(vec4 point) {
   // Transform point back to axis-aligned space
   vec4 alignedPoint = inverseRotateVertex4D(point);
   
-  // Check if point is inside all 8 hyperfaces (4D equivalent of 6 cube faces)
-  bool insideHypercube = (alignedPoint.x >= -1.0 && alignedPoint.x <= 1.0 &&
-                          alignedPoint.y >= -1.0 && alignedPoint.y <= 1.0 &&
-                          alignedPoint.z >= -1.0 && alignedPoint.z <= 1.0 &&
-                          alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
+  // Check if point is inside the hypercube with orthographic projection handling
+  bool insideHypercube;
   
-  // Apply frustum bounds for collapsing effect
-  if (insideHypercube && !isInsideFrustum4D(point)) {
+  if (orthographicMode >= 0) {
+    // For orthographic projection, ignore bounds along the flattened dimension
+    // This allows the entire hypercube to be visible, projected along that axis
+    if (orthographicMode == 0) { // X flattened - ignore X bounds
+      insideHypercube = (alignedPoint.y >= -1.0 && alignedPoint.y <= 1.0 &&
+                         alignedPoint.z >= -1.0 && alignedPoint.z <= 1.0 &&
+                         alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
+    }
+    else if (orthographicMode == 1) { // Y flattened - ignore Y bounds
+      insideHypercube = (alignedPoint.x >= -1.0 && alignedPoint.x <= 1.0 &&
+                         alignedPoint.z >= -1.0 && alignedPoint.z <= 1.0 &&
+                         alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
+    }
+    else if (orthographicMode == 2) { // Z flattened - ignore Z bounds
+      insideHypercube = (alignedPoint.x >= -1.0 && alignedPoint.x <= 1.0 &&
+                         alignedPoint.y >= -1.0 && alignedPoint.y <= 1.0 &&
+                         alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
+    }
+    else if (orthographicMode == 3) { // W flattened - ignore W bounds
+      insideHypercube = (alignedPoint.x >= -1.0 && alignedPoint.x <= 1.0 &&
+                         alignedPoint.y >= -1.0 && alignedPoint.y <= 1.0 &&
+                         alignedPoint.z >= -1.0 && alignedPoint.z <= 1.0);
+    }
+  } else {
+    // Normal 4D bounds check
+    insideHypercube = (alignedPoint.x >= -1.0 && alignedPoint.x <= 1.0 &&
+                       alignedPoint.y >= -1.0 && alignedPoint.y <= 1.0 &&
+                       alignedPoint.z >= -1.0 && alignedPoint.z <= 1.0 &&
+                       alignedPoint.w >= -1.0 && alignedPoint.w <= 1.0);
+  }
+  
+  // Apply frustum bounds for collapsing effect (only in perspective mode)
+  if (orthographicMode < 0 && insideHypercube && !isInsideFrustum4D(point)) {
     return false; // Outside frustum bounds
   }
   
   return insideHypercube;
 }
 
+// Get ray origin for a given screen coordinate based on projection mode
+vec4 getRayOrigin4D(vec2 screenCoord) {
+  if (orthographicMode >= 0) {
+    // ORTHOGRAPHIC MODE: Ray origin varies with screen coordinates
+    // Use orthographic bounds to map screen coordinates to world space
+    
+    if (orthographicMode == 0) { // X flattened - rays start from YZW plane
+      // Get the bounds for the two visible dimensions (Y and Z for screen X and Y)
+      float yRange = orthographicBounds[1][1] - orthographicBounds[1][0]; // Y bounds range
+      float zRange = orthographicBounds[2][1] - orthographicBounds[2][0]; // Z bounds range
+      float yCenter = (orthographicBounds[1][1] + orthographicBounds[1][0]) * 0.5;
+      float zCenter = (orthographicBounds[2][1] + orthographicBounds[2][0]) * 0.5;
+      
+      // Map screen coordinates to viewing bounds (smaller bounds = more zoomed in)
+      float yPos = yCenter + screenCoord.x * yRange * 0.25; // Screen X maps to Y dimension
+      float zPos = zCenter + screenCoord.y * zRange * 0.25; // Screen Y maps to Z dimension
+      return vec4(-6.0, yPos, zPos, 0.0);
+    }
+    else if (orthographicMode == 1) { // Y flattened - rays start from XZW plane  
+      float xRange = orthographicBounds[0][1] - orthographicBounds[0][0];
+      float zRange = orthographicBounds[2][1] - orthographicBounds[2][0];
+      float xCenter = (orthographicBounds[0][1] + orthographicBounds[0][0]) * 0.5;
+      float zCenter = (orthographicBounds[2][1] + orthographicBounds[2][0]) * 0.5;
+      
+      float xPos = xCenter + screenCoord.x * xRange * 0.25; // Screen X maps to X dimension
+      float zPos = zCenter + screenCoord.y * zRange * 0.25; // Screen Y maps to Z dimension
+      return vec4(xPos, -6.0, zPos, 0.0);
+    }
+    else if (orthographicMode == 2) { // Z flattened - rays start from XYW plane
+      float xRange = orthographicBounds[0][1] - orthographicBounds[0][0];
+      float yRange = orthographicBounds[1][1] - orthographicBounds[1][0];
+      float xCenter = (orthographicBounds[0][1] + orthographicBounds[0][0]) * 0.5;
+      float yCenter = (orthographicBounds[1][1] + orthographicBounds[1][0]) * 0.5;
+      
+      float xPos = xCenter + screenCoord.x * xRange * 0.25; // Screen X maps to X dimension
+      float yPos = yCenter + screenCoord.y * yRange * 0.25; // Screen Y maps to Y dimension
+      return vec4(xPos, yPos, -6.0, 0.0);
+    }
+    else if (orthographicMode == 3) { // W flattened - rays start from XYZ plane
+      float xRange = orthographicBounds[0][1] - orthographicBounds[0][0];
+      float yRange = orthographicBounds[1][1] - orthographicBounds[1][0];
+      float xCenter = (orthographicBounds[0][1] + orthographicBounds[0][0]) * 0.5;
+      float yCenter = (orthographicBounds[1][1] + orthographicBounds[1][0]) * 0.5;
+      
+      float xPos = xCenter + screenCoord.x * xRange * 0.25; // Screen X maps to X dimension
+      float yPos = yCenter + screenCoord.y * yRange * 0.25; // Screen Y maps to Y dimension
+      return vec4(xPos, yPos, 0.0, -6.0);
+    }
+  }
+  
+  // PERSPECTIVE MODE: All rays start from camera position
+  return camera4DPos;
+}
+
 // Generate 4D ray direction from 2D screen coordinates with proper W exploration
 vec4 generate4DRayDirection(vec2 screenCoord) {
-  // Create a true 4D viewing volume where screen coordinates map to 4D directions
-  
-  float fov = 0.8; // Field of view factor
-  
-  // Create a 4D coordinate system relative to camera
-  // Use screen X,Y to vary multiple 4D dimensions, not just X,Y
-  vec4 ray4D = camera4DForward; // Start with camera forward direction
-  
-  // Create 4D basis vectors for screen mapping
-  // Screen X affects both X and W dimensions  
-  // Screen Y affects both Y and Z dimensions
-  // This creates a proper 4D viewing volume
-  vec4 screenX_4D = vec4(1.0, 0.0, 0.0, 0.3); // X movement also affects W
-  vec4 screenY_4D = vec4(0.0, 1.0, 0.2, 0.0); // Y movement also affects Z
-  
-  // Apply screen offset to create 4D viewing rays
-  ray4D += screenCoord.x * fov * screenX_4D;
-  ray4D += screenCoord.y * fov * screenY_4D;
-  
-  // Add some W variation based on distance from screen center
-  float distFromCenter = length(screenCoord);
-  vec4 wVariation = vec4(0.0, 0.0, 0.0, distFromCenter * 0.2);
-  ray4D += wVariation;
-  
-  // Normalize the 4D ray direction
-  float length4D = sqrt(ray4D.x*ray4D.x + ray4D.y*ray4D.y + ray4D.z*ray4D.z + ray4D.w*ray4D.w);
-  return ray4D / length4D;
+  if (orthographicMode >= 0) {
+    // ORTHOGRAPHIC MODE: All rays are parallel, only ray origin varies
+    // In orthographic projection, all rays have the same direction (viewing direction)
+    
+    // For orthographic, we use a fixed viewing direction
+    // The flattened dimension determines the viewing direction
+    vec4 orthoDirection;
+    if (orthographicMode == 0) { // X flattened - looking along X axis
+      orthoDirection = vec4(1.0, 0.0, 0.0, 0.0);
+    }
+    else if (orthographicMode == 1) { // Y flattened - looking along Y axis
+      orthoDirection = vec4(0.0, 1.0, 0.0, 0.0);
+    }
+    else if (orthographicMode == 2) { // Z flattened - looking along Z axis
+      orthoDirection = vec4(0.0, 0.0, 1.0, 0.0);
+    }
+    else if (orthographicMode == 3) { // W flattened - looking along W axis
+      orthoDirection = vec4(0.0, 0.0, 0.0, 1.0);
+    }
+    
+    return orthoDirection;
+  }
+  else {
+    // PERSPECTIVE MODE: Create diverging rays from camera position
+    float fov = 0.8; // Field of view factor
+    
+    // Create a 4D coordinate system relative to camera
+    // Use screen X,Y to vary multiple 4D dimensions, not just X,Y
+    vec4 ray4D = camera4DForward; // Start with camera forward direction
+    
+    // Create 4D basis vectors for screen mapping
+    // Screen X affects both X and W dimensions  
+    // Screen Y affects both Y and Z dimensions
+    // This creates a proper 4D viewing volume
+    vec4 screenX_4D = vec4(1.0, 0.0, 0.0, 0.3); // X movement also affects W
+    vec4 screenY_4D = vec4(0.0, 1.0, 0.2, 0.0); // Y movement also affects Z
+    
+    // Apply screen offset to create 4D viewing rays
+    ray4D += screenCoord.x * fov * screenX_4D;
+    ray4D += screenCoord.y * fov * screenY_4D;
+    
+    // Add some W variation based on distance from screen center
+    float distFromCenter = length(screenCoord);
+    vec4 wVariation = vec4(0.0, 0.0, 0.0, distFromCenter * 0.2);
+    ray4D += wVariation;
+    
+    // Normalize the 4D ray direction
+    float length4D = sqrt(ray4D.x*ray4D.x + ray4D.y*ray4D.y + ray4D.z*ray4D.z + ray4D.w*ray4D.w);
+    return ray4D / length4D;
+  }
 }
 
 // Adaptive ray marching to find precise surface intersections using 4D rays
@@ -178,13 +288,16 @@ vec3 adaptiveRayMarch4D(vec2 screenCoord) {
   // Generate 4D ray from camera position through screen coordinate
   vec4 ray4DDirection = generate4DRayDirection(screenCoord);
   
+  // Get ray origin based on projection mode
+  vec4 rayOrigin4D = getRayOrigin4D(screenCoord);
+  
   // Phase 1: Coarse ray marching to find approximate entry point
   float t = 0.05;
   bool wasInside = false;
   float entryApprox = -1.0;
   
   for (int i = 0; i < 120 && t < maxDistance; i++) {
-    vec4 samplePos4D = camera4DPos + t * ray4DDirection; // True 4D ray marching
+    vec4 samplePos4D = rayOrigin4D + t * ray4DDirection; // Ray marching from appropriate origin
     bool isInside = isInside4D(samplePos4D);
     
     if (!wasInside && isInside) {
@@ -210,7 +323,7 @@ vec3 adaptiveRayMarch4D(vec2 screenCoord) {
   float closestToSurface = 999.0;
   
   for (float ft = searchStart; ft <= searchEnd; ft += fineStep) {
-    vec4 samplePos4D = camera4DPos + ft * ray4DDirection; // True 4D sampling
+    vec4 samplePos4D = rayOrigin4D + ft * ray4DDirection; // Ray marching from appropriate origin
     
     // Transform to axis-aligned space for surface analysis
     vec4 alignedPoint = inverseRotateVertex4D(samplePos4D);
@@ -397,37 +510,77 @@ void main() {
   
   vec3 color = vec3(0.05, 0.05, 0.1); // Dark space background
   
-  // Strong visual feedback for selected dimension
-  if (selectedDim == 0) color = mix(color, vec3(0.2, 0.05, 0.05), 0.4); // Strong red tint for X
-  else if (selectedDim == 1) color = mix(color, vec3(0.05, 0.2, 0.05), 0.4); // Strong green tint for Y
-  else if (selectedDim == 2) color = mix(color, vec3(0.05, 0.05, 0.2), 0.4); // Strong blue tint for Z
-  else if (selectedDim == 3) color = mix(color, vec3(0.2, 0.2, 0.05), 0.4); // Strong yellow tint for W
-  
-  // Check if selected dimension's frustum bounds are non-default (indicating active collapsing)
-  bool hasActiveFrustum = false;
-  if (selectedDim == 3) { // W dimension has different default bounds
-    if (abs(frustumBounds[selectedDim][0] + 4.0) > 0.1 || abs(frustumBounds[selectedDim][1] - 4.0) > 0.1) {
-      hasActiveFrustum = true;
+  // Visual feedback for orthographic mode (stronger than frustum selection)
+  if (orthographicMode >= 0) {
+    if (orthographicMode == 0) color = mix(color, vec3(0.4, 0.1, 0.1), 0.6); // Strong red for X-flattened
+    else if (orthographicMode == 1) color = mix(color, vec3(0.1, 0.4, 0.1), 0.6); // Strong green for Y-flattened
+    else if (orthographicMode == 2) color = mix(color, vec3(0.1, 0.1, 0.4), 0.6); // Strong blue for Z-flattened
+    else if (orthographicMode == 3) color = mix(color, vec3(0.4, 0.4, 0.1), 0.6); // Strong yellow for W-flattened
+    
+    // Add a grid pattern tied to orthographic bounds to show scale changes
+    float xBoundsRange = 6.0; // Default range
+    float yBoundsRange = 6.0; // Default range
+    
+    if (orthographicMode == 0) { // X-flattened: Y and Z are visible
+      xBoundsRange = orthographicBounds[1][1] - orthographicBounds[1][0]; // Y range (screen X)
+      yBoundsRange = orthographicBounds[2][1] - orthographicBounds[2][0]; // Z range (screen Y)
+    } else if (orthographicMode == 1) { // Y-flattened: X and Z are visible
+      xBoundsRange = orthographicBounds[0][1] - orthographicBounds[0][0]; // X range (screen X)
+      yBoundsRange = orthographicBounds[2][1] - orthographicBounds[2][0]; // Z range (screen Y)
+    } else if (orthographicMode == 2) { // Z-flattened: X and Y are visible
+      xBoundsRange = orthographicBounds[0][1] - orthographicBounds[0][0]; // X range (screen X)
+      yBoundsRange = orthographicBounds[1][1] - orthographicBounds[1][0]; // Y range (screen Y)
+    } else if (orthographicMode == 3) { // W-flattened: X and Y are visible
+      xBoundsRange = orthographicBounds[0][1] - orthographicBounds[0][0]; // X range (screen X)
+      yBoundsRange = orthographicBounds[1][1] - orthographicBounds[1][0]; // Y range (screen Y)
     }
-  } else { // X, Y, Z dimensions
-    if (abs(frustumBounds[selectedDim][0] + 2.0) > 0.1 || abs(frustumBounds[selectedDim][1] - 2.0) > 0.1) {
-      hasActiveFrustum = true;
-    }
+    
+    float gridSizeX = 20.0 * (xBoundsRange / 6.0); // Scale grid X with bounds
+    float gridSizeY = 20.0 * (yBoundsRange / 6.0); // Scale grid Y with bounds
+    float grid = abs(sin(gl_FragCoord.x / gridSizeX)) * abs(sin(gl_FragCoord.y / gridSizeY));
+    color = mix(color, vec3(0.3, 0.3, 0.3), grid * 0.15); // Slightly more visible
+  }
+  else {
+    // Strong visual feedback for selected dimension (only when not in orthographic mode)
+    if (selectedDim == 0) color = mix(color, vec3(0.2, 0.05, 0.05), 0.4); // Strong red tint for X
+    else if (selectedDim == 1) color = mix(color, vec3(0.05, 0.2, 0.05), 0.4); // Strong green tint for Y
+    else if (selectedDim == 2) color = mix(color, vec3(0.05, 0.05, 0.2), 0.4); // Strong blue tint for Z
+    else if (selectedDim == 3) color = mix(color, vec3(0.2, 0.2, 0.05), 0.4); // Strong yellow tint for W
   }
   
-  if (hasActiveFrustum) {
-    // Add pulsing effect for active collapsing
-    float pulse = 0.5 + 0.3 * sin(gl_FragCoord.x * 0.1 + gl_FragCoord.y * 0.1);
-    color = mix(color, vec3(0.3, 0.3, 0.3), 0.2 * pulse); // Pulsing bright when actively collapsing
-  }
-  
-  // DEBUG: Show W coordinate distribution across screen when W dimension is selected
-  if (selectedDim == 3) { // W dimension selected
-    vec4 ray4DDirection = generate4DRayDirection(coord);
-    vec4 testPoint = camera4DPos + 3.0 * ray4DDirection; // Sample point along ray
-    float wValue = testPoint.w;
-    // Color based on W coordinate to visualize W distribution
-    color = mix(color, vec3(0.5 + wValue * 0.5, 0.5, 0.5 - wValue * 0.5), 0.3);
+  // Show frustum effects in both orthographic and perspective mode, but with reduced intensity in orthographic
+  if (true) {
+    // Check if selected dimension's frustum bounds are non-default (indicating active collapsing)
+    bool hasActiveFrustum = false;
+    if (selectedDim == 3) { // W dimension has different default bounds
+      if (abs(frustumBounds[selectedDim][0] + 4.0) > 0.1 || abs(frustumBounds[selectedDim][1] - 4.0) > 0.1) {
+        hasActiveFrustum = true;
+      }
+    } else { // X, Y, Z dimensions
+      if (abs(frustumBounds[selectedDim][0] + 2.0) > 0.1 || abs(frustumBounds[selectedDim][1] - 2.0) > 0.1) {
+        hasActiveFrustum = true;
+      }
+    }
+    
+    if (hasActiveFrustum) {
+      // Add pulsing effect for active collapsing
+      float pulse = 0.5 + 0.3 * sin(gl_FragCoord.x * 0.1 + gl_FragCoord.y * 0.1);
+      float intensity = orthographicMode >= 0 ? 0.1 : 0.2; // Reduced intensity in orthographic mode
+      color = mix(color, vec3(0.3, 0.3, 0.3), intensity * pulse); // Pulsing bright when actively collapsing
+    }
+    
+    // DEBUG: Show W coordinate distribution across screen when W dimension is selected
+    if (selectedDim == 3) { // W dimension selected
+      vec4 ray4DDirection = generate4DRayDirection(coord);
+      
+      vec4 debugRayOrigin = getRayOrigin4D(coord);
+      vec4 testPoint = debugRayOrigin + 3.0 * ray4DDirection; // Sample point along ray
+      float wValue = testPoint.w;
+      // Color based on W coordinate to visualize W distribution
+      color = mix(color, vec3(0.5 + wValue * 0.5, 0.5, 0.5 - wValue * 0.5), 0.3);
+    }
+    
+
   }
   
   // Perform adaptive 4D ray marching to find precise surface intersections
@@ -440,7 +593,9 @@ void main() {
   if (surfaceHitDistance >= 0.0) {
     // Ray hits a 4D hypercube surface
     vec4 ray4DDirection = generate4DRayDirection(coord);
-    vec4 hitPos4D = camera4DPos + surfaceHitDistance * ray4DDirection;
+    
+    vec4 rayOriginForHit = getRayOrigin4D(coord);
+    vec4 hitPos4D = rayOriginForHit + surfaceHitDistance * ray4DDirection;
     
     // Color based on surface type and normal direction
     vec3 surfaceColor;
