@@ -36,6 +36,9 @@ uniform int orthographicMode;   // -1=disabled, 0=x, 1=y, 2=z, 3=w flattened
 uniform float orthographicSlice; // Which slice/plane to show when flattened
 uniform mat4 orthographicBounds; // Orthographic viewing bounds for each dimension [min, max, 0, 0]
 
+// Wireframe uniforms
+uniform bool showWireframe;     // Whether to show 4D hypercube wireframe
+
 out vec4 outColor;
 
 // Apply inverse 4D rotation to transform point back to axis-aligned hypercube space
@@ -429,6 +432,52 @@ float rayLineSegmentDistance(vec3 rayOrigin, vec3 rayDir, vec3 lineStart, vec3 l
   return distance(rayPoint, linePoint);
 }
 
+// 2D distance from point to segment
+float pointSegmentDistance2D(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float abLen2 = dot(ab, ab);
+  if (abLen2 < 1e-6) return length(p - a);
+  float t = clamp(dot(p - a, ab) / abLen2, 0.0, 1.0);
+  vec2 closest = a + t * ab;
+  return length(p - closest);
+}
+
+// Project a 4D point to screen-space coordinates consistent with 'coord' ([-2,2])
+vec2 project4DToScreen(vec4 p) {
+  // Compute NDC in [-1,1], then scale by 2 to match 'coord' space used in this shader
+  vec2 ndc;
+  if (orthographicMode >= 0) {
+    // Bounds and centers
+    float xMin = orthographicBounds[0][0]; float xMax = orthographicBounds[0][1];
+    float yMin = orthographicBounds[1][0]; float yMax = orthographicBounds[1][1];
+    float zMin = orthographicBounds[2][0]; float zMax = orthographicBounds[2][1];
+    float xC = 0.5 * (xMin + xMax); float xR = max(1e-3, xMax - xMin);
+    float yC = 0.5 * (yMin + yMax); float yR = max(1e-3, yMax - yMin);
+    float zC = 0.5 * (zMin + zMax); float zR = max(1e-3, zMax - zMin);
+    if (orthographicMode == 0) { // X flattened → show Y (screen X), Z (screen Y)
+      ndc = vec2(2.0 * (p.y - yC) / yR, 2.0 * (p.z - zC) / zR);
+    } else if (orthographicMode == 1) { // Y flattened → show X, Z
+      ndc = vec2(2.0 * (p.x - xC) / xR, 2.0 * (p.z - zC) / zR);
+    } else if (orthographicMode == 2) { // Z flattened → show X, Y
+      ndc = vec2(2.0 * (p.x - xC) / xR, 2.0 * (p.y - yC) / yR);
+    } else { // W flattened → show X, Y
+      ndc = vec2(2.0 * (p.x - xC) / xR, 2.0 * (p.y - yC) / yR);
+    }
+  } else {
+    // Perspective mapping that matches generate4DRayDirection basis
+    vec4 screenX4 = vec4(1.0, 0.0, 0.0, 0.3);
+    vec4 screenY4 = vec4(0.0, 1.0, 0.2, 0.0);
+    vec4 fwd = normalize(camera4DForward);
+    vec4 v = p - camera4DTarget;
+    float x = dot(v, screenX4);
+    float y = dot(v, screenY4);
+    float z = max(0.05, dot(v, fwd));
+    float fov = 0.8;
+    ndc = vec2(x / (z * fov), y / (z * fov));
+  }
+  return ndc * 2.0; // convert NDC [-1,1] to shader coord [-2,2]
+}
+
 // Cast ray from camera through pixel, find closest intersection with 4D hypercube
 // Returns: x = distance to intersection, y = W coordinate of intersection, z = type (0=vertex, 1=edge)
 vec3 castCameraRay(vec2 screenCoord) {
@@ -717,6 +766,46 @@ void main() {
     color = hitColor * finalBrightness;
   }
   */
+  
+  // 4D Wireframe (screen-space continuous edges)
+  if (showWireframe) {
+    vec2 px = coord; // screen-space [-2,2]
+    float pxScale = min(4.0 / max(1.0, resolution.x), 4.0 / max(1.0, resolution.y));
+    float edgeRadius = pxScale * 1.8; // ~1.8px
+    float vertRadius = pxScale * 2.4; // ~2.4px
+
+    // Edges as 2D line segments in screen space
+    for (int i = 0; i < 32; i++) {
+      int edgeIdx = i * 3;
+      int v1Idx = edges[edgeIdx];
+      int v2Idx = edges[edgeIdx + 1];
+      int dim = edges[edgeIdx + 2];
+      vec4 p0 = vertices[v1Idx];
+      vec4 p1 = vertices[v2Idx];
+
+      vec2 a = project4DToScreen(p0);
+      vec2 b = project4DToScreen(p1);
+      float d = pointSegmentDistance2D(px, a, b);
+
+      vec3 wireColor;
+      if (dim == 0) wireColor = vec3(1.0, 0.4, 0.4);
+      else if (dim == 1) wireColor = vec3(0.4, 1.0, 0.4);
+      else if (dim == 2) wireColor = vec3(0.4, 0.4, 1.0);
+      else wireColor = vec3(1.0, 1.0, 0.4);
+
+      float alpha = smoothstep(edgeRadius, 0.0, d);
+      color = mix(color, wireColor, clamp(alpha, 0.0, 1.0));
+    }
+
+    // Vertices as 2D discs
+    for (int i = 0; i < 16; i++) {
+      vec4 p = vertices[i];
+      vec2 q = project4DToScreen(p);
+      float d = length(px - q);
+      float alpha = smoothstep(vertRadius, 0.0, d);
+      color = mix(color, vec3(1.0), clamp(alpha, 0.0, 1.0));
+    }
+  }
   
   // Add subtle grid for reference (camera frustum visualization)
   float gridSpacing = 0.5;

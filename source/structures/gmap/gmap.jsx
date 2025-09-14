@@ -29,6 +29,8 @@ const Gmap = () => {
     orthographicMode,
     orthographicSlice,
     orthographicBounds,
+    // Wireframe mode
+    showWireframe,
     rotateVertex4D, 
     resetLight, 
     resetCamera, 
@@ -124,7 +126,9 @@ const Gmap = () => {
           // Orthographic/Flattening uniforms
           orthographicMode: gl.getUniformLocation(program, 'orthographicMode'),
           orthographicSlice: gl.getUniformLocation(program, 'orthographicSlice'),
-          orthographicBounds: gl.getUniformLocation(program, 'orthographicBounds')
+          orthographicBounds: gl.getUniformLocation(program, 'orthographicBounds'),
+          // Wireframe uniforms
+          showWireframe: gl.getUniformLocation(program, 'showWireframe')
     }
 
     // Create hypercube data
@@ -216,6 +220,9 @@ const Gmap = () => {
           orthographicBounds.w.min, orthographicBounds.w.max, 0, 0
         ])
         gl.uniformMatrix4fv(uniforms.orthographicBounds, false, orthoBoundsMatrix)
+        
+        // Upload wireframe mode
+        gl.uniform1i(uniforms.showWireframe, showWireframe ? 1 : 0)
     
     // Upload rotated vertex data
     const flatVertices = new Float32Array(rotatedVertices.flat())
@@ -228,12 +235,12 @@ const Gmap = () => {
     // Render
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  }, [rotation, rotateVertex4D, light4DPos, camera4DPos, camera4DTarget, camera4DForward, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension, orthographicMode, orthographicSlice, orthographicBounds])
+  }, [rotation, rotateVertex4D, light4DPos, camera4DPos, camera4DTarget, camera4DForward, camera3DPos, cameraTarget, cameraUp, cameraForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension, orthographicMode, orthographicSlice, orthographicBounds, showWireframe])
 
   // Re-render when rotation, light position, camera, or frustum changes
   useEffect(() => {
     render()
-  }, [rotation, light4DPos, camera4DPos, camera4DForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension, orthographicMode, orthographicSlice, orthographicBounds, render])
+  }, [rotation, light4DPos, camera4DPos, camera4DForward, shadowPlaneCenter, shadowPlaneDistance, frustumParams, selectedDimension, orthographicMode, orthographicSlice, orthographicBounds, showWireframe, render])
 
   return (
     <PageWrapper style={{ padding: '2rem' }}>
@@ -268,10 +275,15 @@ const Gmap = () => {
         • <strong>Press 'D':</strong> Flatten Z dimension (XYW view)<br/>
         • <strong>Press 'F':</strong> Flatten W dimension (XYZ view)<br/>
         • <strong>Press 'G':</strong> Disable flattening (normal 4D view)<br/>
+        <strong>4D Wireframe Visualization:</strong><br/>
+        • <strong>Press 'W':</strong> Toggle 4D hypercube wireframe (edges & vertices)<br/>
         • <strong>Middle mouse drag:</strong> {orthographicMode ? 'Adjust orthographic viewing bounds (both axes)' : 'Adjust frustum bounds (selected dimension)'}<br/>
         • <strong>Shift+Middle mouse drag:</strong> Projection offset control (currently disabled)<br/>
         • <strong>Current Mode:</strong> <span style={{color: '#FF9800', fontWeight: 'bold', fontSize: '1.2em'}}>
           {orthographicMode ? `${orthographicMode.toUpperCase()}-Flattened (offset: ${orthographicSlice.toFixed(2)})` : 'Normal 4D'}
+        </span><br/>
+        • <strong>Wireframe:</strong> <span style={{color: showWireframe ? '#4CAF50' : '#F44336', fontWeight: 'bold', fontSize: '1.2em'}}>
+          {showWireframe ? 'ON' : 'OFF'}
         </span><br/>
         • <strong>Selected:</strong> <span style={{color: '#4CAF50', fontWeight: 'bold', fontSize: '1.2em'}}>{selectedDimension.toUpperCase()}</span> dimension<br/>
         • <strong>{orthographicMode ? 'Orthographic Viewing Bounds:' : 'Frustum Bounds (Clipping):'}</strong><br/>

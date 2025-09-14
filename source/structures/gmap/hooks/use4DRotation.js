@@ -43,6 +43,9 @@ export function use4DRotation() {
   const [orthographicMode, setOrthographicMode] = useState(null) // null, 'x', 'y', 'z', or 'w'
   const [orthographicSlice, setOrthographicSlice] = useState(0.0) // Which slice/plane to show when flattened
   
+  // Track wireframe visibility
+  const [showWireframe, setShowWireframe] = useState(false) // Whether to show 4D hypercube wireframe
+  
   // Track orthographic viewing bounds (scale of the orthographic projection)
   const [orthographicBounds, setOrthographicBounds] = useState({
     x: { min: -3.0, max: 3.0 },  // X viewing bounds for orthographic projection
@@ -371,6 +374,15 @@ export function use4DRotation() {
           setOrthographicMode(null)
           console.log('Orthographic mode: Disabled (normal 4D view)')
         }
+        
+        // Wireframe toggle (W key)
+        if (e.key.toLowerCase() === 'w') {
+          setShowWireframe(prev => {
+            const newValue = !prev
+            console.log(`4D Hypercube wireframe: ${newValue ? 'Enabled' : 'Disabled'}`)
+            return newValue
+          })
+        }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -456,6 +468,8 @@ export function use4DRotation() {
     orthographicMode,
     orthographicSlice,
     orthographicBounds,
+    // Wireframe data
+    showWireframe,
     rotateVertex4D,
     resetLight,
     resetCamera,
