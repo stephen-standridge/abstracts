@@ -20,6 +20,10 @@ uniform float shadowPlaneDistance;
 uniform vec4 camera4DPos;
 uniform vec4 camera4DTarget;
 uniform vec4 camera4DForward;
+uniform float wVariationScale; // 0 disables W variation in perspective rays (debug/calibration)
+uniform bool wireDebugCompare; // draw dual projection markers for calibration
+uniform bool useCPUWireframe;  // if true in perspective, use CPU-projected 2D positions
+uniform vec2 projected2D[16];  // CPU-projected screen coords for vertices in coord space [-2,2]
 // 4D rotation angles for inverse transformation
 uniform float rotationXY;
 uniform float rotationXZ; 
@@ -269,9 +273,10 @@ vec4 generate4DRayDirection(vec2 screenCoord) {
     ray4D += screenCoord.x * fov * screenX_4D;
     ray4D += screenCoord.y * fov * screenY_4D;
     
-    // Add some W variation based on distance from screen center
+    // Optional W variation based on distance from screen center
     float distFromCenter = length(screenCoord);
-    vec4 wVariation = vec4(0.0, 0.0, 0.0, distFromCenter * 0.2);
+    float wScale = wVariationScale; // external control
+    vec4 wVariation = vec4(0.0, 0.0, 0.0, distFromCenter * 0.2 * wScale);
     ray4D += wVariation;
     
     // Normalize the 4D ray direction
@@ -444,16 +449,15 @@ float pointSegmentDistance2D(vec2 p, vec2 a, vec2 b) {
 
 // Project a 4D point to screen-space coordinates consistent with 'coord' ([-2,2])
 vec2 project4DToScreen(vec4 p) {
-  // Compute NDC in [-1,1], then scale by 2 to match 'coord' space used in this shader
-  vec2 ndc;
   if (orthographicMode >= 0) {
-    // Bounds and centers
+    // Bounds and centers (orthographic → NDC scaled to coord space)
     float xMin = orthographicBounds[0][0]; float xMax = orthographicBounds[0][1];
     float yMin = orthographicBounds[1][0]; float yMax = orthographicBounds[1][1];
     float zMin = orthographicBounds[2][0]; float zMax = orthographicBounds[2][1];
     float xC = 0.5 * (xMin + xMax); float xR = max(1e-3, xMax - xMin);
     float yC = 0.5 * (yMin + yMax); float yR = max(1e-3, yMax - yMin);
     float zC = 0.5 * (zMin + zMax); float zR = max(1e-3, zMax - zMin);
+    vec2 ndc;
     if (orthographicMode == 0) { // X flattened → show Y (screen X), Z (screen Y)
       ndc = vec2(2.0 * (p.y - yC) / yR, 2.0 * (p.z - zC) / zR);
     } else if (orthographicMode == 1) { // Y flattened → show X, Z
@@ -463,19 +467,109 @@ vec2 project4DToScreen(vec4 p) {
     } else { // W flattened → show X, Y
       ndc = vec2(2.0 * (p.x - xC) / xR, 2.0 * (p.y - yC) / yR);
     }
+    return ndc * 2.0; // convert NDC [-1,1] to shader coord [-2,2]
   } else {
-    // Perspective mapping that matches generate4DRayDirection basis
-    vec4 screenX4 = vec4(1.0, 0.0, 0.0, 0.3);
-    vec4 screenY4 = vec4(0.0, 1.0, 0.2, 0.0);
-    vec4 fwd = normalize(camera4DForward);
-    vec4 v = p - camera4DTarget;
-    float x = dot(v, screenX4);
-    float y = dot(v, screenY4);
-    float z = max(0.05, dot(v, fwd));
+    // Perspective: decompose vector to point into forward plane and divide by depth
+    vec4 f = normalize(camera4DForward);
+    vec4 ax = vec4(1.0, 0.0, 0.0, 0.3);
+    vec4 ay = vec4(0.0, 1.0, 0.2, 0.0);
+    // Remove forward component from basis, then orthonormalize
+    vec4 axp = ax - f * dot(ax, f);
+    vec4 axn = normalize(axp);
+    vec4 byp = ay - f * dot(ay, f);
+    vec4 byo = byp - axn * dot(byp, axn);
+    vec4 byn = normalize(byo);
+
+    vec4 v = p - camera4DPos;
+    float depth = max(1e-4, dot(v, f));
+    vec4 vperp = v - f * depth;
     float fov = 0.8;
-    ndc = vec2(x / (z * fov), y / (z * fov));
+    float sx = dot(vperp, axn) / (depth * fov);
+    float sy = dot(vperp, byn) / (depth * fov);
+    return vec2(sx, sy) * 2.0; // match coord space scale [-2,2]
   }
-  return ndc * 2.0; // convert NDC [-1,1] to shader coord [-2,2]
+}
+
+// Simpler perspective projection using raw screen basis without orthonormalization
+vec2 project4DToScreenLinear(vec4 p) {
+  if (orthographicMode >= 0) {
+    return project4DToScreen(p);
+  }
+  vec4 screenX4 = vec4(1.0, 0.0, 0.0, 0.3);
+  vec4 screenY4 = vec4(0.0, 1.0, 0.2, 0.0);
+  vec4 fwd = normalize(camera4DForward);
+  vec4 v = p - camera4DPos;
+  float x = dot(v, screenX4);
+  float y = dot(v, screenY4);
+  float z = max(0.05, dot(v, fwd));
+  float fov = 0.8;
+  vec2 ndc = vec2(x / (z * fov), y / (z * fov));
+  return ndc * 2.0;
+}
+
+// Distance/Depth-based attenuation for wireframe intensity (brighter when closer)
+float wireDistanceAttenuation(vec4 p) {
+  vec4 f = normalize(camera4DForward);
+  float depth = max(0.001, dot(p - camera4DPos, f));
+  // Inverse falloff with a floor so far edges remain visible
+  float att = 1.0 / (1.0 + 0.25 * depth);
+  return clamp(att, 0.25, 1.0);
+}
+
+// 4D box SDF for axis-aligned hypercube in aligned space ([-1,1]^4)
+float sdfHypercubeAligned(vec4 alignedPoint) {
+  vec4 d = abs(alignedPoint) - vec4(1.0);
+  float outside = length(max(d, vec4(0.0)));
+  float inside = min(max(max(max(d.x, d.y), max(d.z, d.w)), 0.0), 0.0);
+  return outside + inside;
+}
+
+// Sphere tracing using SDF for robust, alias-free intersection
+// Returns: x = hit distance (-1 if none), y = surface normal component sign, z = surface type (0=x,1=y,2=z,3=w)
+vec3 sphereTrace4D(vec2 screenCoord) {
+  const float maxDistance = 20.0;
+  const int maxSteps = 120;
+  const float epsilon = 0.0015; // surface threshold
+  const float minStep = 0.01;
+  const float maxStep = 0.5;
+
+  vec4 ro = getRayOrigin4D(screenCoord);
+  vec4 rd = normalize(generate4DRayDirection(screenCoord));
+
+  float t = 0.0;
+  for (int i = 0; i < maxSteps; i++) {
+    vec4 p = ro + t * rd;
+    vec4 aligned = inverseRotateVertex4D(p);
+    float sd = sdfHypercubeAligned(aligned);
+    if (sd < epsilon) {
+      // Classify face and normal sign like before
+      float distToXPos = abs(aligned.x - 1.0);
+      float distToXNeg = abs(aligned.x + 1.0);
+      float distToYPos = abs(aligned.y - 1.0);
+      float distToYNeg = abs(aligned.y + 1.0);
+      float distToZPos = abs(aligned.z - 1.0);
+      float distToZNeg = abs(aligned.z + 1.0);
+      float distToWPos = abs(aligned.w - 1.0);
+      float distToWNeg = abs(aligned.w + 1.0);
+      float minDist = min(min(min(distToXPos, distToXNeg), min(distToYPos, distToYNeg)),
+                         min(min(distToZPos, distToZNeg), min(distToWPos, distToWNeg)));
+      float normalSign = 1.0;
+      float surfaceType = 0.0;
+      if (minDist == distToXPos) { normalSign = 1.0; surfaceType = 0.0; }
+      else if (minDist == distToXNeg) { normalSign = -1.0; surfaceType = 0.0; }
+      else if (minDist == distToYPos) { normalSign = 1.0; surfaceType = 1.0; }
+      else if (minDist == distToYNeg) { normalSign = -1.0; surfaceType = 1.0; }
+      else if (minDist == distToZPos) { normalSign = 1.0; surfaceType = 2.0; }
+      else if (minDist == distToZNeg) { normalSign = -1.0; surfaceType = 2.0; }
+      else if (minDist == distToWPos) { normalSign = 1.0; surfaceType = 3.0; }
+      else { normalSign = -1.0; surfaceType = 3.0; }
+      return vec3(t, normalSign, surfaceType);
+    }
+    if (t > maxDistance) break;
+    float stepLen = clamp(sd * 0.9, minStep, maxStep);
+    t += stepLen;
+  }
+  return vec3(-1.0, 0.0, 0.0);
 }
 
 // Cast ray from camera through pixel, find closest intersection with 4D hypercube
@@ -632,8 +726,8 @@ void main() {
 
   }
   
-  // Perform adaptive 4D ray marching to find precise surface intersections
-  vec3 marchResult = adaptiveRayMarch4D(coord);
+  // Perform robust SDF-based sphere tracing to reduce angular artifacts
+  vec3 marchResult = sphereTrace4D(coord);
   float surfaceHitDistance = marchResult.x;
   float surfaceNormal = marchResult.y;
   float surfaceType = marchResult.z;
@@ -783,9 +877,12 @@ void main() {
       vec4 p0 = vertices[v1Idx];
       vec4 p1 = vertices[v2Idx];
 
-      vec2 a = project4DToScreen(p0);
-      vec2 b = project4DToScreen(p1);
+      vec2 a = (useCPUWireframe && orthographicMode < 0) ? projected2D[v1Idx] : project4DToScreen(p0);
+      vec2 b = (useCPUWireframe && orthographicMode < 0) ? projected2D[v2Idx] : project4DToScreen(p1);
       float d = pointSegmentDistance2D(px, a, b);
+      // Depth attenuation based on edge midpoint
+      vec4 mid4 = 0.5 * (p0 + p1);
+      float atten = wireDistanceAttenuation(mid4);
 
       vec3 wireColor;
       if (dim == 0) wireColor = vec3(1.0, 0.4, 0.4);
@@ -793,17 +890,37 @@ void main() {
       else if (dim == 2) wireColor = vec3(0.4, 0.4, 1.0);
       else wireColor = vec3(1.0, 1.0, 0.4);
 
-      float alpha = smoothstep(edgeRadius, 0.0, d);
+      float alpha = smoothstep(edgeRadius, 0.0, d) * atten;
       color = mix(color, wireColor, clamp(alpha, 0.0, 1.0));
     }
 
     // Vertices as 2D discs
     for (int i = 0; i < 16; i++) {
       vec4 p = vertices[i];
-      vec2 q = project4DToScreen(p);
+      vec2 q = (useCPUWireframe && orthographicMode < 0) ? projected2D[i] : project4DToScreen(p);
       float d = length(px - q);
-      float alpha = smoothstep(vertRadius, 0.0, d);
+      float atten = wireDistanceAttenuation(p);
+      float alpha = smoothstep(vertRadius, 0.0, d) * atten;
       color = mix(color, vec3(1.0), clamp(alpha, 0.0, 1.0));
+    }
+
+    // Debug dual markers to compare projection formulas in perspective mode
+    if (wireDebugCompare && orthographicMode < 0) {
+      float dbgRadius = pxScale * 2.2;
+      for (int i = 0; i < 16; i++) {
+        vec4 p = vertices[i];
+        // A: Orthonormalized projection (current)
+        vec2 a = project4DToScreen(p);
+        float da = length(px - a);
+        float aa = smoothstep(dbgRadius, 0.0, da);
+        color = mix(color, vec3(1.0, 0.2, 0.2), clamp(aa, 0.0, 1.0));
+
+        // B: Linear basis projection (raw screen basis)
+        vec2 b = project4DToScreenLinear(p);
+        float db = length(px - b);
+        float ab = smoothstep(dbgRadius, 0.0, db);
+        color = mix(color, vec3(0.2, 1.0, 1.0), clamp(ab, 0.0, 1.0));
+      }
     }
   }
   
