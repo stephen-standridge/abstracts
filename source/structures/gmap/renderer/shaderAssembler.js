@@ -1,5 +1,3 @@
-import headerTemplate from '../shaders/frag/header.glsl'
-
 function glslType({ type, size }) {
   if (size && size > 1) return `${type} ${size > 1 ? '' : ''}`
   return type
