@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react'
-import { registerWireframe, registerGeometryUniforms } from '../renderer/uniforms/registryRuntime'
 
 export function useWireframe4D() {
   const uniforms = [ { name: 'showWireframe', type: 'bool' }, { name: 'wireDebugCompare', type: 'bool' }, { name: 'useCPUWireframe', type: 'bool' }, { name: 'projected2D', type: 'vec2', size: 16 }, { name: 'vertices', type: 'vec4', size: 16 }, { name: 'edges', type: 'int', size: 96 } ]

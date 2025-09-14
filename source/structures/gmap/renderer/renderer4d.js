@@ -1,10 +1,9 @@
 import { createProgram, getUniformLocations } from './programFactory'
 import { vertexShaderSource, buildFragmentShaderSource } from './shaderSources'
-import { getRuntimeUniforms, getRuntimeOuts, resetRuntimeUniforms } from './uniforms/registryRuntime'
+import { getRuntimeUniforms } from './uniforms/registryRuntime'
 import { createFullscreenQuad, drawFullscreenQuad } from './fullscreenQuad'
 import { uploadResolution, uploadLegacyCamera, uploadCamera4D, uploadRotations, uploadFrustum, uploadOrthographic, uploadLight } from './uniforms4d'
 import { projectVerticesCPU } from './wireframeProjector'
-import { getUniformNames } from './uniforms/registry'
 
 export function initRenderer4D(gl) {
   // Build fragment shader from runtime-registered uniforms
